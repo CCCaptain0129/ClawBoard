@@ -239,7 +239,273 @@ OpenClaw 是一个强大的 AI Agent 系统，支持多个 Agent 并发运行。
 
 ---
 
-## 7. 风险与依赖
+## 9. 任务看板系统需求
+
+### 9.1 背景
+
+OpenClaw 项目采用 `TASKS.md` 文档进行任务管理，但缺乏可视化的任务看板。需要开发一个任务看板系统，实现：
+
+1. **可视化展示**：Trello 风格的三列任务看板（待处理、进行中、已完成）
+2. **数据同步**：TASKS.md（Markdown）与 JSON 文件的双向同步
+3. **Agent 交互**：Agent 可以领取任务、更新状态、报告完成
+4. **多项目支持**：支持多个项目的任务管理，统一展示
+
+### 9.2 数据架构设计
+
+#### 文件结构
+```
+projects/项目名称/
+├── TASKS.md              # Markdown 格式的任务文档（主数据源）
+├── tasks/                # JSON 数据（自动生成）
+│   ├── projects.json    # 项目列表
+│   └── {projectId}-tasks.json  # 任务数据
+├── scripts/              # 同步脚本（可选）
+│   ├── sync-md-to-json.ts   # Markdown → JSON
+│   └── sync-json-to-md.ts   # JSON → Markdown
+└── docs/
+    ├── PRD.md
+    └── PROGRESS.md
+```
+
+#### 数据流
+```
+┌─────────────┐
+│  TASKS.md  │ ← 人工编辑（主数据源）
+└──────┬──────┘
+       │
+       ├───────────────────┐
+       │                   │
+       ▼                   ▼
+┌─────────────────┐  ┌─────────────┐
+│  Markdown      │  │  JSON API   │
+│  → JSON 工具   │  │  看板更新    │
+└────────┬────────┘  │  → Markdown  │
+         │           └──────┬───────┘
+         ▼                  │
+┌─────────────┐             │
+│ JSON 文件   │ ←────────────┘
+└─────────────┘   看板数据源
+```
+
+### 9.3 功能需求
+
+#### 9.3.1 核心功能（P1 - MVP）
+
+**数据同步**
+- [ ] **Markdown → JSON 解析**
+  - 解析 TASKS.md 文档格式
+  - 提取任务信息（ID、标题、描述、优先级、状态、标签）
+  - 生成 JSON 文件
+  - 支持阶段分组
+
+- [ ] **JSON → Markdown 生成**
+  - 从 JSON 生成 TASKS.md
+  - 保持格式一致性
+  - 支持自动生成任务 ID（TASK-001, TASK-002...）
+
+- [ ] **双向同步**
+  - Markdown 变化 → 自动同步到 JSON
+  - 看板操作 → 自动同步到 Markdown
+  - Agent 操作 → 自动同步到 Markdown
+
+**任务看板界面**
+- [ ] **三列布局**
+  - 待处理（📋）
+  - 进行中（🚧）
+  - 已完成（✅）
+
+- [ ] **任务卡片**
+  - 显示任务标题（不显示 TASK-XXX）
+  - 显示任务描述
+  - 显示优先级徽章（P1/P2/P3）
+  - 显示标签（后端、前端、docs 等）
+  - 显示状态（待处理/进行中/已完成）
+  - 显示领取者（如果有）
+  - 显示阶段信息
+
+- [ ] **多项目管理**
+  - Tab 切换不同项目
+  - 独立的数据文件
+  - 统一的看板展示
+
+- [ ] **统计数据**
+  - 每列任务数量
+  - 总任务数
+  - 完成进度百分比
+
+#### 9.3.2 Agent 交互（P1 - MVP）
+
+**任务领取**
+- Agent 调用 API: `POST /api/tasks/projects/:id/tasks/:taskId/claim`
+- 后端更新 JSON（设置 claimedBy，更新状态为 in-progress）
+- 后端同步到 Markdown（运行 JSON → Markdown 工具）
+- WebSocket 广播任务更新
+
+**任务完成**
+- Agent 调用 API: `POST /api/tasks/projects/:id/tasks/:taskId`
+- 请求体: `{ status: "done", completedAt: "2026-03-10T14:00:00Z" }`
+- 后端更新 JSON（更新状态为 done，记录完成时间）
+- 后端同步到 Markdown
+- WebSocket 广播
+
+**自动任务分配**
+- 后端定时任务（每 60 秒）
+- 检查所有待处理任务
+- 自动分配给空闲 Agent
+- 分配后自动同步到 Markdown
+- WebSocket 广播
+
+#### 9.3.3 API 接口
+
+**项目管理**
+```
+GET    /api/tasks/projects                    # 获取所有项目
+GET    /api/tasks/projects/:id                # 获取单个项目
+POST   /api/tasks/projects                    # 创建项目
+PUT    /api/tasks/projects/:id                # 更新项目
+DELETE /api/tasks/projects/:id                # 删除项目
+```
+
+**任务管理**
+```
+GET    /api/tasks/projects/:id/tasks          # 获取项目所有任务
+GET    /api/tasks/projects/:id/tasks/:taskId  # 获取单个任务
+POST   /api/tasks/projects/:id/tasks          # 创建任务
+PUT    /api/tasks/projects/:id/tasks/:taskId  # 更新任务
+DELETE /api/tasks/projects/:id/tasks/:taskId  # 删除任务
+```
+
+**任务操作**
+```
+POST   /api/tasks/projects/:id/tasks/:taskId/claim     # 领取
+POST   /api/tasks/projects/:id/tasks/:taskId/unclaim   # 放弃
+POST   /api/tasks/projects/:id/tasks/:taskId/complete  # 完成
+```
+
+**同步接口**
+```
+POST   /api/tasks/sync/from-md              # Markdown → JSON
+POST   /api/tasks/sync/to-md                # JSON → Markdown
+POST   /api/tasks/sync/full                 # 双向同步
+```
+
+#### 9.3.4 可复用性设计（P2）
+
+**CLI 工具**
+```bash
+npx openclaw-kanban create       # 创建项目
+npx openclaw-kanban init          # 初始化
+npx openclaw-kanban import        # MD → JSON
+npx openclaw-kanban export        # JSON → MD
+npx openclaw-kanban watch         # 监控服务
+```
+
+**新项目创建流程**
+1. 创建项目目录
+2. 创建 TASKS.md 模板
+3. 初始化看板（自动生成 JSON）
+4. 启动服务
+
+### 9.4 TASKS.md 文档格式
+
+#### 推荐格式
+```markdown
+# 项目名称 - 任务分解
+
+## 项目信息
+- **项目 ID**: openclaw-visualization
+- **名称**: OpenClaw 可视化监控平台
+- **负责人**: @Agent
+- **状态**: 🚧 进行中
+
+## 阶段 1
+
+### 任务列表
+
+-  **TASK-001** `P1` `docs` `done`
+  - 状态: 已完成
+  - 描述: 创建项目目录结构
+
+-  **TASK-002** `P1` `backend` `todo`
+  - 状态: 待处理
+  - 描述: 初始化后端项目
+  - 领取者: @Agent
+
+## 统计
+- **任务总数**: 10
+- **待处理**: 3
+- **进行中**: 1
+- **已完成**: 6
+```
+
+#### 格式说明
+- 任务 ID：自动生成（TASK-001, TASK-002...）
+- 优先级：`P1`（高）、`P2`（中）、`P3`（低）
+- 标签：`docs`、`backend`、`frontend` 等
+- 状态：`todo`（待处理）、`in-progress`（进行中）、`done`（已完成）
+- 领取者：`@Agent`、`@User` 等
+
+### 9.5 技术实现
+
+#### 数据模型
+```typescript
+interface Task {
+  id: string;                    // TASK-001
+  title: string;                  // 任务标题
+  description: string;            // 任务描述
+  status: 'todo' | 'in-progress' | 'done';
+  priority: 'P1' | 'P2' | 'P3';
+  labels: string[];               // 标签
+  assignee: string | null;        // 分配给谁
+  claimedBy: string | null;       // 领取者
+  dueDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+  comments: any[];
+}
+
+interface Project {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  leadAgent: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Stage {
+  name: string;                   // 阶段名称
+  week: string;
+  tasks: Task[];
+}
+```
+
+#### 同步机制
+- **MarkdownToJSON**: 解析 TASKS.md，生成 JSON
+- **JSONToMarkdown**: 从 JSON 生成 TASKS.md
+- **SyncManager**: 统一管理同步
+- **AgentTaskScheduler**: 定时任务调度器
+
+#### WebSocket 协议
+```typescript
+// 任务更新
+{
+  type: 'TASK_UPDATE',
+  projectId: string,
+  task: Task
+}
+
+// Agent 更新
+{
+  type: 'AGENT_UPDATE',
+  agents: Agent[]
+}
+```
+
+---
+
+## 10. 风险与依赖
 
 ### 风险
 

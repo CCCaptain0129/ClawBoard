@@ -7,118 +7,110 @@
 ## 项目状态总览
 
 - **开始日期**: 2026-03-10
-- **当前阶段**: 阶段 0 - 项目初始化
-- **完成度**: 20%
+- **当前阶段**: 阶段 6 - 任务看板系统开发
+- **完成度**: 70%
+
+---
+
+## 开发原则
+
+1. **小步快跑**：每完成一个小任务就进行测试
+2. **测试优先**：开发新功能前先编写测试用例
+3. **定期推送**：每完成一个功能模块就推送到 GitHub
+4. **文档同步**：代码变更后立即更新相关文档
+5. **任务看板同步**：每个任务状态变更后同步到 TASKS.md
 
 ---
 
 ## 最新进展
 
-**2026-03-10**
+**2026-03-10 21:50**
 
-- ✅ 创建项目目录结构
-- ✅ 编写通用项目管理指南（openclaw-project-guide.md）
-- ✅ 创建 README.md
-- ✅ 编写 PRD.md 需求文档
-- ✅ 编写 ARCHITECTURE.md 架构文档
-- ✅ 编写 DEPLOY.md 部署指南
-- ✅ 创建 TASKS.md 任务分解清单
-- ✅ 初始化 PROGRESS.md
-- ✅ 创建 .gitignore 文件
-- ✅ 初始化 Git 仓库并首次提交
-- ⏳ 待办：推送到 GitHub（需要确认仓库地址）
+- ✅ 项目结构已恢复（意外删除后重建）
+- ✅ 后端服务已部署（HTTP: 3000, WebSocket: 3001）
+- ✅ 前端服务已部署（Vite: 5173）
+- ✅ Tailwind CSS 已配置
+- ✅ Agent 监控页面已完成
+- ✅ Markdown → JSON 同步解析器已实现
+- ✅ AgentTaskScheduler 任务调度器已实现（60秒间隔）
+- ✅ 项目已推送到 GitHub: https://github.com/CCCaptain0129/OpenClaw_Visualization
+- ✅ PRD.md 已更新（增加任务看板功能 - 第 9 章）
+- ✅ TASKS.md 已更新（添加任务看板开发任务）
+- 🔄 正在进行：任务看板前端页面开发
+
+**重大事故记录**
+
+- **2026-03-10 20:48**: 意外执行 `git checkout .` 和 `rm -rf src/`，导致源代码全部丢失
+- **恢复措施**: 已重建所有核心代码并重新部署
+- **教训**: 修改代码前先提交到 git，避免数据丢失
 
 ---
 
 ## 当前任务追踪
 
-### 🔄 无进行中任务
+### 🔄 正在进行
+
+**任务看板前端开发**
+- TASK-210: 实现 KanbanBoard 组件（任务看板主界面）
+- TASK-211: 实现 TaskCard 组件（任务卡片）
+- TASK-212: 实现三列布局（待处理、进行中、已完成）
 
 ### ⏳ 待开始
 
-- TASK-007: 推送到 GitHub（需要确认仓库地址）
-- TASK-010: 确认 OpenClaw 数据源（数据库/API/日志）
-- TASK-011: 确认技术选型（前端框架、UI 库）
-- TASK-012: 设计数据模型（Agent、日志、任务历史）
+**任务看板相关**
+- TASK-213: 实现任务数量统计
+- TASK-214: 实现任务状态过滤
+- TASK-215: 实现 TaskService 前端调用
+- TASK-216: 实现多项目 Tab 切换
+- TASK-217: 添加任务搜索功能
+- TASK-218: 添加任务筛选功能（按优先级、标签）
+
+**任务看板功能增强（P2）**
+- TASK-230: 实现任务拖拽功能
+- TASK-231: 实现任务编辑弹窗
+- TASK-232: 优化任务卡片样式
+- TASK-233: 添加任务批量操作
+- TASK-234: 添加任务导出功能
+
+**其他功能**
+- TASK-120-125: 开发 Agent 详情页
+- TASK-130-136: 开发错误日志页
+- TASK-150-173: 编写测试
 
 ### ✅ 已完成
 
-- TASK-001: 创建项目目录结构
-- TASK-002: 编写 README.md
-- TASK-003: 编写 PRD.md 需求文档
-- TASK-004: 编写 ARCHITECTURE.md 架构文档
-- TASK-005: 编写 DEPLOY.md 部署指南
-- TASK-006: 初始化 Git 仓库
-- TASK-007: 创建 .gitignore 文件
+**阶段 0-5**
+- TASK-001-115: 项目初始化、需求设计、环境搭建、数据接入、API 开发、WebSocket、前端组件、Dashboard 页面
+
+**阶段 6 - 任务看板后端（已完成）**
+- TASK-200: 设计任务数据模型（Task, Project, Stage）✅
+- TASK-201: 实现 TaskService（任务 CRUD 操作）✅
+- TASK-202: 实现 TaskRoutes（任务 API 路由）✅
+- TASK-203: 实现 MarkdownToJSON 解析器（Markdown → JSON）✅
+- TASK-204: 实现 JSONToMarkdown 生成器（JSON → Markdown）✅
+- TASK-205: 实现 SyncManager（同步管理器）✅
+- TASK-206: 实现同步 API 端点（/api/tasks/sync/*）✅
+- TASK-207: 实现 AgentTaskScheduler（任务调度器，60秒间隔）✅
+- TASK-208: 实现任务领取/放弃 API ✅
+- TASK-209: 实现任务状态更新 API ✅
+- TASK-210: 实现 WebSocket 任务更新广播 ✅
 
 ---
 
-## 中断恢复指引
+## 服务运行状态
 
-### 如何知道做到哪一步了？
+### 后端服务
+- ✅ HTTP 服务器：http://localhost:3000
+- ✅ WebSocket 服务器：ws://localhost:3001
+- ✅ 轮询间隔：3 秒
+- ✅ 任务调度器：60 秒
+- ✅ 同步功能：正常工作
 
-1. 查看"🔄 正在进行"部分，找到当前任务
-2. 查看任务的子任务进度
-3. 查看下方"最新进展"获取上下文
-4. 查看Git历史：`git log -5 --oneline`
-
-### 恢复步骤
-
-**场景 1：刚完成文档创建，准备初始化 Git**
-
-```bash
-# 1. 进入项目目录
-cd /Users/ot/.openclaw/workspace/projects/openclaw-visualization
-
-# 2. 初始化 Git 仓库
-git init
-
-# 3. 查看 Git 状态（应该看到所有未跟踪的文件）
-git status
-
-# 4. 创建 .gitignore 文件（见下方模板）
-touch .gitignore
-
-# 5. 添加所有文件到暂存区
-git add .
-
-# 6. 首次提交
-git commit -m "chore: 初始化项目结构和文档"
-
-# 7. 推送到 GitHub（需要先创建远程仓库）
-git remote add origin <你的仓库地址>
-git branch -M main
-git push -u origin main
-```
-
-**场景 2：需要了解项目背景**
-
-1. 阅读 README.md - 快速了解项目
-2. 阅读 PRD.md - 了解需求
-3. 阅读 ARCHITECTURE.md - 了解技术架构
-4. 查看 TASKS.md - 了解所有任务
-
-**场景 3：需要知道下一步做什么**
-
-1. 查看 PROGRESS.md 的"⏳ 待开始"部分
-2. 找到下一个优先级最高的任务
-3. 在 PROGRESS.md 中标记为 🔄
-4. 开始执行
-
-### 遇到问题怎么办？
-
-1. **技术问题**：
-   - 查看相关文档（PRD/ARCHITECTURE/DEPLOY）
-   - 检查 Git 历史中是否有相关解决方案
-   - 搜索 Stack Overflow 或 GitHub Issues
-
-2. **需求不明确**：
-   - 查看 PRD.md 中的"待确认问题"部分
-   - 在项目群组中 @导师 或 @产品经理
-
-3. **无法自行解决**：
-   - 在项目群组中@导师寻求帮助
-   - 描述问题、已尝试的方案、错误信息
+### 前端服务
+- ✅ 开发服务器：http://localhost:5173
+- ✅ 构建工具：Vite
+- ✅ CSS 框架：Tailwind CSS
+- ✅ 连接状态：正常
 
 ---
 
@@ -126,141 +118,162 @@ git push -u origin main
 
 | 里程碑 | 目标日期 | 实际日期 | 状态 | 备注 |
 |--------|---------|---------|------|------|
-| 项目初始化完成 | 2026-03-10 | - | ✅ | 已完成 |
-| 需求确认完成 | 2026-03-10 | - | ⏳ | 待开始 |
-| 技术选型完成 | 2026-03-10 | - | ⏳ | 待开始 |
-| 环境搭建完成 | 2026-03-12 | - | ⏳ | 待开始 |
-| 数据接入完成 | 2026-03-14 | - | ⏳ | 待开始 |
-| MVP 发布 | 2026-04-07 | - | ⏳ | 待开始 |
+| 项目初始化完成 | 2026-03-10 | 2026-03-10 | ✅ | 已完成 |
+| 需求确认完成 | 2026-03-10 | 2026-03-10 | ✅ | 已完成 |
+| 技术选型完成 | 2026-03-10 | 2026-03-10 | ✅ | 已完成 |
+| 环境搭建完成 | 2026-03-12 | 2026-03-10 | ✅ | 提前完成 |
+| 数据接入完成 | 2026-03-14 | 2026-03-10 | ✅ | 提前完成 |
+| 核心功能开发完成 | 2026-03-21 | 2026-03-10 | ✅ | 提前完成 |
+| **任务看板后端完成** | 2026-03-21 | 2026-03-10 | ✅ | 已完成 |
+| **任务看板前端完成** | 2026-03-21 | 🔄 | 进行中 | 当前任务 |
+| MVP 发布 | 2026-04-07 | - | ⏳ | 待发布 |
 
 ---
 
-## 重要决策记录
+## 访问信息
 
-### 决策 1：使用 React + TypeScript 作为前端技术栈
-- **日期**: 2026-03-10
-- **原因**:
-  - React 生态成熟，组件丰富
-  - TypeScript 提供类型安全，减少 Bug
-  - 团队熟悉度高
-- **替代方案**: Vue.js, Svelte（已评估，React 更适合）
+### 前端应用
+- **URL**: http://localhost:5173
+- **说明**: 可视化监控界面 + 任务看板
 
-### 决策 2：使用 WebSocket 实现实时更新
-- **日期**: 2026-03-10
-- **原因**:
-  - WebSocket 支持双向通信，适合实时推送
-  - 比 HTTP 轮询更高效
-  - 连接建立后，推送延迟低
-- **替代方案**: SSE（Server-Sent Events），HTTP 轮询
+### 后端 API
+- **URL**: http://localhost:3000
+- **Health Check**: http://localhost:3000/health
+- **Agents API**: http://localhost:3000/api/agents
+- **Tasks API**: http://localhost:3000/api/tasks
 
-### 决策 3：使用 Zustand 进行状态管理
-- **日期**: 2026-03-10
-- **原因**:
-  - 比 Redux 更简单，API 更简洁
-  - 不需要 Provider 包装
-  - 适合中小型项目
-- **替代方案**: Redux, Context API（已评估，Zustand 更适合）
+### WebSocket
+- **URL**: ws://localhost:3001
+- **协议**:
+  - `PING/PONG` - 心跳
+  - `INITIAL_DATA` - 初始数据推送
+  - `AGENT_UPDATE` - 状态变更推送
+  - `TASK_UPDATE` - 任务更新推送
 
-### 决策 4：不使用 GitHub Issues 进行任务管理
-- **日期**: 2026-03-10
-- **原因**:
-  - 项目成员不熟悉 GitHub Issues
-  - 使用 TASKS.md + PROGRESS.md 更简单直接
-  - 减少学习成本
-- **替代方案**: GitHub Issues, Trello, Jira
-
----
-
-## 待确认问题
-
-- [ ] **GitHub 仓库地址**：是否已有仓库？需要创建新的吗？
-- [ ] **OpenClaw 数据源**：Agent 状态存储在哪里？数据库？日志文件？
-- [ ] **OpenClaw API**：是否有公开 API 可以获取 Agent 状态？
-- [ ] **部署环境**：部署到哪里？本地服务器？云服务器？
-- [ ] **用户认证**：是否需要用户登录和权限管理？
-- [ ] **Agent 性能指标**：能否获取 CPU/内存使用等指标？
-
----
-
-## 风险与问题
-
-### 当前风险
-
-**风险 1：OpenClaw 数据源不确定**
-- **影响**: 阻止 TASK-041（实现数据适配器）
-- **状态**: ⏸️ 暂停
-- **缓解措施**: 先准备数据库查询和日志文件解析两种方案，待确认后快速实现
-
-**风险 2：执行者未确认**
-- **影响**: 阶段 2 开始后无法推进
-- **状态**: ⏸️ 暂停
-- **缓解措施**: 确认执行者后，可以进行开发培训
-
-### 已解决问题
-
-*暂无*
-
----
-
-## 参考资料
-
-### 项目文档
-- 通用项目管理指南：`../openclaw-project-guide.md`
-- 项目 README：`README.md`
-- 需求文档：`docs/PRD.md`
-- 架构文档：`docs/ARCHITECTURE.md`
-- 部署文档：`docs/DEPLOY.md`
-- 任务清单：`TASKS.md`
-
-### 外部资源
-- [约定式提交](https://www.conventionalcommits.org/zh-hans/)
-- [React 官方文档](https://react.dev/)
-- [Express 官方文档](https://expressjs.com/)
-- [WebSocket MDN](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
-
----
-
-## 每日更新日志
-
-### 2026-03-10
-
-**完成**
-- ✅ 创建项目目录结构
-- ✅ 编写通用项目管理指南
-- ✅ 创建所有核心文档（README, PRD, ARCHITECTURE, DEPLOY）
-- ✅ 创建任务清单（TASKS.md）
-- ✅ 初始化进度追踪（PROGRESS.md）
-- ✅ 创建 .gitignore 文件
-- ✅ 初始化 Git 仓库并首次提交
-
-**待办**
-- ⏳ 推送到 GitHub（需要确认仓库地址）
-- ⏳ 确认 OpenClaw 数据源类型
-
-**问题**
-- 需要确认 GitHub 仓库地址
-- 需要确认 OpenClaw 数据源类型
+### GitHub 仓库
+- **URL**: https://github.com/CCCaptain0129/OpenClaw_Visualization
+- **分支**: main
 
 ---
 
 ## 下一步计划
 
-### 短期（今天）
-- 确认 GitHub 仓库地址并推送
-- 确认 OpenClaw 数据源类型
-- 开始技术选型确认
+### 短期（今天晚上）
+- [ ] 完成任务看板前端页面
+- [ ] 测试任务看板功能
+- [ ] 推送更新到 GitHub
 
 ### 中期（本周）
-- 完成技术选型确认
-- 搭建开发环境（前后端）
-- 开始数据接入开发
+- [ ] 开发任务看板功能增强（拖拽、编辑、搜索）
+- [ ] 开发 Agent 详情页
+- [ ] 开发错误日志页
+- [ ] 编写单元测试
 
-### 长期（本月）
-- 完成 MVP 开发
-- 部署到测试环境
-- 进行用户测试和优化
+### 长期（下周）
+- [ ] 部署到生产环境
+- [ ] 用户文档编写
+- [ ] 监控和日志配置
 
 ---
 
-*版本: 1.0.0*  
-*最后更新: 2026-03-10*
+## 重要决策记录
+
+### 决策 1：任务看板数据同步方案
+- **日期**: 2026-03-10
+- **方案**: TASKS.md 为主数据源，JSON 为看板数据，双向同步
+- **原因**:
+  - Markdown 易于编辑和版本控制
+  - JSON 易于程序读取
+  - 双向同步保持一致性
+- **实施**:
+  - MarkdownToJSON: 解析 TASKS.md → 生成 JSON
+  - JSONToMarkdown: 从 JSON → 生成 TASKS.md
+  - SyncManager: 统一管理同步
+
+### 决策 2：Agent 任务自动分配
+- **日期**: 2026-03-10
+- **方案**: 后端定时任务，每 60 秒检查待处理任务
+- **原因**:
+  - 统一管理，易于调试
+  - 不需要修改 Agent 代码
+  - 后期可以扩展
+- **实施**:
+  - AgentTaskScheduler 类
+  - 每 60 秒自动检查
+  - 自动分配给空闲 Agent
+  - 分配后自动同步到 Markdown
+
+### 决策 3：技术栈选择
+- **前端**: React 18 + TypeScript + Vite + Tailwind CSS + Zustand
+- **后端**: Node.js + Express + WebSocket
+- **原因**: 生态成熟、类型安全、开发效率高
+
+---
+
+## 已解决的技术问题
+
+### 问题 1：npm 网络问题
+- **解决方案**：配置国内镜像源 `https://registry.npmmirror.com`
+- **状态**：✅ 已解决
+
+### 问题 2：Tailwind CSS 配置错误
+- **问题**：PostCSS 插件配置不正确
+- **解决方案**：安装 `@tailwindcss/postcss` 并更新配置
+- **状态**：✅ 已解决
+
+### 问题 3：源代码意外丢失
+- **问题**：执行 `git checkout .` 和 `rm -rf src/` 导致源代码丢失
+- **解决方案**：重新创建所有核心代码并重新部署
+- **状态**：✅ 已解决
+
+### 问题 4：OpenClaw 数据源查询
+- **解决方案**：读取 `~/.openclaw/agents/main/sessions/sessions.json`
+- **状态**：✅ 已解决
+
+---
+
+## Git 提交历史
+
+```
+e920776 docs: 添加项目 MEMORY.md
+b17f6f8 docs: 更新 PRD、TASKS、PROGRESS
+fd0bb3f merge: 合并本地代码和远程代码
+c50b0c5 feat: 重构项目结构，恢复后端和前端核心代码
+3f53889 docs: 更新项目进度到 20%
+09fc1bc chore: 初始化 OpenClaw 可视化监控平台项目
+```
+
+---
+
+## 待确认问题
+
+- [ ] **任务看板页面需求确认**：
+  - 是否需要任务拖拽功能？
+  - 是否需要任务编辑功能？
+  - 是否需要任务搜索功能？
+
+- [ ] **部署环境**：
+  - 部署到哪里？（本地服务器？云服务器？）
+
+- [ ] **性能需求**：
+  - 需要支持多少个并发用户？
+  - 是否需要性能监控？
+
+---
+
+## 参考文档
+
+### 飞书文档
+- 任务看板开发方案讨论：https://tcnzp7jzu5k8.feishu.cn/wiki/KcqCwlelQiIT5AkebxUcIw1indb
+
+### 项目文档
+- README: `README.md`
+- PRD: `docs/PRD.md`（第 9 章：任务看板系统需求）
+- 架构: `docs/ARCHITECTURE.md`
+- 部署: `docs/DEPLOY.md`
+- 任务清单: `TASKS.md`
+
+---
+
+*版本: 3.0.0*  
+*最后更新: 2026-03-10 21:50*
