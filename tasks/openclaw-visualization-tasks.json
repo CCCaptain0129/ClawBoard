@@ -5,7 +5,7 @@
   "status": "active",
   "leadAgent": null,
   "createdAt": "2026-03-10T00:00:00.000Z",
-  "updatedAt": "2026-03-10T23:33:44.886Z",
+  "updatedAt": "2026-03-10T23:47:20.911Z",
   "tasks": [
     {
       "id": "TASK-001",
@@ -171,7 +171,7 @@
       "id": "TASK-021",
       "title": "修复发现的 bug",
       "description": "修复发现的 bug",
-      "status": "todo",
+      "status": "in-progress",
       "priority": "P1",
       "labels": [
         "阶段 3：测试与部署（P2）"
@@ -180,7 +180,7 @@
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-10T23:33:09.330Z",
-      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:45:30.400Z",
       "comments": []
     },
     {
@@ -203,7 +203,7 @@
       "id": "TASK-023",
       "title": "提交代码到 GitHub",
       "description": "提交代码到 GitHub",
-      "status": "todo",
+      "status": "in-progress",
       "priority": "P1",
       "labels": [
         "阶段 3：测试与部署（P2）"
@@ -212,7 +212,7 @@
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-10T23:33:09.330Z",
-      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:47:20.910Z",
       "comments": []
     }
   ]
