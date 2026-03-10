@@ -1,157 +1,238 @@
-# OpenClaw Agent 可视化监控平台
+# OpenClaw Visualization
 
-实时监控和管理 OpenClaw Agent 的 Web 可视化界面
+> OpenClaw Agent 可视化监控平台
 
----
+## 简介
 
-## 快速开始
-
-```bash
-# 克隆项目
-cd /Users/ot/.openclaw/workspace/projects/openclaw-visualization
-
-# 安装依赖
-npm install
-
-# 启动开发服务器
-npm run dev
-
-# 构建生产版本
-npm run build
-```
-
----
+一个实时监控和管理 OpenClaw Agent 的可视化平台，包含 Agent 状态监控和 Trello 风格的任务看板系统。
 
 ## 功能特性
 
-- ✅ 实时显示所有 Agent 的运行状态
-- ✅ 展示每个 Agent 的当前任务和进度
-- ✅ 任务历史记录查看
-- ✅ 错误日志展示
-- ✅ Agent 性能监控（CPU/内存使用）
-- ✅ WebSocket 实时推送更新
+### Agent 监控
+- 实时展示所有 Agent 状态
+- 显示 Token 使用统计
+- WebSocket 实时更新（3 秒轮询）
+- Agent 详细信息查看
 
----
+### 任务看板
+- Trello 风格三列布局（待处理、进行中、已完成）
+- 任务状态实时切换
+- Markdown ↔ JSON 双向同步
+- 任务统计和进度追踪
+- 优先级和标签分类
+- 响应式设计，极简风格
 
 ## 技术栈
 
-- **前端**: React 18 + TypeScript + Vite
-- **状态管理**: Zustand
-- **UI组件**: shadcn/ui + Tailwind CSS
-- **实时通信**: WebSocket
-- **后端**: Node.js + Express
-- **数据源**: OpenClaw 数据库 / API
+### 前端
+- React 18 + TypeScript
+- Vite
+- Tailwind CSS
+- WebSocket 客户端
 
----
+### 后端
+- Node.js + Express
+- TypeScript
+- WebSocket 服务
+- 文件系统操作
+
+## 快速开始
+
+### 前置要求
+- Node.js >= 18
+- npm 或 yarn
+
+### 安装依赖
+
+```bash
+# 后端
+cd src/backend
+npm install
+
+# 前端
+cd ../frontend
+npm install
+```
+
+### 启动服务
+
+```bash
+# 启动后端服务（端口 3000 / 3001）
+cd src/backend
+npm run dev
+
+# 启动前端服务（端口 5173）
+cd src/frontend
+npm run dev
+```
+
+### 访问应用
+
+- 前端：http://localhost:5173
+- 后端 API：http://localhost:3000
+- WebSocket：ws://localhost:3001
+
+## API 文档
+
+### Agent API
+
+#### 获取所有 Agent
+```http
+GET /api/agents
+```
+
+### 任务 API
+
+#### 获取所有项目
+```http
+GET /api/tasks/projects
+```
+
+#### 获取项目任务
+```http
+GET /api/tasks/projects/:id/tasks
+```
+
+#### 更新任务状态
+```http
+PUT /api/tasks/projects/:id/tasks/:taskId
+Content-Type: application/json
+
+{
+  "status": "in-progress"
+}
+```
+
+### 同步 API
+
+#### Markdown → JSON
+```http
+POST /api/sync/from-markdown/:projectId
+```
+
+#### JSON → Markdown
+```http
+POST /api/sync/to-markdown/:projectId
+```
+
+#### 双向同步
+```http
+POST /api/sync/:projectId
+```
 
 ## 项目结构
 
 ```
 openclaw-visualization/
-├── README.md
-├── docs/
-│   ├── PRD.md            # 产品需求文档
-│   ├── ARCHITECTURE.md   # 技术架构
-│   └── DEPLOY.md         # 部署指南
-├── TASKS.md              # 任务分解清单
-├── PROGRESS.md           # 进度追踪
-├── CHANGELOG.md          # 变更日志
 ├── src/
-│   ├── frontend/         # 前端代码
+│   ├── backend/          # 后端服务
 │   │   ├── src/
-│   │   │   ├── components/
-│   │   │   ├── pages/
-│   │   │   ├── stores/
-│   │   │   └── hooks/
-│   │   ├── package.json
-│   │   └── vite.config.ts
-│   ├── backend/          # 后端代码
-│   │   ├── src/
-│   │   │   ├── routes/
-│   │   │   ├── services/
-│   │   │   └── websocket/
-│   │   ├── package.json
-│   │   └── tsconfig.json
-│   └── shared/           # 共享代码
-│       └── types/
-├── tests/
-└── .github/
-    └── PULL_REQUEST_TEMPLATE.md
+│   │   │   ├── routes/   # API 路由
+│   │   │   ├── services/ # 业务逻辑
+│   │   │   ├── websocket/# WebSocket 服务
+│   │   │   ├── sync/     # 同步逻辑
+│   │   │   └── schedulers/# 定时任务
+│   │   └── package.json
+│   └── frontend/         # 前端应用
+│       ├── src/
+│       │   ├── components/# React 组件
+│       │   ├── pages/    # 页面组件
+│       │   ├── services/ # API 调用
+│       │   └── hooks/    # 自定义 Hook
+│       └── package.json
+├── tasks/                # 任务数据
+│   ├── projects.json
+│   └── openclaw-visualization-tasks.json
+└── TASKS.md             # 任务清单（Markdown 格式）
 ```
 
----
+## 任务管理
 
-## 开发指南
+任务以 Markdown 格式存储在 `TASKS.md`，通过同步 API 自动转换为 JSON 格式供前端使用。
 
-### 环境要求
+### 添加新任务
 
-- Node.js >= 18
-- npm >= 9
+在 `TASKS.md` 中按照以下格式添加：
 
-### 代码规范
+```markdown
+## 阶段 X
 
-项目使用 ESLint + Prettier 进行代码格式化：
+### 任务列表
 
-```bash
-# 检查代码规范
-npm run lint
-
-# 自动修复
-npm run lint:fix
+-  **TASK-XXX** `P1` `frontend`
+  - 状态: 待处理
+  - 描述: 任务描述
+  - 负责人: @username
 ```
 
-### Commit Message 规范
+然后点击"同步到 Markdown"按钮，或调用同步 API。
 
-遵循约定式提交规范：
+## 开发进度
 
-- `feat`: 新功能
-- `fix`: Bug修复
-- `docs`: 文档更新
-- `refactor`: 重构
-- `test`: 测试相关
-- `chore`: 构建/工具变动
-
-示例：
-```bash
-git commit -m "feat(dashboard): 添加Agent状态实时更新"
-```
-
----
-
-## 开发流程
-
-1. 从 TASKS.md 选择待办任务
-2. 在 PROGRESS.md 中标记为进行中
-3. 创建 feature 分支：`git checkout -b feature/xxx`
-4. 开发并提交代码
-5. 推送到远程：`git push origin feature/xxx`
-6. 更新 PROGRESS.md
-
-详见项目管理指南：`../openclaw-project-guide.md`
-
----
+- ✅ Agent 监控：100%
+- ✅ 任务看板后端：100%
+- ✅ 任务看板前端：100%
+- 🚧 功能增强：开发中
+- ⏳ 部署到生产：待开始
 
 ## 部署
 
-详见 [docs/DEPLOY.md](docs/DEPLOY.md)
+### 环境变量
 
----
+创建 `.env` 文件：
 
-## 贡献指南
+```env
+PORT=3000
+WS_PORT=3001
+```
 
-1. Fork 本仓库
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'feat: Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 提交Pull Request
+### 构建生产版本
 
----
+```bash
+# 前端构建
+cd src/frontend
+npm run build
+
+# 后端构建（可选）
+cd ../backend
+npm run build
+```
+
+### 使用 PM2 部署
+
+```bash
+# 安装 PM2
+npm install -g pm2
+
+# 启动后端
+pm2 start src/backend/src/index.ts --name openclaw-backend
+
+# 启动前端（使用 nginx 提供静态文件）
+# 或使用 PM2 + serve
+cd src/frontend
+npm run build
+pm2 serve dist 5173 --name openclaw-frontend
+```
+
+## 常见问题
+
+### WebSocket 连接失败
+检查后端服务是否启动，端口 3001 是否被占用。
+
+### 任务同步失败
+检查 `tasks/` 目录是否有写入权限。
+
+### 前端无法连接后端
+检查 CORS 配置和后端服务状态。
 
 ## 许可证
 
-MIT
+MIT License
 
----
+## 贡献
 
-*版本: 0.1.0*  
-*最后更新: 2026-03-10*
+欢迎提交 Issue 和 Pull Request！
+
+## 联系方式
+
+- GitHub: https://github.com/CCCaptain0129/OpenClaw_Visualization

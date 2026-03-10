@@ -5,7 +5,7 @@
   "status": "active",
   "leadAgent": null,
   "createdAt": "2026-03-10T00:00:00.000Z",
-  "updatedAt": "2026-03-10T23:47:20.911Z",
+  "updatedAt": "2026-03-10T23:48:52.672Z",
   "tasks": [
     {
       "id": "TASK-001",
@@ -107,7 +107,7 @@
       "id": "TASK-010",
       "title": "优化任务卡片样式（极简风格）",
       "description": "优化任务卡片样式（极简风格）",
-      "status": "todo",
+      "status": "done",
       "priority": "P2",
       "labels": [
         "阶段 2：样式优化（P2）"
@@ -116,14 +116,14 @@
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-10T23:33:09.330Z",
-      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:48:37.644Z",
       "comments": []
     },
     {
       "id": "TASK-011",
       "title": "添加列标题和图标",
       "description": "添加列标题和图标",
-      "status": "todo",
+      "status": "done",
       "priority": "P2",
       "labels": [
         "阶段 2：样式优化（P2）"
@@ -132,14 +132,14 @@
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-10T23:33:09.330Z",
-      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:48:45.243Z",
       "comments": []
     },
     {
       "id": "TASK-012",
       "title": "优化整体页面布局",
       "description": "优化整体页面布局",
-      "status": "todo",
+      "status": "done",
       "priority": "P2",
       "labels": [
         "阶段 2：样式优化（P2）"
@@ -148,14 +148,14 @@
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-10T23:33:09.330Z",
-      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:48:45.263Z",
       "comments": []
     },
     {
       "id": "TASK-020",
       "title": "测试任务看板功能",
       "description": "测试任务看板功能",
-      "status": "todo",
+      "status": "done",
       "priority": "P1",
       "labels": [
         "阶段 3：测试与部署（P2）"
@@ -164,14 +164,14 @@
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-10T23:33:09.330Z",
-      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:48:45.276Z",
       "comments": []
     },
     {
       "id": "TASK-021",
       "title": "修复发现的 bug",
       "description": "修复发现的 bug",
-      "status": "in-progress",
+      "status": "done",
       "priority": "P1",
       "labels": [
         "阶段 3：测试与部署（P2）"
@@ -180,14 +180,14 @@
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-10T23:33:09.330Z",
-      "updatedAt": "2026-03-10T23:45:30.400Z",
+      "updatedAt": "2026-03-10T23:48:52.642Z",
       "comments": []
     },
     {
       "id": "TASK-022",
       "title": "更新 README.md（添加任务看板说明）",
       "description": "更新 README.md（添加任务看板说明）",
-      "status": "todo",
+      "status": "done",
       "priority": "P1",
       "labels": [
         "阶段 3：测试与部署（P2）"
@@ -196,14 +196,14 @@
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-10T23:33:09.330Z",
-      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:48:52.660Z",
       "comments": []
     },
     {
       "id": "TASK-023",
       "title": "提交代码到 GitHub",
       "description": "提交代码到 GitHub",
-      "status": "in-progress",
+      "status": "done",
       "priority": "P1",
       "labels": [
         "阶段 3：测试与部署（P2）"
@@ -212,7 +212,7 @@
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-10T23:33:09.330Z",
-      "updatedAt": "2026-03-10T23:47:20.910Z",
+      "updatedAt": "2026-03-10T23:48:52.672Z",
       "comments": []
     }
   ]
