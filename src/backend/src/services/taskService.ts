@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export class TaskService {
-  private tasksPath = path.join(process.cwd(), '../tasks');
+  private tasksPath = path.join(process.cwd(), '../../tasks');
   private projectsPath = path.join(this.tasksPath, 'projects.json');
 
   async getAllProjects(): Promise<Project[]> {
@@ -19,6 +19,28 @@ export class TaskService {
   async getProjectById(id: string): Promise<Project | null> {
     const projects = await this.getAllProjects();
     return projects.find(p => p.id === id) || null;
+  }
+
+  async createTask(projectId: string, task: Partial<Task>): Promise<Task> {
+    const tasks = await this.getTasksByProject(projectId);
+    const newTask: Task = {
+      id: task.id || `TASK-${Date.now()}`,
+      title: task.title || 'New Task',
+      description: task.description || '',
+      status: 'todo',
+      priority: task.priority || 'P2',
+      labels: task.labels || [],
+      assignee: task.assignee || null,
+      claimedBy: null,
+      dueDate: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      comments: [],
+    };
+    
+    tasks.push(newTask);
+    await this.saveTasks(projectId, tasks);
+    return newTask;
   }
 
   async getTasksByProject(projectId: string): Promise<Task[]> {

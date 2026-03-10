@@ -1,93 +1,75 @@
-# 任务看板 MVP - 任务清单
+# openclaw-visualization
 
-> 极简风格任务看板 - 只包含必要功能
+> OpenClaw Agent 可视化监控平台
 
----
+## 统计
 
-## 项目信息
-
-- **项目 ID**: `task-board-mvp`
-- **名称**: 任务看板 MVP
-- **描述**: Trello 风格的三列任务看板
-- **状态**: 🚧 active
-- **负责人**: @Agent
-
----
+- **任务总数**: 13
+- **待处理**: 11
+- **进行中**: 1
+- **已完成**: 1
+- **进度**: 8% (1/13)
 
 ## 阶段 1：前端基础（P1 - 核心功能）
 
 ### 任务列表
 
--  **TASK-001** `P1` `frontend` `done`
+-  **TASK-001** `P1 `frontend``
   - 状态: 已完成
   - 描述: 创建 KanbanBoard 组件基础结构
 
--  **TASK-002** `P1` `frontend` `todo`
-  - 状态: 待处理
+-  **TASK-002** `P1 `frontend``
+  - 状态: 进行中
   - 描述: 实现三列布局（待处理、进行中、已完成）
 
--  **TASK-003** `P1` `frontend` `todo`
+-  **TASK-003** `P1 `frontend``
   - 状态: 待处理
   - 描述: 创建 TaskCard 组件（显示任务信息）
 
--  **TASK-004** `P1` `frontend` `todo`
+-  **TASK-004** `P1 `frontend``
   - 状态: 待处理
   - 描述: 实现任务状态过滤（只显示对应列的任务）
 
--  **TASK-005** `P1` `frontend` `todo`
+-  **TASK-005** `P1 `frontend``
   - 状态: 待处理
   - 描述: 从 API 获取任务数据并显示
 
--  **TASK-006** `P1` `frontend` `todo`
+-  **TASK-006** `P1 `frontend``
   - 状态: 待处理
   - 描述: 实现任务数量统计显示
-
----
 
 ## 阶段 2：样式优化（P2）
 
 ### 任务列表
 
--  **TASK-010** `P2` `frontend` `todo`
+-  **TASK-010** `P2 `frontend``
   - 状态: 待处理
   - 描述: 优化任务卡片样式（极简风格）
 
--  **TASK-011** `P2` `frontend` `todo`
+-  **TASK-011** `P2 `frontend``
   - 状态: 待处理
   - 描述: 添加列标题和图标
 
--  **TASK-012** `P2` `frontend` `todo`
+-  **TASK-012** `P2 `frontend``
   - 状态: 待处理
   - 描述: 优化整体页面布局
-
----
 
 ## 阶段 3：测试与部署（P2）
 
 ### 任务列表
 
--  **TASK-020** `P1` `test` `todo`
+-  **TASK-020** `P1 `test``
   - 状态: 待处理
   - 描述: 测试任务看板功能
 
--  **TASK-021** `P1` `dev` `todo`
+-  **TASK-021** `P1 `dev``
   - 状态: 待处理
   - 描述: 修复发现的 bug
 
--  **TASK-022** `P1` `docs` `todo`
+-  **TASK-022** `P1 `docs``
   - 状态: 待处理
   - 描述: 更新 README.md（添加任务看板说明）
 
--  **TASK-023** `P1` `dev` `todo`
+-  **TASK-023** `P1 `dev``
   - 状态: 待处理
   - 描述: 提交代码到 GitHub
-
----
-
-## 统计
-
-- **任务总数**: 11
-- **待处理**: 10
-- **进行中**: 0
-- **已完成**: 1
-- **进度**: 9% (1/11)

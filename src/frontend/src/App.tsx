@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import Dashboard from './pages/Dashboard'
+import KanbanBoard from './components/KanbanBoard'
 import './index.css'
 
 function App() {
@@ -46,16 +47,7 @@ function App() {
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {currentPage === 'agents' ? <Dashboard /> : (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <div className="text-6xl mb-4">🚧</div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">任务看板开发中</h2>
-              <p className="text-gray-500">Trello 风格的任务看板，支持 Markdown ↔ JSON 双向同步</p>
-              <p className="text-sm text-gray-400 mt-2">当前进度：后端基础完成，前端开发中</p>
-            </div>
-          </div>
-        )}
+        {currentPage === 'agents' ? <Dashboard /> : <KanbanBoard />}
       </main>
     </div>
   )

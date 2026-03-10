@@ -7,7 +7,7 @@ export class MarkdownToJSON {
     const tasksMdPath = path.join(process.cwd(), '../../TASKS.md');
 
     try {
-      const markdown = await fs.readFile(tasksMdPath, 'utf-8');
+      const markdown = fs.readFileSync(tasksMdPath, 'utf-8');
       const lines = markdown.split('\n');
 
       let currentStage: Stage | null = null;

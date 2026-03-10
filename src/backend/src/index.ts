@@ -9,6 +9,9 @@ import { taskRoutes } from './routes/tasks';
 import { syncRoutes } from './routes/sync';
 import { WebSocketHandler } from './websocket/server';
 import { AgentTaskScheduler } from './schedulers/agentTaskScheduler';
+import { SyncManager } from './sync/syncManager';
+import { MarkdownToJSON } from './sync/markdownToJSON';
+import { JSONToMarkdown } from './sync/jsonToMarkdown';
 
 const app = express();
 const server = createServer(app);
@@ -26,7 +29,7 @@ const scheduler = new AgentTaskScheduler(taskService, wsServer);
 
 app.use('/api/agents', agentRoutes(agentService));
 app.use('/api/tasks', taskRoutes(taskService, wsServer));
-app.use('/api/sync', syncRoutes(wsServer));
+app.use('/api/sync', syncRoutes(taskService, wsServer));
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -37,6 +40,15 @@ server.listen(PORT, () => {
 });
 
 wsServer.start();
+
+// 启动时同步 Markdown 到 JSON
+const markdownToJSON = new MarkdownToJSON();
+const jsonToMarkdown = new JSONToMarkdown();
+const syncManager = new SyncManager(markdownToJSON, jsonToMarkdown, taskService);
+
+syncManager.syncFromMarkdown('openclaw-visualization')
+  .then(() => console.log('✅ Initial sync completed'))
+  .catch(err => console.error('❌ Initial sync failed:', err));
 
 // Start polling
 setInterval(async () => {

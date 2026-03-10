@@ -1,0 +1,219 @@
+{
+  "id": "openclaw-visualization",
+  "name": "openclaw-visualization",
+  "description": "",
+  "status": "active",
+  "leadAgent": null,
+  "createdAt": "2026-03-10T23:33:09.330Z",
+  "updatedAt": "2026-03-10T23:33:09.330Z",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "创建 KanbanBoard 组件基础结构",
+      "description": "创建 KanbanBoard 组件基础结构",
+      "status": "done",
+      "priority": "P1",
+      "labels": [
+        "阶段 1：前端基础（P1 - 核心功能）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "comments": []
+    },
+    {
+      "id": "TASK-002",
+      "title": "实现三列布局（待处理、进行中、已完成）",
+      "description": "实现三列布局（待处理、进行中、已完成）",
+      "status": "in-progress",
+      "priority": "P1",
+      "labels": [
+        "阶段 1：前端基础（P1 - 核心功能）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "comments": []
+    },
+    {
+      "id": "TASK-003",
+      "title": "创建 TaskCard 组件（显示任务信息）",
+      "description": "创建 TaskCard 组件（显示任务信息）",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [
+        "阶段 1：前端基础（P1 - 核心功能）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "comments": []
+    },
+    {
+      "id": "TASK-004",
+      "title": "实现任务状态过滤（只显示对应列的任务）",
+      "description": "实现任务状态过滤（只显示对应列的任务）",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [
+        "阶段 1：前端基础（P1 - 核心功能）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "comments": []
+    },
+    {
+      "id": "TASK-005",
+      "title": "从 API 获取任务数据并显示",
+      "description": "从 API 获取任务数据并显示",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [
+        "阶段 1：前端基础（P1 - 核心功能）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "comments": []
+    },
+    {
+      "id": "TASK-006",
+      "title": "实现任务数量统计显示",
+      "description": "实现任务数量统计显示",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [
+        "阶段 1：前端基础（P1 - 核心功能）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "comments": []
+    },
+    {
+      "id": "TASK-010",
+      "title": "优化任务卡片样式（极简风格）",
+      "description": "优化任务卡片样式（极简风格）",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "阶段 2：样式优化（P2）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "comments": []
+    },
+    {
+      "id": "TASK-011",
+      "title": "添加列标题和图标",
+      "description": "添加列标题和图标",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "阶段 2：样式优化（P2）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "comments": []
+    },
+    {
+      "id": "TASK-012",
+      "title": "优化整体页面布局",
+      "description": "优化整体页面布局",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "阶段 2：样式优化（P2）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "comments": []
+    },
+    {
+      "id": "TASK-020",
+      "title": "测试任务看板功能",
+      "description": "测试任务看板功能",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [
+        "阶段 3：测试与部署（P2）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "comments": []
+    },
+    {
+      "id": "TASK-021",
+      "title": "修复发现的 bug",
+      "description": "修复发现的 bug",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [
+        "阶段 3：测试与部署（P2）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "comments": []
+    },
+    {
+      "id": "TASK-022",
+      "title": "更新 README.md（添加任务看板说明）",
+      "description": "更新 README.md（添加任务看板说明）",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [
+        "阶段 3：测试与部署（P2）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "comments": []
+    },
+    {
+      "id": "TASK-023",
+      "title": "提交代码到 GitHub",
+      "description": "提交代码到 GitHub",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [
+        "阶段 3：测试与部署（P2）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-10T23:33:09.330Z",
+      "updatedAt": "2026-03-10T23:33:09.330Z",
+      "comments": []
+    }
+  ]
+}
