@@ -19,55 +19,84 @@ interface AgentCardProps {
 }
 
 export default function AgentCard({ agent, onSelect }: AgentCardProps) {
-  const statusColors = {
-    running: 'bg-green-100 text-green-800',
-    stopped: 'bg-gray-100 text-gray-800',
-    idle: 'bg-yellow-100 text-yellow-800',
+  const statusConfig = {
+    running: {
+      bg: 'bg-emerald-50',
+      text: 'text-emerald-700',
+      border: 'border-emerald-200',
+      icon: '●',
+      label: '运行中'
+    },
+    stopped: {
+      bg: 'bg-slate-100',
+      text: 'text-slate-600',
+      border: 'border-slate-200',
+      icon: '○',
+      label: '已停止'
+    },
+    idle: {
+      bg: 'bg-amber-50',
+      text: 'text-amber-700',
+      border: 'border-amber-200',
+      icon: '◐',
+      label: '空闲'
+    }
   }
 
-  const statusText = {
-    running: '运行中',
-    stopped: '已停止',
-    idle: '空闲',
-  }
+  const config = statusConfig[agent.status]
 
   return (
     <div
       onClick={onSelect}
-      className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer"
+      className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:shadow-blue-100 transition-all duration-300 cursor-pointer"
     >
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-lg font-semibold text-gray-900">{agent.name}</h3>
-        <span className={`px-2 py-1 rounded text-xs font-medium ${statusColors[agent.status]}`}>
-          {statusText[agent.status]}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <h3 className="text-lg font-bold text-gray-900">{agent.name}</h3>
+        </div>
+        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text} ${config.border}`}>
+          <span className="mr-1.5">{config.icon}</span>
+          {config.label}
         </span>
       </div>
-      <div className="text-sm text-gray-500 mb-1">
-        {new Date(agent.lastActive).toLocaleDateString('zh-CN')}
+
+      <div className="text-xs text-gray-400 mb-4 font-medium">
+        {new Date(agent.lastActive).toLocaleDateString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' })}
       </div>
-      <div className="grid grid-cols-2 gap-2 text-sm">
-        <div>
-          <span className="text-gray-500">模型</span>
-          <div className="font-medium">{agent.model}</div>
+
+      <div className="space-y-3">
+        <div className="flex items-center text-sm">
+          <span className="text-gray-400 w-16 shrink-0">模型</span>
+          <span className="font-medium text-gray-700">{agent.model}</span>
         </div>
-        <div>
-          <span className="text-gray-500">类型</span>
-          <div className="font-medium">{agent.type}</div>
+        <div className="flex items-center text-sm">
+          <span className="text-gray-400 w-16 shrink-0">类型</span>
+          <span className="font-medium text-gray-700">{agent.type}</span>
         </div>
-        <div>
-          <span className="text-gray-500">渠道</span>
-          <div className="font-medium">{agent.channel}</div>
+        <div className="flex items-center text-sm">
+          <span className="text-gray-400 w-16 shrink-0">渠道</span>
+          <span className="font-medium text-gray-700">{agent.channel}</span>
         </div>
       </div>
-      <div className="mt-3 pt-3 border-t border-gray-100">
-        <div className="text-sm text-gray-500 mb-1">Token 使用</div>
-        <div className="flex gap-2">
-          <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs">
+
+      <div className="mt-4 pt-4 border-t border-gray-100">
+        <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
+          <span className="font-medium">Token 使用</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full h-2">
+            <div 
+              className="h-2 bg-blue-500 rounded-full transition-all duration-500"
+              style={{ width: `${Math.min((agent.tokenUsage.total / 500000) * 100, 100)}%` }}
+            ></div>
+          </div>
+          <span className="text-xs font-medium text-gray-600">
             {agent.tokenUsage.input.toLocaleString()} / {agent.tokenUsage.output.toLocaleString()}
           </span>
         </div>
-        <div className="text-xs text-gray-400 mt-1">
-          上下文: 202,752 / 总计: {agent.tokenUsage.total.toLocaleString()}
+        <div className="flex justify-between items-center mt-2 text-xs text-gray-400">
+          <span>总计</span>
+          <span className="font-medium text-gray-700">{agent.tokenUsage.total.toLocaleString()}</span>
         </div>
       </div>
     </div>

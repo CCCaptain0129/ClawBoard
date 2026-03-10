@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import Dashboard from './pages/Dashboard'
 import './index.css'
 
@@ -6,39 +6,56 @@ function App() {
   const [currentPage, setCurrentPage] = useState<'agents' | 'tasks'>('agents')
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">OpenClaw Agent 可视化监控</h1>
-          <div className="mt-2">
-            <span className="text-green-500 text-sm">已连接</span>
-          </div>
-          <div className="mt-4 flex gap-2">
-            <button
-              onClick={() => setCurrentPage('agents')}
-              className={`px-4 py-2 rounded ${
-                currentPage === 'agents' 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-200 text-gray-700'
-              }`}
-            >
-              Agent 监控
-            </button>
-            <button
-              onClick={() => setCurrentPage('tasks')}
-              className={`px-4 py-2 rounded ${
-                currentPage === 'tasks' 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-200 text-gray-700'
-              }`}
-            >
-              任务看板
-            </button>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">OpenClaw Agent 可视化监控</h1>
+              <p className="text-sm text-gray-500 mt-1">实时监控和管理 OpenClaw Agent</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                已连接
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCurrentPage('agents')}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                    currentPage === 'agents' 
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Agent 监控
+                </button>
+                <button
+                  onClick={() => setCurrentPage('tasks')}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                    currentPage === 'tasks' 
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  任务看板
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </header>
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {currentPage === 'agents' ? <Dashboard /> : <div>任务看板开发中...</div>}
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        {currentPage === 'agents' ? <Dashboard /> : (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="text-6xl mb-4">🚧</div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">任务看板开发中</h2>
+              <p className="text-gray-500">Trello 风格的任务看板，支持 Markdown ↔ JSON 双向同步</p>
+              <p className="text-sm text-gray-400 mt-2">当前进度：后端基础完成，前端开发中</p>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   )

@@ -45,35 +45,63 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-gray-500">加载中...</div>
+      <div className="flex items-center justify-center py-20">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="text-gray-500">加载中...</div>
+        </div>
       </div>
     )
   }
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">Agent 概览</h2>
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <p className="text-sm text-gray-500">总 Agent 数</p>
-          <p className="text-2xl font-bold text-gray-900">{agents.length}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <p className="text-sm text-gray-500">运行中</p>
-          <p className="text-2xl font-bold text-gray-900">{runningCount}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <p className="text-sm text-gray-500">总 Token 使用</p>
-          <p className="text-2xl font-bold text-gray-900">{totalTokens.toLocaleString()}</p>
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Agent 概览</h2>
+        <div className="grid grid-cols-3 gap-6">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white">
+                <span className="text-lg">📊</span>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">总 Agent 数</p>
+                <p className="text-2xl font-bold text-gray-900">{agents.length}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white">
+                <span className="text-lg">🟢</span>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">运行中</p>
+                <p className="text-2xl font-bold text-gray-900">{runningCount}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white">
+                <span className="text-lg">⚡</span>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">总 Token 使用</p>
+                <p className="text-2xl font-bold text-gray-900">{totalTokens.toLocaleString()}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">Agent 列表</h2>
-      <div className="grid grid-cols-2 gap-4">
-        {agents.map(agent => (
-          <AgentCard key={agent.id} agent={agent} />
-        ))}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Agent 列表</h2>
+        <div className="grid grid-cols-2 gap-6">
+          {agents.map(agent => (
+            <AgentCard key={agent.id} agent={agent} />
+          ))}
+        </div>
       </div>
     </div>
   )
