@@ -6,6 +6,7 @@ import { AgentService } from './services/agentService';
 import { TaskService } from './services/taskService';
 import { agentRoutes } from './routes/agents';
 import { taskRoutes } from './routes/tasks';
+import { syncRoutes } from './routes/sync';
 import { WebSocketHandler } from './websocket/server';
 import { AgentTaskScheduler } from './schedulers/agentTaskScheduler';
 
@@ -25,6 +26,7 @@ const scheduler = new AgentTaskScheduler(taskService, wsServer);
 
 app.use('/api/agents', agentRoutes(agentService));
 app.use('/api/tasks', taskRoutes(taskService, wsServer));
+app.use('/api/sync', syncRoutes(wsServer));
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
