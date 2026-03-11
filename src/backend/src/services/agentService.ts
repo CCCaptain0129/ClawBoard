@@ -28,31 +28,44 @@ export class AgentService {
   }
 
   private transformToAgent(sessionKey: string, session: any): Agent {
-    // 计算运行状态
-    let status = 'stopped';
-    const lastActive = session.updatedAt ? new Date(session.updatedAt).toISOString() : new Date().toISOString();
-    const now = Date.now();
-    const lastActiveTime = session.updatedAt || now;
-    const inactiveTime = now - lastActiveTime;
+    // 获取最后活动时间（毫秒时间戳）
+    const lastActiveTimestamp = session.updatedAt || Date.now();
+    const lastActive = new Date(lastActiveTimestamp).toISOString();
     
-    // 如果在最近 5 分钟内有活动，认为是活跃的
+    // 计算运行状态
+    // 注意：sessions.json 的 updatedAt 是会话配置的最后更新时间
+    // 不等于 Agent 的实时运行状态
+    // 我们基于最近活动时间的合理性来判断
+    let status: 'running' | 'idle' | 'stopped' = 'idle';
+    const now = Date.now();
+    const inactiveTime = now - lastActiveTimestamp;
+    
+    // 状态判断规则（更宽松的阈值）：
+    // - idle: 默认状态（会话存在，表示曾经活跃过）
+    // - running: 非常近期有活动（最近 5 分钟内，表示可能正在处理）
+    // - stopped: 长期无活动（超过 24 小时）
     if (inactiveTime < 5 * 60 * 1000) {
       status = 'running';
-    } else if (inactiveTime < 30 * 60 * 1000) {
-      status = 'idle';
+    } else if (inactiveTime > 24 * 60 * 60 * 1000) {
+      status = 'stopped';
     }
+
+    // Token 使用统计
+    const totalTokens = session.totalTokens || 0;
+    const inputTokens = session.inputTokens || 0;
+    const outputTokens = session.outputTokens || totalTokens - inputTokens;
 
     return {
       id: sessionKey,
       name: this.getAgentName(sessionKey, session),
       type: session.chatType === 'direct' ? '直接对话' : '群组对话',
       channel: this.getAgentChannel(sessionKey, session),
-      status: status as 'running' | 'idle' | 'stopped',
+      status: status,
       model: session.model || 'glm-4.7',
       tokenUsage: {
-        input: session.inputTokens || 0,
-        output: session.outputTokens || 0,
-        total: session.totalTokens || 0,
+        input: inputTokens,
+        output: outputTokens,
+        total: totalTokens,
       },
       lastActive: lastActive,
       createdAt: session.createdAt ? new Date(session.createdAt).toISOString() : undefined,
@@ -75,6 +88,7 @@ export class AgentService {
   }
 
   private getAgentChannel(sessionKey: string, session: any): string {
+    // 优先从 deliveryContext 获取
     if (session.deliveryContext?.channel) {
       const channelMap: { [key: string]: string } = {
         'webchat': '网页对话',
@@ -86,6 +100,19 @@ export class AgentService {
       return channelMap[session.deliveryContext.channel] || session.deliveryContext.channel;
     }
     
+    // 优先从 lastChannel 获取
+    if (session.lastChannel) {
+      const channelMap: { [key: string]: string } = {
+        'webchat': '网页对话',
+        'feishu': '飞书',
+        'telegram': 'Telegram',
+        'discord': 'Discord',
+        'whatsapp': 'WhatsApp',
+      };
+      return channelMap[session.lastChannel] || session.lastChannel;
+    }
+    
+    // 从 sessionKey 推断
     if (sessionKey.includes('feishu')) {
       return '飞书';
     }

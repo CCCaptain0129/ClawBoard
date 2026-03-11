@@ -7,7 +7,7 @@
   "color": "#8B5CF6",
   "icon": "🤖",
   "createdAt": "2026-03-11T00:56:22.000Z",
-  "updatedAt": "2026-03-11T00:59:05.212Z",
+  "updatedAt": "2026-03-11T01:14:43.310Z",
   "tasks": [
     {
       "id": "TASK-001",
@@ -121,7 +121,7 @@
       "id": "TASK-007",
       "title": "制定 MEMORY 使用规范",
       "description": "总结本次开发中 MEMORY 的使用经验，制定 workspace/MEMORY.md 的使用规范和最佳实践",
-      "status": "todo",
+      "status": "done",
       "priority": "P2",
       "labels": [
         "docs",
@@ -131,14 +131,14 @@
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-11T00:00:00.000Z",
-      "updatedAt": "2026-03-11T00:00:00.000Z",
+      "updatedAt": "2026-03-11T01:14:40.225Z",
       "comments": []
     },
     {
       "id": "TASK-008",
       "title": "完善开发流程文档",
       "description": "总结本次开发中的良好实践（小步快跑、频繁提交、及时推送、文档同步），形成标准化的开发流程文档",
-      "status": "todo",
+      "status": "done",
       "priority": "P3",
       "labels": [
         "docs",
@@ -148,7 +148,7 @@
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-11T00:00:00.000Z",
-      "updatedAt": "2026-03-11T00:00:00.000Z",
+      "updatedAt": "2026-03-11T01:14:43.310Z",
       "comments": []
     }
   ]
