@@ -44,12 +44,47 @@ export class TaskService {
   }
 
   async getTasksByProject(projectId: string): Promise<Task[]> {
+    const filePath = path.join(this.tasksPath, `${projectId}-tasks.json`);
+    let data = '';
+    
     try {
-      const filePath = path.join(this.tasksPath, `${projectId}-tasks.json`);
-      const data = fs.readFileSync(filePath, 'utf-8');
+      data = fs.readFileSync(filePath, 'utf-8');
       const project = JSON.parse(data);
       return project.tasks || [];
-    } catch {
+    } catch (error) {
+      console.error(`❌ Failed to load tasks for project "${projectId}":`);
+      console.error(`   File path: ${filePath}`);
+      console.error(`   Error: ${error instanceof Error ? error.message : String(error)}`);
+      
+      // 尝试提取错误行号（仅在 JSON 解析错误时）
+      if (error instanceof SyntaxError && data) {
+        const match = /position (\d+)/.exec(error.message);
+        if (match) {
+          const position = parseInt(match[1], 10);
+          const lines = data.split('\n');
+          let line = 1, col = 0;
+          for (let i = 0, count = 0; i < lines.length && count < position; i++) {
+            count += lines[i].length + 1; // +1 for newline
+            if (count <= position) {
+              line = i + 1;
+              col = position - (count - lines[i].length - 1);
+            }
+          }
+          console.error(`   Error location: Line ${line}, Column ${col}`);
+          console.error(`   Context: ${lines[line - 1]?.trim() || '(empty line)'}`);
+        }
+      }
+      
+      if (error instanceof SyntaxError) {
+        console.error(`   This appears to be a JSON syntax error.`);
+        console.error(`   Common issues:`);
+        console.error(`   - Missing quotes around keys`);
+        console.error(`   - Trailing commas`);
+        console.error(`   - Invalid characters`);
+        console.error(`   - Unmatched brackets or braces`);
+        console.error(`   Tip: Use 'python3 -m json.tool <file>' to validate JSON`);
+      }
+      
       return [];
     }
   }
