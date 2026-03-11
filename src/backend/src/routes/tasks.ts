@@ -1,9 +1,13 @@
 import { Router } from 'express';
 import { TaskService } from '../services/taskService';
 import { WebSocketHandler } from '../websocket/server';
+import { SubagentManager } from '../services/subagentManager';
 
 export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler) {
   const router = Router();
+
+  // 初始化SubagentManager
+  const subagentManager = new SubagentManager(taskService);
 
   // 获取所有项目
   router.get('/projects', async (req, res) => {
@@ -151,13 +155,13 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
       const { id } = req.params;
       const tasks = await taskService.getTasksByProject(id);
       const project = await taskService.getProjectById(id);
-      
+
       const total = tasks.length;
       const completed = tasks.filter(t => t.status === 'done').length;
       const inProgress = tasks.filter(t => t.status === 'in-progress').length;
       const todo = tasks.filter(t => t.status === 'todo').length;
       const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
-      
+
       res.json({
         projectId: id,
         projectName: project?.name || '',
@@ -174,6 +178,100 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
       });
     } catch (error) {
       res.status(500).json({ error: 'Failed to get project progress' });
+    }
+  });
+
+  // 创建Subagent并自动更新任务状态
+  router.post('/subagent/create', async (req, res) => {
+    try {
+      const { projectId, taskId, taskTitle, taskDescription, subagentType } = req.body;
+
+      if (!projectId || !taskId || !taskTitle || !taskDescription) {
+        return res.status(400).json({
+          error: 'Missing required fields: projectId, taskId, taskTitle, taskDescription'
+        });
+      }
+
+      const subagentId = await subagentManager.createSubagent({
+        projectId,
+        taskId,
+        taskTitle,
+        taskDescription,
+        subagentType
+      });
+
+      // 获取更新后的任务
+      const task = await taskService.getTasksByProject(projectId)
+        .then(tasks => tasks.find(t => t.id === taskId));
+
+      // 广播任务更新
+      if (task) {
+        wsServer.broadcastTaskUpdate(projectId, task);
+      }
+
+      res.json({
+        success: true,
+        subagentId,
+        task,
+        message: 'Subagent created and task status updated to in-progress'
+      });
+    } catch (error) {
+      console.error('Failed to create subagent:', error);
+      res.status(500).json({
+        error: 'Failed to create subagent',
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // 标记Subagent完成并更新任务状态
+  router.post('/subagent/complete', async (req, res) => {
+    try {
+      const { subagentId, success, output, error } = req.body;
+
+      if (!subagentId) {
+        return res.status(400).json({
+          error: 'Missing required field: subagentId'
+        });
+      }
+
+      // 查找任务ID
+      const fs = await import('fs');
+      const recordingPath = '/Users/ot/.openclaw/workspace/projects/openclaw-visualization/docs/internal/SUBAGENTS任务分发记录.md';
+      const content = fs.readFileSync(recordingPath, 'utf-8');
+      const match = content.match(new RegExp(`Subagent ID.*\`${subagentId}\`.*任务:\\s*(TASK-\\d+)`, 's'));
+      const taskId = match ? match[1] : null;
+
+      await subagentManager.markSubagentComplete(subagentId, {
+        success: success ?? false,
+        output: output || '',
+        error,
+        completedAt: new Date().toISOString()
+      });
+
+      // 获取更新后的任务
+      let task = null;
+      if (taskId) {
+        task = await taskService.getTasksByProject('openclaw-visualization')
+          .then(tasks => tasks.find(t => t.id === taskId));
+
+        // 广播任务更新
+        if (task) {
+          wsServer.broadcastTaskUpdate('openclaw-visualization', task);
+        }
+      }
+
+      res.json({
+        success: true,
+        task,
+        message: 'Subagent marked as complete and task status updated'
+      });
+    } catch (error) {
+      console.error('Failed to mark subagent complete:', error);
+      res.status(500).json({
+        error: 'Failed to mark subagent complete',
+        details: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
