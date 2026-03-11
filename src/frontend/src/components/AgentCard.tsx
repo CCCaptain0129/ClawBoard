@@ -14,6 +14,7 @@ interface AgentCardProps {
       total: number
     }
     lastActive: string
+    lastActiveRaw?: string
     lastRun?: string
     groupName?: string
   }
@@ -35,13 +36,12 @@ export default function AgentCard({ agent }: AgentCardProps) {
       text: 'text-slate-600',
       border: 'border-slate-200',
       icon: '🔴',
-      tokenStatus: 'text-slate-400',
       label: '已停止'
     },
     idle: {
       bg: 'bg-gradient-to-r from-amber-50 to-yellow-50',
       text: 'text-amber-700',
-      border: 'border-200',
+      border: 'border-amber-200',
       icon: '🟡',
       label: '空闲'
     }
@@ -60,7 +60,7 @@ export default function AgentCard({ agent }: AgentCardProps) {
             <h3 className="text-lg font-bold text-gray-900">{displayName}</h3>
           </div>
           {agent.groupName && agent.groupName !== agent.name && (
-            <p className="text-xs text-gray-400 mt-0.5">Agent ID: {agent.name}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{agent.name}</p>
           )}
         </div>
         <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold ${config.bg} ${config.text} ${config.border} shadow-sm`}>

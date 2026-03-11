@@ -32,9 +32,6 @@ export class OpenClawAgentMonitor {
     ['oc_0754a493527ed8a4b28bd0dffdf802de', 'OpenClaw 集成讨论组'],
     ['oc_2647837964c3cc31f6beb38fc43058d4', '测试群组 A'],
     ['oc_49db5e0b3f3ab28b88d251cd1f59a807', '测试群组 B'],
-    ['oc_c43058d4c64c1d36606d12d1a018d6fe', '讨论群组 C'],
-    ['oc_1f59a807a2ab4244b57c38683f6c5aef8', '讨论群组 D'],
-    ['oc_fdf802de0b8d24c5bbf329482d0d1a75e', '讨论群组 E'],
   ]);
 
   // 时间格式化
@@ -66,23 +63,7 @@ export class OpenClawAgentMonitor {
       return realtimeAgents;
     }
 
-    // 回退到 HTTP API
-    try {
-      const response = await fetch('http://127.0.0.1:18789/api/sessions', {
-        headers: {
-          'Authorization': `Bearer ${this.token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return this.parseAgentStatus(data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch agent status via HTTP:', error);
-    }
-
-    // 最终回退到 sessions.json
+    // 回退到 sessions.json
     return this.getAgentStatusFromFile();
   }
 
@@ -96,11 +77,11 @@ export class OpenClawAgentMonitor {
       }, 5000);
 
       ws.on('open', () => {
-        // 发送 agents.list 请求
+        // 发送 sessions.list 请求
         const request = {
           type: 'req',
           id: this.requestId++,
-          method: 'agents.list',
+          method: 'sessions.list',
           params: {}
         };
         
@@ -116,8 +97,8 @@ export class OpenClawAgentMonitor {
             clearTimeout(timeout);
             ws.close();
             
-            // 解析 agents 数据
-            const agents = this.parseRealtimeAgents(message.payload);
+            // 解析 sessions 数据
+            const agents = this.parseSessionsData(message.payload);
             resolve(agents);
           }
         } catch (error) {
@@ -138,21 +119,11 @@ export class OpenClawAgentMonitor {
     });
   }
 
-  private parseRealtimeAgents(payload: any): AgentStatus[] {
+  private parseSessionsData(payload: any): AgentStatus[] {
     const agents: AgentStatus[] = [];
     
-    // payload 可能包含 agents 数组
-    if (payload.agents && Array.isArray(payload.agents)) {
-      for (const agent of payload.agents) {
-        // 检查是否有会话列表
-        if (agent.sessions) {
-          for (const session of agent.sessions) {
-            agents.push(this.parseAgentSession(session, agent.id));
-          }
-        }
-      }
-    } else if (payload.sessions) {
-      // 直接返回 sessions
+    // payload 可能包含 sessions 数组
+    if (payload.sessions && Array.isArray(payload.sessions)) {
       for (const session of payload.sessions) {
         agents.push(this.parseAgentSession(session, 'main'));
       }
@@ -183,10 +154,12 @@ export class OpenClawAgentMonitor {
       }
     } else {
       // 没有 lastRun，根据 updatedAt 判断
-      if (inactiveTime < 1 * 60 * 1000) {
-        status = 'running';
-      } else if (inactiveTime > 24 * 60 * 60 * 1000) {
+      // 如果 session 有任何活动记录，默认为 idle 而不是 stopped
+      // 停止状态只在长期无活动（超过 7 天）时设置
+      if (inactiveTime > 7 * 24 * 60 * 60 * 1000) {
         status = 'stopped';
+      } else {
+        status = 'idle';
       }
     }
 
@@ -207,81 +180,11 @@ export class OpenClawAgentMonitor {
       },
       lastActive: this.formatTimeAgo(lastActive),
       lastActiveRaw: lastActive,
-      lastRun: session.lastRun ? this.formatTimeAgo(session.lastRun) : null,
+      lastRun: session.lastRun ? this.formatTimeAgo(session.lastRun) : undefined,
       lastRunRaw: session.lastRun,
       type: session.chatType === 'direct' ? '直接对话' : '群组对话',
       channel: this.getAgentChannel(session),
-      groupName: this.getGroupFriendlyName(session), // 新增：友好群组名称
-    };
-  }
-
-  private parseAgentStatus(data: any): AgentStatus[] {
-    const agents: AgentStatus[] = [];
-    
-    // data 可能包含 sessions 数组或对象
-    const sessions = data.sessions || data;
-    
-    if (Array.isArray(sessions)) {
-      for (const session of sessions) {
-        agents.push(this.transformSessionToAgentStatus(session));
-      }
-    } else if (typeof sessions === 'object') {
-      for (const [key, session] of Object.entries(sessions)) {
-        agents.push(this.transformSessionToAgentStatus(session as any));
-      }
-    }
-    
-    return agents;
-  }
-
-  private transformSessionToAgentStatus(session: any): AgentStatus {
-    const lastActiveTimestamp = session.updatedAt || session.lastActive || Date.now();
-    const lastActive = new Date(lastActiveTimestamp).toISOString();
-    
-    // 更智能的状态判断
-    let status: 'running' | 'idle' | 'stopped' = 'idle';
-    const now = Date.now();
-    const inactiveTime = now - lastActiveTimestamp;
-    
-    // 如果有 lastRun 信息，使用它来判断
-    if (session.lastRun) {
-      const lastRunTimestamp = new Date(session.lastRun).getTime();
-      const runInactiveTime = now - lastRunTimestamp;
-      
-      // lastRun 在 5 分钟内，认为是 running
-      if (runInactiveTime < 5 * 60 * 1000) {
-        status = 'running';
-      } else if (runInactiveTime > 24 * 60 * 60 * 1000) {
-        status = 'stopped';
-      }
-    } else {
-      // 没有 lastRun，使用 updatedAt 判断
-      if (inactiveTime < 2 * 60 * 1000) {
-        status = 'running';
-      } else if (inactiveTime > 24 * 60 * 60 * 1000) {
-        status = 'stopped';
-      }
-    }
-
-    // Token 使用统计
-    const totalTokens = session.totalTokens || 0;
-    const inputTokens = session.inputTokens || session.contextTokens || 0;
-    const outputTokens = session.outputTokens || (totalTokens - inputTokens);
-
-    return {
-      id: session.key || session.id || '',
-      name: this.getAgentName(session),
-      status: status,
-      model: session.model || 'glm-4.7',
-      tokenUsage: {
-        input: inputTokens,
-        output: outputTokens,
-        total: totalTokens,
-      },
-      lastActive: lastActive,
-      lastRun: session.lastRun,
-      type: session.chatType === 'direct' ? '直接对话' : '群组对话',
-      channel: this.getAgentChannel(session),
+      groupName: this.getGroupFriendlyName(session) || undefined,
     };
   }
 
@@ -313,7 +216,7 @@ export class OpenClawAgentMonitor {
   // 新增：获取友好的群组名称
   private getGroupFriendlyName(session: any): string {
     if (session.chatType === 'direct') {
-      return "";
+      return '';
     }
     
     const groupId = session.key?.split(':').pop() || '';
@@ -330,7 +233,7 @@ export class OpenClawAgentMonitor {
       }
     }
     
-    return "";
+    return '';
   }
 
   private getAgentChannel(session: any): string {
@@ -356,7 +259,7 @@ export class OpenClawAgentMonitor {
       const agents: AgentStatus[] = [];
       
       for (const [key, session] of Object.entries(sessionsData)) {
-        agents.push(this.transformSessionToAgentStatus(session as any));
+        agents.push(this.parseAgentSession(session as any, key));
       }
       
       return agents;
