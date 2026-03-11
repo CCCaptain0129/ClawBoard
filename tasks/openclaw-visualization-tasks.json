@@ -42,14 +42,20 @@
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-11T04:56:56.542Z",
-      "updatedAt": "2026-03-11T04:56:56.542Z",
-      "comments": []
+      "updatedAt": "2026-03-11T07:29:00.000Z",
+      "comments": [
+        {
+          "author": "test-agent",
+          "text": "发现两个问题：1. Gateway session 数据没有 to 字段 2. 飞书 API 认证失败 (app_secret invalid)",
+          "timestamp": "2026-03-11T07:29:00.000Z"
+        }
+      ]
     },
     {
       "id": "TASK-016",
       "title": "用户可读性优化，减少困惑。简化 Agent 卡片中的技术指标，让普通用户也能理解。减少不必要的详细信息，优先显示用户关心的信息（如最后活动时间、消息数）。考虑添加图标和颜色提高可读性。",
       "description": "用户可读性优化，减少困惑。简化 Agent 卡片中的技术指标，让普通用户也能理解。减少不必要的详细信息，优先显示用户关心的信息（如最后活动时间、消息数）。考虑添加图标和颜色提高可读性。",
-      "status": "todo",
+      "status": "done",
       "priority": "P2",
       "labels": [
         "阶段 4：Agent 监控优化（P1 - 核心功能）",
@@ -59,10 +65,10 @@
         "optimization"
       ],
       "assignee": null,
-      "claimedBy": null,
+      "claimedBy": "dev-agent-TASK-016",
       "dueDate": null,
       "createdAt": "2026-03-11T04:56:56.542Z",
-      "updatedAt": "2026-03-11T04:56:56.542Z",
+      "updatedAt": "2026-03-11T06:34:00.000Z",
       "comments": []
     },
     {

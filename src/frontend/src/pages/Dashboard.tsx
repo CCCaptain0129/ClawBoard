@@ -15,6 +15,9 @@ interface Agent {
     total: number
   }
   lastActive: string
+  lastActiveRaw?: string
+  lastRun?: string
+  groupName?: string
 }
 
 export default function Dashboard() {

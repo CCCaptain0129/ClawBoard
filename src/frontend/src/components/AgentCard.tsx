@@ -88,32 +88,21 @@ export default function AgentCard({ agent }: AgentCardProps) {
         </div>
       </div>
 
-      {/* 今日统计 */}
+      {/* 使用概览 */}
       <div className="mb-4">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-sm font-medium text-gray-700">📊 今日统计</span>
+          <span className="text-sm font-medium text-gray-700">📈 使用概览</span>
         </div>
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-3">
-            <div className="text-xs text-gray-500 mb-1">消息</div>
-            <div className="text-lg font-bold text-gray-900">
-              {(agent.tokenUsage.total / 100).toFixed(0)}
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-xs text-gray-500 mb-1">今日使用量</div>
+              <div className="text-lg font-bold text-gray-900">
+                {formatUsage(agent.tokenUsage.total)}
+              </div>
+              <div className="text-xs text-gray-400 mt-1">AI 处理能力消耗</div>
             </div>
-          </div>
-          <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-3">
-            <div className="text-xs text-gray-500 mb-1">Token</div>
-            <div className="text-lg font-bold text-gray-900">
-              {formatNumber(agent.tokenUsage.total)}
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-lg p-3">
-            <div className="text-xs text-gray-500 mb-1">效率</div>
-            <div className="text-lg font-bold text-gray-900">
-              {agent.tokenUsage.total > 0 
-                ? ((agent.tokenUsage.output / agent.tokenUsage.total) * 100).toFixed(0) + '%'
-                : '0%'
-              }
-            </div>
+            <div className="text-3xl opacity-20">⚡</div>
           </div>
         </div>
       </div>
@@ -151,9 +140,9 @@ export default function AgentCard({ agent }: AgentCardProps) {
               </span>
             </div>
             <div className="flex items-center justify-between py-2">
-              <span className="text-gray-500">Token 详情</span>
+              <span className="text-gray-500">使用详情</span>
               <span className="font-medium text-gray-700">
-                {formatNumber(agent.tokenUsage.input)} / {formatNumber(agent.tokenUsage.output)}
+                {formatUsage(agent.tokenUsage.input)} / {formatUsage(agent.tokenUsage.output)}
               </span>
             </div>
           </div>
@@ -163,7 +152,7 @@ export default function AgentCard({ agent }: AgentCardProps) {
   )
 }
 
-function formatNumber(num: number): string {
+function formatUsage(num: number): string {
   if (num >= 1000000) {
     return (num / 1000000).toFixed(1) + 'M'
   }

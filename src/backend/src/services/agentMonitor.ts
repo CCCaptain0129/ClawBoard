@@ -1,5 +1,6 @@
 import WebSocket from 'ws';
 import * as http from 'http';
+import { feishuService, FeishuGroupInfo } from './feishuService';
 
 export interface AgentStatus {
   id: string;
@@ -13,6 +14,8 @@ export interface AgentStatus {
   };
   lastActive: string;
   lastActiveRaw?: string;
+  updatedAt?: string;
+  updatedAtRaw?: number;
   lastRun?: string;
   lastRunRaw?: string;
   type: string;
@@ -25,13 +28,59 @@ export class OpenClawAgentMonitor {
   private gatewayUrl: string = 'ws://127.0.0.1:18789';
   private token: string = '57d11dfee3fa0b04fae66be5a74559513c1d5f521ba196f2';
   private requestId: number = 1;
-  
-  // 群组名称映射（临时方案，后续从飞书 API 获取）
-  private groupNames: Map<string, string> = new Map([
-    ['oc_0754a493527ed8a4b28bd0dffdf802de', 'OpenClaw 集成讨论组'],
-    ['oc_2647837964c3cc31f6beb38fc43058d4', '测试群组 A'],
-    ['oc_49db5e0b3f3ab28b88d251cd1f59a807', '测试群组 B'],
-  ]);
+  private messageTimestampCache: Map<string, number> = new Map();
+
+  /**
+   * 从 sessionFile 读取最后一条消息的时间戳
+   */
+  private async getLastMessageTimestamp(sessionFilePath: string): Promise<number> {
+    // 检查缓存
+    if (this.messageTimestampCache.has(sessionFilePath)) {
+      const cached = this.messageTimestampCache.get(sessionFilePath)!;
+      // 缓存有效期 1 分钟
+      if (Date.now() - cached < 60000) {
+        return cached;
+      }
+    }
+
+    try {
+      const fs = await import('fs');
+      if (!fs.existsSync(sessionFilePath)) {
+        return Date.now();
+      }
+
+      // 读取最后几行（最多 5 行）来找到最后的消息时间戳
+      const fileContent = fs.readFileSync(sessionFilePath, 'utf-8');
+      const lines = fileContent.split('\n').filter(line => line.trim());
+
+      if (lines.length === 0) {
+        return Date.now();
+      }
+
+      // 从后往前找，找到第一条有效消息的时间戳
+      for (let i = lines.length - 1; i >= Math.max(0, lines.length - 5); i--) {
+        try {
+          const line = JSON.parse(lines[i]);
+          if (line.timestamp) {
+            const timestamp = new Date(line.timestamp).getTime();
+            if (!isNaN(timestamp) && timestamp > 0) {
+              // 缓存结果
+              this.messageTimestampCache.set(sessionFilePath, timestamp);
+              return timestamp;
+            }
+          }
+        } catch (error) {
+          // 跳过无效的 JSON 行
+          continue;
+        }
+      }
+
+      return Date.now();
+    } catch (error) {
+      console.error(`Error reading session file ${sessionFilePath}:`, error);
+      return Date.now();
+    }
+  }
 
   // 时间格式化
   private formatTimeAgo(timestamp: string): string {
@@ -90,7 +139,7 @@ export class OpenClawAgentMonitor {
         ws.send(JSON.stringify(request));
       });
 
-      ws.on('message', (data: WebSocket.Data) => {
+      ws.on('message', async (data: WebSocket.Data) => {
         try {
           const message = JSON.parse(data.toString());
           
@@ -100,7 +149,7 @@ export class OpenClawAgentMonitor {
             ws.close();
             
             // 解析 Gateway 返回的数据
-            const agents = this.parseGatewayPayload(message.payload);
+            const agents = await this.parseGatewayPayload(message.payload);
             console.log(`✅ 从 Gateway 获取到 ${agents.length} 个 Agent`);
             resolve(agents);
           }
@@ -123,7 +172,7 @@ export class OpenClawAgentMonitor {
     });
   }
 
-  private parseGatewayPayload(payload: any): AgentStatus[] {
+  private async parseGatewayPayload(payload: any): Promise<AgentStatus[]> {
     const agents: AgentStatus[] = [];
     
     // 尝试从 payload 中提取 sessions
@@ -131,39 +180,51 @@ export class OpenClawAgentMonitor {
     
     if (Array.isArray(sessions)) {
       for (const session of sessions) {
-        agents.push(this.parseGatewaySession(session));
+        const agent = await this.parseGatewaySession(session);
+        agents.push(agent);
       }
     } else if (typeof sessions === 'object') {
       for (const [key, session] of Object.entries(sessions)) {
-        agents.push(this.parseGatewaySession(session, key));
+        const agent = await this.parseGatewaySession(session, key);
+        agents.push(agent);
       }
     }
     
     return agents;
   }
 
-  private parseGatewaySession(session: any, sessionKey?: string): AgentStatus {
+  private async parseGatewaySession(session: any, sessionKey?: string): Promise<AgentStatus> {
     const key = sessionKey || session.key || session.id || '';
-    
-    // 尝试从不同字段获取时间戳
-    const lastActiveTimestamp = session.updatedAt || session.lastActive || session.lastMessageTime || Date.now();
-    const lastActive = new Date(lastActiveTimestamp).toISOString();
+
+    // DEBUG: 打印所有飞书群组的 session 数据
+    if (key.includes('feishu:group:') || key.includes('oc_')) {
+      console.log(`DEBUG: Full session data for ${key}:`, JSON.stringify(session, null, 2));
+    }
+
+    // 优先从 sessionFile 读取真实的最后消息时间
+    let lastMessageTimestamp = session.updatedAt || Date.now();
+    if (session.sessionFile) {
+      lastMessageTimestamp = await this.getLastMessageTimestamp(session.sessionFile);
+    }
+
+    const lastActive = new Date(lastMessageTimestamp).toISOString();
     const now = Date.now();
-    const inactiveTime = now - lastActiveTimestamp;
-    
-    // 智能状态判断 - 基于连接状态和活动时间
+    const inactiveTime = now - lastMessageTimestamp;
+
+    // 智能状态判断 - 基于连接状态和真实的消息活动时间
     let status: 'running' | 'idle' | 'stopped' = 'idle';
-    
+
     // 检查是否有活跃连接
-    const hasActiveConnection = session.lastChannel !== undefined || 
+    const hasActiveConnection = session.lastChannel !== undefined ||
                              session.connectionState === 'connected' ||
                              session.status === 'active' ||
                              session.isAlive;
-    
+
     // 检查是否有定时任务正在运行
     const hasActivePolling = session.polling;
-    
-    if (hasActiveConnection || hasActivePolling) {
+
+    // 如果有活跃连接或正在轮询，或者1小时内有消息活动，则标记为 running
+    if (hasActiveConnection || hasActivePolling || inactiveTime < 60 * 60 * 1000) {
       status = 'running';
     } else if (inactiveTime > 7 * 24 * 60 * 60 * 1000) {
       status = 'stopped';
@@ -173,6 +234,31 @@ export class OpenClawAgentMonitor {
     const totalTokens = session.totalTokens || 0;
     const inputTokens = session.inputTokens || session.contextTokens || 0;
     const outputTokens = session.outputTokens || (totalTokens - inputTokens);
+
+    // 获取群组名称（如果是飞书群组）
+    let groupName = '';
+    console.log(`DEBUG: key=${key}, session.to=${session.to}`);
+
+    // 尝试从 key 中提取 chat_id
+    let chatId = '';
+    if (session.to && session.to.startsWith('chat:oc_')) {
+      chatId = session.to;
+    } else if (key.includes('feishu:group:oc_')) {
+      const match = key.match(/feishu:group:(oc_[a-f0-9]+)/);
+      if (match) {
+        chatId = `chat:${match[1]}`;
+      }
+    }
+
+    if (chatId) {
+      try {
+        const groupInfo = await feishuService.getCachedGroupInfo(chatId);
+        groupName = groupInfo.name;
+        console.log(`DEBUG: Fetched group info for ${chatId}:`, groupName);
+      } catch (error) {
+        console.warn(`Failed to fetch group info for ${chatId}:`, error);
+      }
+    }
 
     return {
       id: key,
@@ -186,11 +272,13 @@ export class OpenClawAgentMonitor {
       },
       lastActive: this.formatTimeAgo(lastActive),
       lastActiveRaw: lastActive,
+      updatedAt: session.updatedAt ? this.formatTimeAgo(new Date(session.updatedAt).toISOString()) : undefined,
+      updatedAtRaw: session.updatedAt,
       lastRun: session.lastRun ? this.formatTimeAgo(session.lastRun) : undefined,
       lastRunRaw: session.lastRun,
       type: session.chatType === 'direct' ? '直接对话' : '群组对话',
       channel: this.formatChannelName(session),
-      groupName: this.extractGroupName(session),
+      groupName: groupName || undefined,
     };
   }
 
@@ -220,32 +308,6 @@ export class OpenClawAgentMonitor {
     return channelMap[channel] || channel || '未知渠道';
   }
 
-  private extractGroupName(session: any): string {
-    // 尝试从不同字段获取群组名称
-    const displayName = session.displayName || session.name || session.origin?.label || '';
-    
-    // 优先：如果有 groupName 字段
-    if (session.groupName) {
-      return session.groupName;
-    }
-    
-    // 其次：从 displayName 提取（如果不是自动生成的）
-    if (displayName && !displayName.startsWith('feishu:g-oc_')) {
-      return displayName;
-    }
-    
-    // 尝试从 origin.label 或 subject 获取
-    if (session.origin?.label && !session.origin.label.startsWith('oc_')) {
-      return session.origin.label;
-    }
-    
-    if (session.subject && !session.subject.startsWith('oc_')) {
-      return session.subject;
-    }
-    
-    return '';
-  }
-
   private async getAgentStatusFromFile(): Promise<AgentStatus[]> {
     try {
       const fs = await import('fs');
@@ -256,7 +318,8 @@ export class OpenClawAgentMonitor {
       const agents: AgentStatus[] = [];
       
       for (const [key, session] of Object.entries(sessionsData)) {
-        agents.push(this.parseFileSession(session as any, key));
+        const agent = await this.parseFileSession(session as any, key);
+        agents.push(agent);
       }
       
       return agents;
@@ -266,22 +329,42 @@ export class OpenClawAgentMonitor {
     }
   }
 
-  private parseFileSession(session: any, key: string): AgentStatus {
-    const lastActiveTimestamp = session.updatedAt || session.lastActive || Date.now();
-    const lastActive = new Date(lastActiveTimestamp).toISOString();
+  private async parseFileSession(session: any, key: string): Promise<AgentStatus> {
+    // 优先从 sessionFile 读取真实的最后消息时间
+    let lastMessageTimestamp = session.updatedAt || Date.now();
+    if (session.sessionFile) {
+      lastMessageTimestamp = await this.getLastMessageTimestamp(session.sessionFile);
+    }
+
+    const lastActive = new Date(lastMessageTimestamp).toISOString();
     const now = Date.now();
-    const inactiveTime = now - lastActiveTimestamp;
-    
-    // 默认为 idle，只有在长期无活动时才设为 stopped
+    const inactiveTime = now - lastMessageTimestamp;
+
+    // 基于真实的消息活动时间判断状态
     let status: 'running' | 'idle' | 'stopped' = 'idle';
-    
-    if (inactiveTime > 7 * 24 * 60 * 60 * 1000) {
+
+    // 1小时内有消息活动，标记为 running
+    if (inactiveTime < 60 * 60 * 1000) {
+      status = 'running';
+    } else if (inactiveTime > 7 * 24 * 60 * 60 * 1000) {
       status = 'stopped';
     }
     
     const totalTokens = session.totalTokens || 0;
     const inputTokens = session.inputTokens || session.contextTokens || 0;
     const outputTokens = session.outputTokens || (totalTokens - inputTokens);
+
+    // 获取群组名称
+    let groupName = '';
+    if (session.to && session.to.startsWith('chat:oc_')) {
+      const chatId = session.to;
+      try {
+        const groupInfo = await feishuService.getCachedGroupInfo(chatId);
+        groupName = groupInfo.name;
+      } catch (error) {
+        console.warn(`Failed to fetch group info for ${chatId}:`, error);
+      }
+    }
 
     return {
       id: key,
@@ -295,11 +378,13 @@ export class OpenClawAgentMonitor {
       },
       lastActive: this.formatTimeAgo(lastActive),
       lastActiveRaw: lastActive,
+      updatedAt: session.updatedAt ? this.formatTimeAgo(new Date(session.updatedAt).toISOString()) : undefined,
+      updatedAtRaw: session.updatedAt,
       lastRun: session.lastRun ? this.formatTimeAgo(session.lastRun) : undefined,
       lastRunRaw: session.lastRun,
       type: session.chatType === 'direct' ? '直接对话' : '群组对话',
       channel: this.formatChannelName(session),
-      groupName: this.extractGroupName(session) || undefined,
+      groupName: groupName || undefined,
     };
   }
 }

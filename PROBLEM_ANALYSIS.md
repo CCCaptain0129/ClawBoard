@@ -2,7 +2,7 @@
 
 ## 当前问题
 
-### TASK-014: 检查获取的 Agent 状态是否准确
+### TASK-014: 检查获取的 Agent 状态是否准确 ✅ 已修复
 
 **现状：**
 - 主 Agent 显示为 `idle`（16小时前有活动）
@@ -14,14 +14,24 @@
 2. 缺少 `lastRun` 字段（最后一次运行时间）
 3. 无法区分 Agent 是否真的在后台工作
 
-**可能的原因：**
-- sessions.json 只包含会话配置，不包含实时运行状态
-- 需要从其他来源获取实时状态（WebSocket、日志、内存状态）
+**根本原因：**
+- 代码错误地使用 `updatedAt` 字段来判断 Agent 状态
+- 真实的消息时间戳存储在 `sessionFile` 的 jsonl 文件中
+- 没有读取 sessionFile 的最后消息时间戳
 
-**需要验证：**
-- OpenClaw 控制台显示的 Agent 状态是什么？
-- 是否有 WebSocket 推送实时状态？
-- 是否有 API 可以获取实时 Agent 状态？
+**修复方案：**
+- 添加 `getLastMessageTimestamp()` 方法读取 sessionFile 的最后一条记录
+- 优先使用真实的最后消息时间判断状态
+- 保留 `updatedAt` 字段用于显示"配置更新"信息
+- 区分 `lastActive`（最后消息时间）和 `updatedAt`（配置更新时间）
+
+**状态判断规则（修复后）：**
+- `running`: 1小时内有消息活动或有活跃连接
+- `idle`: 1小时 - 7天内有消息活动
+- `stopped`: 7天以上无消息活动
+
+**相关文件：**
+- src/backend/src/services/agentMonitor.ts - Agent 监控服务（已修复）
 
 ---
 

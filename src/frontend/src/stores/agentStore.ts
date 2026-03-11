@@ -13,6 +13,9 @@ interface Agent {
     total: number
   }
   lastActive: string
+  lastActiveRaw?: string
+  lastRun?: string
+  groupName?: string
 }
 
 interface AgentStore {
