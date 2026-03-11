@@ -14,11 +14,11 @@ export class AgentService {
         status: status.status,
         model: status.model,
         tokenUsage: status.tokenUsage,
-        lastActive: status.lastActive,
+        lastActive: status.lastActive,  // 使用格式化后的"多久前"
         lastActiveRaw: status.lastActiveRaw,
         lastRun: status.lastRun,
         lastRunRaw: status.lastRunRaw,
-        groupName: status.groupName,
+        groupName: status.groupName || undefined,  // 将 null 转换为 undefined
       }));
     } catch (error) {
       console.error('Error fetching agents:', error);

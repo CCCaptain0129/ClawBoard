@@ -12,9 +12,12 @@ export interface AgentStatus {
     total: number;
   };
   lastActive: string;
+  lastActiveRaw?: string;
   lastRun?: string;
+  lastRunRaw?: string;
   type: string;
   channel: string;
+  groupName?: string;
 }
 
 export class OpenClawAgentMonitor {
@@ -29,6 +32,9 @@ export class OpenClawAgentMonitor {
     ['oc_0754a493527ed8a4b28bd0dffdf802de', 'OpenClaw 集成讨论组'],
     ['oc_2647837964c3cc31f6beb38fc43058d4', '测试群组 A'],
     ['oc_49db5e0b3f3ab28b88d251cd1f59a807', '测试群组 B'],
+    ['oc_c43058d4c64c1d36606d12d1a018d6fe', '讨论群组 C'],
+    ['oc_1f59a807a2ab4244b57c38683f6c5aef8', '讨论群组 D'],
+    ['oc_fdf802de0b8d24c5bbf329482d0d1a75e', '讨论群组 E'],
   ]);
 
   // 时间格式化
@@ -307,7 +313,7 @@ export class OpenClawAgentMonitor {
   // 新增：获取友好的群组名称
   private getGroupFriendlyName(session: any): string {
     if (session.chatType === 'direct') {
-      return null;
+      return "";
     }
     
     const groupId = session.key?.split(':').pop() || '';
@@ -315,12 +321,16 @@ export class OpenClawAgentMonitor {
       return this.groupNames.get(groupId)!;
     }
     
+    // 尝试从 displayName 或 origin.label 获取
     const displayName = session.displayName || session.origin?.label || '';
     if (displayName && displayName !== groupId) {
-      return displayName;
+      // 如果显示名称看起来像群组名称（不是 ID），就使用它
+      if (!displayName.startsWith('oc_')) {
+        return displayName;
+      }
     }
     
-    return null;
+    return "";
   }
 
   private getAgentChannel(session: any): string {
