@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 interface AgentCardProps {
   agent: {
@@ -14,98 +14,161 @@ interface AgentCardProps {
       total: number
     }
     lastActive: string
-    lastActiveRaw?: string  // 新增：原始时间戳
-    lastRun?: string  // 新增：格式化后的"多久前"
-    groupName?: string  // 新增：友好的群组名称
+    lastRun?: string
+    groupName?: string
   }
-  onSelect?: () => void
 }
 
-export default function AgentCard({ agent, onSelect }: AgentCardProps) {
+export default function AgentCard({ agent }: AgentCardProps) {
+  const [showDetails, setShowDetails] = useState(false)
+  
   const statusConfig = {
     running: {
-      bg: 'bg-emerald-50',
+      bg: 'bg-gradient-to-r from-emerald-50 to-green-50',
       text: 'text-emerald-700',
       border: 'border-emerald-200',
-      icon: '●',
+      icon: '🟢',
       label: '运行中'
     },
     stopped: {
-      bg: 'bg-slate-100',
+      bg: 'bg-gradient-to-r from-slate-100 to-gray-100',
       text: 'text-slate-600',
       border: 'border-slate-200',
-      icon: '○',
+      icon: '🔴',
+      tokenStatus: 'text-slate-400',
       label: '已停止'
     },
     idle: {
-      bg: 'bg-amber-50',
+      bg: 'bg-gradient-to-r from-amber-50 to-yellow-50',
       text: 'text-amber-700',
-      border: 'border-amber-200',
-      icon: '◐',
+      border: 'border-200',
+      icon: '🟡',
       label: '空闲'
     }
   }
 
   const config = statusConfig[agent.status]
+  const displayName = agent.groupName || agent.name
 
   return (
-    <div
-      onClick={onSelect}
-      className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:shadow-blue-100 transition-all duration-300 cursor-pointer"
-    >
+    <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg hover:shadow-blue-100 transition-all duration-300">
+      {/* 标题栏 */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <h3 className="text-lg font-bold text-gray-900">{agent.groupName || agent.name}</h3>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-2xl">📊</span>
+            <h3 className="text-lg font-bold text-gray-900">{displayName}</h3>
+          </div>
           {agent.groupName && agent.groupName !== agent.name && (
-            <p className="text-xs text-gray-400 mt-1">{agent.name}</p>
+            <p className="text-xs text-gray-400 mt-0.5">Agent ID: {agent.name}</p>
           )}
         </div>
-        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text} ${config.border}`}>
-          <span className="mr-1.5">{config.icon}</span>
+        <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold ${config.bg} ${config.text} ${config.border} shadow-sm`}>
+          <span className="mr-1.5 text-sm">{config.icon}</span>
           {config.label}
         </span>
       </div>
 
-      <div className="text-xs text-gray-400 mb-4 font-medium flex items-center gap-1">
-        <span>最后更新: </span>
-        <span className="text-gray-600">{agent.lastActive}</span>
-      </div>
-
-      <div className="space-y-3">
-        <div className="flex items-center text-sm">
-          <span className="text-gray-400 w-16 shrink-0">模型</span>
-          <span className="font-medium text-gray-700">{agent.model}</span>
+      {/* 最近活动 */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-sm font-medium text-gray-700">💬 最近活动</span>
         </div>
-        <div className="flex items-center text-sm">
-          <span className="text-gray-400 w-16 shrink-0">类型</span>
-          <span className="font-medium text-gray-700">{agent.type}</span>
-        </div>
-        <div className="flex items-center text-sm">
-          <span className="text-gray-400 w-16 shrink-0">渠道</span>
-          <span className="font-medium text-gray-700">{agent.channel}</span>
-        </div>
-      </div>
-
-      <div className="mt-4 pt-4 border-t border-gray-100">
-        <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
-          <span className="font-medium">Token 使用</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full h-2">
-            <div 
-              className="h-2 bg-blue-500 rounded-full transition-all duration-500"
-              style={{ width: `${Math.min((agent.tokenUsage.total / 500000) * 100, 100)}%` }}
-            ></div>
+        <div className="space-y-2 pl-2 border-l-2 border-gray-200">
+          <div className="text-sm text-gray-600">
+            <span className="text-gray-400 mr-2">{agent.lastActive}</span>
+            <span>最后活动</span>
           </div>
-          <span className="text-xs font-medium text-gray-600">
-            {agent.tokenUsage.input.toLocaleString()} / {agent.tokenUsage.output.toLocaleString()}
+          {agent.lastRun && (
+            <div className="text-sm text-gray-600">
+              <span className="text-gray-400 mr-2">{agent.lastRun}</span>
+              <span>最后运行</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 今日统计 */}
+      <div className="mb-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-sm font-medium text-gray-700">📊 今日统计</span>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-3">
+            <div className="text-xs text-gray-500 mb-1">消息</div>
+            <div className="text-lg font-bold text-gray-900">
+              {(agent.tokenUsage.total / 100).toFixed(0)}
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-3">
+            <div className="text-xs text-gray-500 mb-1">Token</div>
+            <div className="text-lg font-bold text-gray-900">
+              {formatNumber(agent.tokenUsage.total)}
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-lg p-3">
+            <div className="text-xs text-gray-500 mb-1">效率</div>
+            <div className="text-lg font-bold text-gray-900">
+              {agent.tokenUsage.total > 0 
+                ? ((agent.tokenUsage.output / agent.tokenUsage.total) * 100).toFixed(0) + '%'
+                : '0%'
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 可折叠的详细信息 */}
+      <div className="border-t border-gray-100 pt-4">
+        <button
+          onClick={() => setShowDetails(!showDetails)}
+          className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <span>⚙️ 详细信息</span>
+          <span className="text-xs text-gray-400">
+            {showDetails ? '▼' : '▶'}
           </span>
-        </div>
-        <div className="flex justify-between items-center mt-2 text-xs text-gray-400">
-          <span>总计</span>
-          <span className="font-medium text-gray-700">{agent.tokenUsage.total.toLocaleString()}</span>
-        </div>
+        </button>
+        
+        {showDetails && (
+          <div className="mt-3 space-y-2 text-sm">
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <span className="text-gray-500">模型</span>
+              <span className="font-medium text-gray-700">{agent.model}</span>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <span className="text-gray-500">类型</span>
+              <span className="font-medium text-gray-700">{agent.type}</span>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <span className="text-gray-500">渠道</span>
+              <span className="font-medium text-gray-700">{agent.channel}</span>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <span className="text-gray-500">会话 ID</span>
+              <span className="font-medium text-gray-700 font-mono text-xs">
+                {agent.id.split(':').pop()?.slice(-8)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <span className="text-gray-500">Token 详情</span>
+              <span className="font-medium text-gray-700">
+                {formatNumber(agent.tokenUsage.input)} / {formatNumber(agent.tokenUsage.output)}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
+}
+
+function formatNumber(num: number): string {
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + 'M'
+  }
+  if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'K'
+  }
+  return num.toString()
 }
