@@ -5,7 +5,7 @@
   "status": "active",
   "leadAgent": null,
   "createdAt": "2026-03-11T04:56:56.542Z",
-  "updatedAt": "2026-03-11T14:13:00.000Z",
+  "updatedAt": "2026-03-11T14:20:00.000Z",
   "tasks": [
     {
       "id": "TASK-014",
@@ -286,7 +286,7 @@
       "comments": []
     },
     {
-      "id": "TASK-019",
+      "id": "TASK-028",
       "title": "增强任务看板错误日志",
       "description": "修改 taskService.ts，在 JSON 解析失败时输出详细的错误日志，包括文件路径、错误信息、行号等，便于快速定位问题。",
       "status": "todo",
@@ -305,7 +305,7 @@
       "comments": []
     },
     {
-      "id": "TASK-020",
+      "id": "TASK-029",
       "title": "添加 JSON 验证中间件",
       "description": "创建 src/backend/src/middleware/jsonValidator.ts，提供 validateJSONFile() 方法，在读取 JSON 文件前验证语法，提前发现错误。",
       "status": "todo",
@@ -324,7 +324,7 @@
       "comments": []
     },
     {
-      "id": "TASK-021",
+      "id": "TASK-030",
       "title": "前端错误提示优化",
       "description": "修改 KanbanBoard.tsx，添加友好的错误提示，当 API 返回错误或数据为空时，显示清晰的错误信息和可能的解决方案。",
       "status": "todo",
@@ -343,7 +343,7 @@
       "comments": []
     },
     {
-      "id": "TASK-022",
+      "id": "TASK-031",
       "title": "改进 TASKS.md 生成逻辑",
       "description": "修改 syncManager.ts，改为每个项目生成独立的 TASKS.md 文件（{project-id}-TASKS.md），避免互相覆盖。更新前端链接和显示逻辑。",
       "status": "todo",
@@ -362,7 +362,7 @@
       "comments": []
     },
     {
-      "id": "TASK-023",
+      "id": "TASK-032",
       "title": "添加项目级别 TASKS.md 链接",
       "description": "在 KanbanBoard 中为每个项目添加 TASKS.md 查看按钮，链接到对应的 {project-id}-TASKS.md 文件。",
       "status": "todo",
@@ -381,7 +381,7 @@
       "comments": []
     },
     {
-      "id": "TASK-024",
+      "id": "TASK-033",
       "title": "实现健康检查 API",
       "description": "新增 /api/tasks/health 端点，检查所有项目的 JSON 文件有效性，返回每个项目的状态、任务数量、错误信息等。",
       "status": "todo",
@@ -400,7 +400,7 @@
       "comments": []
     },
     {
-      "id": "TASK-025",
+      "id": "TASK-034",
       "title": "数据存储迁移到数据库",
       "description": "评估并实施数据库迁移方案（SQLite/PostgreSQL），支持事务、并发访问、备份等功能。",
       "status": "todo",
@@ -419,7 +419,7 @@
       "comments": []
     },
     {
-      "id": "TASK-026",
+      "id": "TASK-035",
       "title": "实现实时同步功能",
       "description": "使用 WebSocket 实现 JSON 和 Markdown 的实时同步，文件变化监控（chokidar），确保数据一致性。",
       "status": "todo",
@@ -438,7 +438,7 @@
       "comments": []
     },
     {
-      "id": "TASK-027",
+      "id": "TASK-036",
       "title": "任务版本控制",
       "description": "实现任务历史变更记录功能，支持查看任务变更历史、回滚到指定版本。",
       "status": "todo",
