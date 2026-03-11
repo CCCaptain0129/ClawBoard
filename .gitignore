@@ -40,3 +40,9 @@ coverage/
 
 # OS
 Thumbs.db
+
+# Project-specific (internal use only)
+MEMORY.md
+CHANGELOG.md
+PROGRESS.md
+docs/
