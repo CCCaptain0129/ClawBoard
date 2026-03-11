@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
+import path from 'path';
 import { WebSocketServer } from 'ws';
 import { AgentService } from './services/agentService';
 import { TaskService } from './services/taskService';
@@ -20,6 +21,11 @@ const WS_PORT = Number(process.env.WS_PORT) || 3001;
 
 app.use(cors());
 app.use(express.json());
+
+// 提供静态文件服务 - tasks 目录
+const tasksPath = path.join(process.cwd(), '../../tasks');
+app.use('/tasks', express.static(tasksPath));
+console.log(`📁 Serving static files from: ${tasksPath}`);
 
 const agentService = new AgentService();
 const taskService = new TaskService();

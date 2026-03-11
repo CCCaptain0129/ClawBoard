@@ -281,6 +281,7 @@ export default function KanbanBoard() {
               {currentProject === 'all' ? '查看所有项目的任务' : projectInfo.description}
             </p>
           </div>
+          {currentProject !== 'all' && <TASKSButton projectId={currentProject} />}
         </div>
         <button
           onClick={handleSync}

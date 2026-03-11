@@ -4,8 +4,8 @@
   "description": "",
   "status": "active",
   "leadAgent": null,
-  "createdAt": "2026-03-11T04:56:56.542Z",
-  "updatedAt": "2026-03-11T14:20:00.000Z",
+  "createdAt": "2026-03-11T14:49:41.537Z",
+  "updatedAt": "2026-03-11T14:49:41.537Z",
   "tasks": [
     {
       "id": "TASK-014",
@@ -14,23 +14,14 @@
       "status": "done",
       "priority": "P1",
       "labels": [
-        "阶段 4：Agent 监控优化（P1 - 核心功能）",
-        "backend",
-        "integration",
-        "verification"
+        "阶段 4：Agent 监控优化（P1 - 核心功能）"
       ],
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T04:56:56.542Z",
-      "updatedAt": "2026-03-11T13:30:00.000Z",
-      "comments": [
-        {
-          "author": "test-agent",
-          "text": "验证通过！Agent 状态准确反映真实运行状态。lastActiveRaw 字段基于 session 文件的实际最后消息时间戳，状态判断逻辑正确。",
-          "timestamp": "2026-03-11T13:30:00.000Z"
-        }
-      ]
+      "createdAt": "2026-03-11T14:49:41.536Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
+      "comments": []
     },
     {
       "id": "TASK-015",
@@ -39,23 +30,14 @@
       "status": "todo",
       "priority": "P1",
       "labels": [
-        "阶段 4：Agent 监控优化（P1 - 核心功能）",
-        "frontend",
-        "ui",
-        "user-experience"
+        "阶段 4：Agent 监控优化（P1 - 核心功能）"
       ],
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T04:56:56.542Z",
-      "updatedAt": "2026-03-11T07:29:00.000Z",
-      "comments": [
-        {
-          "author": "test-agent",
-          "text": "发现两个问题：1. Gateway session 数据没有 to 字段 2. 飞书 API 认证失败 (app_secret invalid)",
-          "timestamp": "2026-03-11T07:29:00.000Z"
-        }
-      ]
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
+      "comments": []
     },
     {
       "id": "TASK-016",
@@ -64,17 +46,13 @@
       "status": "done",
       "priority": "P2",
       "labels": [
-        "阶段 4：Agent 监控优化（P1 - 核心功能）",
-        "frontend",
-        "ui",
-        "user-experience",
-        "optimization"
+        "阶段 4：Agent 监控优化（P1 - 核心功能）"
       ],
       "assignee": null,
-      "claimedBy": "dev-agent-TASK-016",
+      "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T04:56:56.542Z",
-      "updatedAt": "2026-03-11T06:34:00.000Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
@@ -89,8 +67,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T04:56:56.542Z",
-      "updatedAt": "2026-03-11T04:56:56.542Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
@@ -105,8 +83,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T04:56:56.542Z",
-      "updatedAt": "2026-03-11T04:56:56.542Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
@@ -121,8 +99,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T04:56:56.542Z",
-      "updatedAt": "2026-03-11T04:56:56.542Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
@@ -137,8 +115,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T04:56:56.542Z",
-      "updatedAt": "2026-03-11T04:56:56.542Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
@@ -153,8 +131,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T04:56:56.542Z",
-      "updatedAt": "2026-03-11T04:56:56.542Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
@@ -169,8 +147,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T04:56:56.542Z",
-      "updatedAt": "2026-03-11T04:56:56.542Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
@@ -185,8 +163,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T04:56:56.542Z",
-      "updatedAt": "2026-03-11T04:56:56.542Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
@@ -201,8 +179,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T04:56:56.542Z",
-      "updatedAt": "2026-03-11T04:56:56.542Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
@@ -217,8 +195,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T04:56:56.542Z",
-      "updatedAt": "2026-03-11T04:56:56.542Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
@@ -233,8 +211,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T04:56:56.542Z",
-      "updatedAt": "2026-03-11T04:56:56.542Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
@@ -249,8 +227,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T04:56:56.542Z",
-      "updatedAt": "2026-03-11T04:56:56.542Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
@@ -265,8 +243,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T04:56:56.542Z",
-      "updatedAt": "2026-03-11T04:56:56.542Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
@@ -281,191 +259,152 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T04:56:56.542Z",
-      "updatedAt": "2026-03-11T04:56:56.542Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
       "id": "TASK-028",
-      "title": "增强任务看板错误日志",
+      "title": "修改 taskService.ts，在 JSON 解析失败时输出详细的错误日志，包括文件路径、错误信息、行号等，便于快速定位问题。",
       "description": "修改 taskService.ts，在 JSON 解析失败时输出详细的错误日志，包括文件路径、错误信息、行号等，便于快速定位问题。",
       "status": "done",
       "priority": "P1",
       "labels": [
-        "短期优化",
-        "backend",
-        "error-handling",
-        "logging"
+        "阶段 3：测试与部署（P2）"
       ],
       "assignee": null,
-      "claimedBy": "dev-agent-TASK-028",
+      "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T14:13:00.000Z",
-      "updatedAt": "2026-03-11T14:34:00.000Z",
-      "comments": [
-        {
-          "author": "dev-agent",
-          "text": "已完成错误日志增强，新增详细错误信息、行号、列号、上下文显示和解决建议。",
-          "timestamp": "2026-03-11T14:34:00.000Z"
-        }
-      ]
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
+      "comments": []
     },
     {
       "id": "TASK-029",
-      "title": "添加 JSON 验证中间件",
+      "title": "创建 src/backend/src/middleware/jsonValidator.ts，提供 validateJSONFile() 方法，在读取 JSON 文件前验证语法，提前发现错误。",
       "description": "创建 src/backend/src/middleware/jsonValidator.ts，提供 validateJSONFile() 方法，在读取 JSON 文件前验证语法，提前发现错误。",
       "status": "done",
       "priority": "P1",
       "labels": [
-        "短期优化",
-        "backend",
-        "validation",
-        "middleware"
+        "阶段 3：测试与部署（P2）"
       ],
       "assignee": null,
-      "claimedBy": "dev-agent-TASK-029",
+      "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T14:13:00.000Z",
-      "updatedAt": "2026-03-11T14:44:00.000Z",
-      "comments": [
-        {
-          "author": "dev-agent",
-          "text": "已完成 JSON 验证中间件，支持单个文件和批量验证，精确定位错误位置。",
-          "timestamp": "2026-03-11T14:44:00.000Z"
-        }
-      ]
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
+      "comments": []
     },
     {
       "id": "TASK-030",
-      "title": "前端错误提示优化",
+      "title": "修改 KanbanBoard.tsx，添加友好的错误提示，当 API 返回错误或数据为空时，显示清晰的错误信息和可能的解决方案。",
       "description": "修改 KanbanBoard.tsx，添加友好的错误提示，当 API 返回错误或数据为空时，显示清晰的错误信息和可能的解决方案。",
       "status": "todo",
       "priority": "P1",
       "labels": [
-        "短期优化",
-        "frontend",
-        "ui",
-        "error-handling"
+        "阶段 3：测试与部署（P2）"
       ],
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T14:13:00.000Z",
-      "updatedAt": "2026-03-11T14:13:00.000Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
       "id": "TASK-031",
-      "title": "改进 TASKS.md 生成逻辑",
+      "title": "修改 syncManager.ts，改为每个项目生成独立的 TASKS.md 文件（{project-id}-TASKS.md），避免互相覆盖。更新前端链接和显示逻辑。",
       "description": "修改 syncManager.ts，改为每个项目生成独立的 TASKS.md 文件（{project-id}-TASKS.md），避免互相覆盖。更新前端链接和显示逻辑。",
       "status": "todo",
       "priority": "P2",
       "labels": [
-        "中期优化",
-        "backend",
-        "sync",
-        "refactor"
+        "阶段 3：测试与部署（P2）"
       ],
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T14:13:00.000Z",
-      "updatedAt": "2026-03-11T14:13:00.000Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
       "id": "TASK-032",
-      "title": "添加项目级别 TASKS.md 链接",
+      "title": "在 KanbanBoard 中为每个项目添加 TASKS.md 查看按钮，链接到对应的 {project-id}-TASKS.md 文件。",
       "description": "在 KanbanBoard 中为每个项目添加 TASKS.md 查看按钮，链接到对应的 {project-id}-TASKS.md 文件。",
       "status": "todo",
       "priority": "P2",
       "labels": [
-        "中期优化",
-        "frontend",
-        "ui",
-        "feature"
+        "阶段 3：测试与部署（P2）"
       ],
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T14:13:00.000Z",
-      "updatedAt": "2026-03-11T14:13:00.000Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
       "id": "TASK-033",
-      "title": "实现健康检查 API",
+      "title": "新增 /api/tasks/health 端点，检查所有项目的 JSON 文件有效性，返回每个项目的状态、任务数量、错误信息等。",
       "description": "新增 /api/tasks/health 端点，检查所有项目的 JSON 文件有效性，返回每个项目的状态、任务数量、错误信息等。",
       "status": "todo",
       "priority": "P2",
       "labels": [
-        "中期优化",
-        "backend",
-        "api",
-        "health-check"
+        "阶段 3：测试与部署（P2）"
       ],
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T14:13:00.000Z",
-      "updatedAt": "2026-03-11T14:13:00.000Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
       "id": "TASK-034",
-      "title": "数据存储迁移到数据库",
+      "title": "评估并实施数据库迁移方案（SQLite/PostgreSQL），支持事务、并发访问、备份等功能。",
       "description": "评估并实施数据库迁移方案（SQLite/PostgreSQL），支持事务、并发访问、备份等功能。",
       "status": "todo",
       "priority": "P3",
       "labels": [
-        "长期优化",
-        "backend",
-        "database",
-        "migration"
+        "阶段 3：测试与部署（P2）"
       ],
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T14:13:00.000Z",
-      "updatedAt": "2026-03-11T14:13:00.000Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
       "id": "TASK-035",
-      "title": "实现实时同步功能",
+      "title": "使用 WebSocket 实现 JSON 和 Markdown 的实时同步，文件变化监控（chokidar），确保数据一致性。",
       "description": "使用 WebSocket 实现 JSON 和 Markdown 的实时同步，文件变化监控（chokidar），确保数据一致性。",
       "status": "todo",
       "priority": "P3",
       "labels": [
-        "长期优化",
-        "backend",
-        "websocket",
-        "real-time"
+        "阶段 3：测试与部署（P2）"
       ],
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T14:13:00.000Z",
-      "updatedAt": "2026-03-11T14:13:00.000Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     },
     {
       "id": "TASK-036",
-      "title": "任务版本控制",
+      "title": "实现任务历史变更记录功能，支持查看任务变更历史、回滚到指定版本。",
       "description": "实现任务历史变更记录功能，支持查看任务变更历史、回滚到指定版本。",
       "status": "todo",
       "priority": "P3",
       "labels": [
-        "长期优化",
-        "backend",
-        "version-control",
-        "history"
+        "阶段 3：测试与部署（P2）"
       ],
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T14:13:00.000Z",
-      "updatedAt": "2026-03-11T14:13:00.000Z",
+      "createdAt": "2026-03-11T14:49:41.537Z",
+      "updatedAt": "2026-03-11T14:49:41.537Z",
       "comments": []
     }
   ]
