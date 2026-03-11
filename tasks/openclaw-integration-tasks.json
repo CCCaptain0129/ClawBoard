@@ -3,11 +3,10 @@
   "name": "OpenClaw 集成",
   "description": "将看板与 OpenClaw 深度集成，实现智能项目管理和任务跟踪",
   "status": "active",
-  "leadAgent": null,
   "color": "#8B5CF6",
   "icon": "🤖",
   "createdAt": "2026-03-11T00:56:22.000Z",
-  "updatedAt": "2026-03-11T05:03:07.114Z",
+  "updatedAt": "2026-03-11T05:03:23.341Z",
   "tasks": [
     {
       "id": "TASK-001",
@@ -15,16 +14,12 @@
       "description": "验证 start.sh/stop.sh/start.bat/stop.bat 在不同平台上的功能正常，包括依赖安装、服务启动、端口检测、日志查看等",
       "status": "done",
       "priority": "P1",
-      "labels": [
-        "test",
-        "devops",
-        "automation"
-      ],
+      "labels": ["test", "devops", "automation"],
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-11T00:00:00.000Z",
-      "updatedAt": "2026-03-11T00:57:18.027Z",
+      "updatedAt": "2026-03-11T05:00:00.000Z",
       "comments": []
     },
     {
@@ -33,34 +28,26 @@
       "description": "Agent 监控页面数据未与 OpenClaw 实时连接，需要实现从 OpenClaw API 或 WebSocket 获取真实的 Agent 状态、Token 使用等信息",
       "status": "done",
       "priority": "P1",
-      "labels": [
-        "backend",
-        "api",
-        "integration"
-      ],
+      "labels": ["backend", "api", "integration"],
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-11T00:00:00.000Z",
-      "updatedAt": "2026-03-11T00:59:05.212Z",
+      "updatedAt": "2026-03-11T05:00:00.000Z",
       "comments": []
     },
     {
       "id": "TASK-003",
       "title": "设计 OpenClaw 与看板的集成方案",
       "description": "设计 OpenClaw 如何调用看板 API 创建任务、更新状态、查询进度，确定通信方式（HTTP API/WebSocket/CLI）",
-      "status": "todo",
+      "status": "done",
       "priority": "P1",
-      "labels": [
-        "design",
-        "architecture",
-        "integration"
-      ],
+      "labels": ["design", "architecture", "integration"],
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-11T00:00:00.000Z",
-      "updatedAt": "2026-03-11T00:00:00.000Z",
+      "updatedAt": "2026-03-11T05:03:23.341Z",
       "comments": []
     },
     {
@@ -69,16 +56,12 @@
       "description": "OpenClaw 从对话中提取项目需求，生成标准化的项目文档（README.md、TASKS.md），自动创建项目配置",
       "status": "done",
       "priority": "P2",
-      "labels": [
-        "feature",
-        "ai",
-        "automation"
-      ],
+      "labels": ["feature", "ai", "automation"],
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-11T00:00:00.000Z",
-      "updatedAt": "2026-03-11T05:03:07.095Z",
+      "updatedAt": "2026-03-11T05:03:23.341Z",
       "comments": []
     },
     {
@@ -87,16 +70,12 @@
       "description": "OpenClaw 根据需求自动拆解任务，按优先级（P1/P2/P3）和领域（frontend/backend）分类，生成任务清单",
       "status": "done",
       "priority": "P2",
-      "labels": [
-        "feature",
-        "ai",
-        "automation"
-      ],
+      "labels": ["feature", "ai", "automation"],
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-11T00:00:00.000Z",
-      "updatedAt": "2026-03-11T05:03:07.106Z",
+      "updatedAt": "2026-03-11T05:03:23.341Z",
       "comments": []
     },
     {
@@ -105,16 +84,12 @@
       "description": "用户在对话中可以领取任务，完成任务后自动更新看板状态，进度实时反馈",
       "status": "done",
       "priority": "P2",
-      "labels": [
-        "feature",
-        "api",
-        "integration"
-      ],
+      "labels": ["feature", "api", "integration"],
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-11T00:00:00.000Z",
-      "updatedAt": "2026-03-11T05:03:07.114Z",
+      "updatedAt": "2026-03-11T05:03:23.341Z",
       "comments": []
     },
     {
@@ -123,15 +98,12 @@
       "description": "总结本次开发中 MEMORY 的使用经验，制定 workspace/MEMORY.md 的使用规范和最佳实践",
       "status": "done",
       "priority": "P2",
-      "labels": [
-        "docs",
-        "best-practices"
-      ],
+      "labels": ["docs", "best-practices"],
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T00:00:00.000Z",
-      "updatedAt": "2026-03-11T05:02:14.224Z",
+      "createdAt": "2026-03-11T00:00:00.00.000Z",
+      "updatedAt": "2026-03-11T05:03:23.341Z",
       "comments": []
     },
     {
@@ -139,16 +111,27 @@
       "title": "完善开发流程文档",
       "description": "总结本次开发中的良好实践（小步快跑、频繁提交、及时推送、文档同步），形成标准化的开发流程文档",
       "status": "done",
-      "priority": "P3",
-      "labels": [
-        "docs",
-        "best-practices"
-      ],
+      "priority": "P2",
+      "labels": ["docs", "best-practices"],
       "assignee": null,
       "claimedBy": null,
-      "dueDate": null,
+      "dueDate: null,
       "createdAt": "2026-03-11T00:00:00.000Z",
-      "updatedAt": "2026-03-11T05:02:14.236Z",
+      "updatedAt": "2026-03-11T05:03:23.341Z",
+      "comments": []
+    },
+    {
+      "id": "TASK-009",
+      "title": "集成测试",
+      "description": "测试 OpenClaw 集成功能是否正常工作，包括项目创建、任务创建、状态更新、进度查询等 API 接口。验证看板与 OpenClaw 的数据同步。",
+      "status": "todo",
+      "priority": "P1",
+      "labels": ["test", "integration", "verification"],
+      "assignee": "Alice",
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-11T13:21:00.000Z",
+      "updatedAt": "2026-03-11T13:21:00.000Z",
       "comments": []
     }
   ]

@@ -19,17 +19,6 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
   router.get('/projects/:id/tasks', async (req, res) => {
     try {
       const { id } = req.params;
-      const tasks = await taskService.getTasksByProject(id);
-      res.json(tasks);
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch tasks' });
-    }
-  });
-
-  // 获取指定项目的任务（支持过滤）
-  router.get('/projects/:id/tasks', async (req, res) => {
-    try {
-      const { id } = req.params;
       const { status, priority, assignee } = req.query;
       let tasks = await taskService.getTasksByProject(id);
       
@@ -153,26 +142,6 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
       });
     } catch (error) {
       res.status(500).json({ error: 'Failed to update tasks' });
-    }
-  });
-
-  // 删除任务
-  router.delete('/projects/:id/tasks/:taskId', async (req, res) => {
-    try {
-      const { id, taskId } = req.params;
-      const task = await taskService.getTaskById(id, taskId);
-      
-      if (!task) {
-        return res.status(404).json({ error: 'Task not found' });
-      }
-      
-      const tasks = await taskService.getTasksByProject(id);
-      const filteredTasks = tasks.filter(t => t.id !== taskId);
-      await taskService.saveTasks(id, filteredTasks);
-      
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to delete task' });
     }
   });
 
