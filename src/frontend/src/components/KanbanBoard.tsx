@@ -148,7 +148,7 @@ export default function KanbanBoard() {
       await fetch(`http://localhost:3000/api/sync/to-markdown/${projectId}`, {
         method: 'POST',
       })
-      alert('✅ 同步成功！TASKS.md 已更新')
+      alert(`✅ 同步成功！${projectId}-TASKS.md 已更新`)
     } catch (err) {
       console.error('Error syncing:', err)
       alert('❌ 同步失败，请重试')

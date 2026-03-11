@@ -7,6 +7,7 @@ import { Task, Project } from '../types/tasks';
 
 export class SyncManager {
   private taskService: TaskService;
+  private tasksPath: string;
   
   constructor(
     private markdownToJSON: MarkdownToJSON,
@@ -14,6 +15,12 @@ export class SyncManager {
     taskService: TaskService
   ) {
     this.taskService = taskService;
+    this.tasksPath = path.join(process.cwd(), '../../tasks');
+    
+    // 确保 tasks 目录存在
+    if (!fs.existsSync(this.tasksPath)) {
+      fs.mkdirSync(this.tasksPath, { recursive: true });
+    }
   }
 
   /**
@@ -22,13 +29,8 @@ export class SyncManager {
   async syncFromMarkdown(projectId: string): Promise<{ project: Project; tasks: Task[] }> {
     const { project, tasks } = await this.markdownToJSON.parse(projectId);
     
-    const tasksDir = path.join(process.cwd(), '../../tasks');
-    if (!fs.existsSync(tasksDir)) {
-      fs.mkdirSync(tasksDir, { recursive: true });
-    }
-    
     // 保存任务 JSON
-    const filePath = path.join(tasksDir, `${projectId}-tasks.json`);
+    const filePath = path.join(this.tasksPath, `${projectId}-tasks.json`);
     fs.writeFileSync(filePath, JSON.stringify({ ...project, tasks }, null, 2));
     
     console.log(`✅ Synced from markdown: ${tasks.length} tasks loaded`);
@@ -48,10 +50,11 @@ export class SyncManager {
     
     const markdown = this.jsonToMarkdown.generate(project, tasks);
     
-    const tasksMdPath = path.join(process.cwd(), '../../TASKS.md');
+    // 生成独立的 TASKS.md 文件，避免互相覆盖
+    const tasksMdPath = path.join(this.tasksPath, `${projectId}-TASKS.md`);
     fs.writeFileSync(tasksMdPath, markdown);
     
-    console.log(`✅ Synced to markdown: ${tasks.length} tasks saved`);
+    console.log(`✅ Synced to markdown: ${tasks.length} tasks saved to ${projectId}-TASKS.md`);
   }
 
   /**
