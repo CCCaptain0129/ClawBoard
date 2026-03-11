@@ -7,7 +7,7 @@
   "color": "#8B5CF6",
   "icon": "🤖",
   "createdAt": "2026-03-11T00:56:22.000Z",
-  "updatedAt": "2026-03-11T05:02:14.236Z",
+  "updatedAt": "2026-03-11T05:03:07.114Z",
   "tasks": [
     {
       "id": "TASK-001",
@@ -67,7 +67,7 @@
       "id": "TASK-004",
       "title": "实现项目文档自动生成功能",
       "description": "OpenClaw 从对话中提取项目需求，生成标准化的项目文档（README.md、TASKS.md），自动创建项目配置",
-      "status": "todo",
+      "status": "done",
       "priority": "P2",
       "labels": [
         "feature",
@@ -78,14 +78,14 @@
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-11T00:00:00.000Z",
-      "updatedAt": "2026-03-11T00:00:00.000Z",
+      "updatedAt": "2026-03-11T05:03:07.095Z",
       "comments": []
     },
     {
       "id": "TASK-005",
       "title": "实现任务清单自动创建功能",
       "description": "OpenClaw 根据需求自动拆解任务，按优先级（P1/P2/P3）和领域（frontend/backend）分类，生成任务清单",
-      "status": "todo",
+      "status": "done",
       "priority": "P2",
       "labels": [
         "feature",
@@ -96,14 +96,14 @@
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-11T00:00:00.000Z",
-      "updatedAt": "2026-03-11T00:00:00.000Z",
+      "updatedAt": "2026-03-11T05:03:07.106Z",
       "comments": []
     },
     {
       "id": "TASK-006",
       "title": "实现任务领取和完成功能",
       "description": "用户在对话中可以领取任务，完成任务后自动更新看板状态，进度实时反馈",
-      "status": "todo",
+      "status": "done",
       "priority": "P2",
       "labels": [
         "feature",
@@ -114,7 +114,7 @@
       "claimedBy": null,
       "dueDate": null,
       "createdAt": "2026-03-11T00:00:00.000Z",
-      "updatedAt": "2026-03-11T00:00:00.000Z",
+      "updatedAt": "2026-03-11T05:03:07.114Z",
       "comments": []
     },
     {
