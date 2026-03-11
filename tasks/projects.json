@@ -31,5 +31,16 @@
     "icon": "⚡",
     "createdAt": "2026-03-11T00:00:00.000Z",
     "updatedAt": "2026-03-11T00:00:00.000Z"
+  },
+  {
+    "id": "openclaw-integration",
+    "name": "OpenClaw 集成",
+    "description": "将看板与 OpenClaw 深度集成，实现智能项目管理和任务跟踪",
+    "status": "active",
+    "leadAgent": null,
+    "color": "#8B5CF6",
+    "icon": "🤖",
+    "createdAt": "2026-03-11T00:56:22.000Z",
+    "updatedAt": "2026-03-11T00:56:22.000Z"
   }
 ]

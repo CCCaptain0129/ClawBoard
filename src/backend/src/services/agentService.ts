@@ -10,8 +10,9 @@ export class AgentService {
       const sessionsData = JSON.parse(fs.readFileSync(this.sessionsPath, 'utf-8'));
       const agents: Agent[] = [];
       
-      for (const [key, value] of Object.entries(sessionsData)) {
-        agents.push(this.transformToAgent(key, value as any));
+      for (const [sessionKey, sessionData] of Object.entries(sessionsData)) {
+        const session = sessionData as any;
+        agents.push(this.transformToAgent(sessionKey, session));
       }
       
       return agents;
@@ -26,35 +27,69 @@ export class AgentService {
     return agents.find(a => a.id === id) || null;
   }
 
-  private transformToAgent(key: string, session: any): Agent {
+  private transformToAgent(sessionKey: string, session: any): Agent {
+    // 计算运行状态
+    let status = 'stopped';
+    const lastActive = session.updatedAt ? new Date(session.updatedAt).toISOString() : new Date().toISOString();
+    const now = Date.now();
+    const lastActiveTime = session.updatedAt || now;
+    const inactiveTime = now - lastActiveTime;
+    
+    // 如果在最近 5 分钟内有活动，认为是活跃的
+    if (inactiveTime < 5 * 60 * 1000) {
+      status = 'running';
+    } else if (inactiveTime < 30 * 60 * 1000) {
+      status = 'idle';
+    }
+
     return {
-      id: key,
-      name: this.getAgentName(key),
-      type: this.getAgentType(key),
-      channel: this.getAgentChannel(key),
-      status: session.status === 'running' ? 'running' : session.lastActive ? 'idle' : 'stopped',
+      id: sessionKey,
+      name: this.getAgentName(sessionKey, session),
+      type: session.chatType === 'direct' ? '直接对话' : '群组对话',
+      channel: this.getAgentChannel(sessionKey, session),
+      status: status as 'running' | 'idle' | 'stopped',
       model: session.model || 'glm-4.7',
       tokenUsage: {
         input: session.inputTokens || 0,
         output: session.outputTokens || 0,
-        total: (session.inputTokens || 0) + (session.outputTokens || 0),
+        total: session.totalTokens || 0,
       },
-      lastActive: session.lastActive || new Date().toISOString(),
+      lastActive: lastActive,
+      createdAt: session.createdAt ? new Date(session.createdAt).toISOString() : undefined,
     };
   }
 
-  private getAgentName(key: string): string {
-    if (key.includes('feishu')) {
-      return '飞书群组 ' + key.split(':').pop()?.slice(-8);
+  private getAgentName(sessionKey: string, session: any): string {
+    if (session.chatType === 'direct') {
+      return '主 Agent';
     }
-    return '主 Agent';
+    
+    // 从 sessionKey 中提取群组信息
+    if (sessionKey.includes('feishu:group')) {
+      const parts = sessionKey.split(':');
+      const groupId = parts.pop() || '';
+      return `飞书群组 ${groupId.slice(-8)}`;
+    }
+    
+    return '未知 Agent';
   }
 
-  private getAgentType(key: string): string {
-    return key.includes('feishu') ? '群组对话' : '直接对话';
-  }
-
-  private getAgentChannel(key: string): string {
-    return key.includes('feishu') ? '飞书' : '网页对话';
+  private getAgentChannel(sessionKey: string, session: any): string {
+    if (session.deliveryContext?.channel) {
+      const channelMap: { [key: string]: string } = {
+        'webchat': '网页对话',
+        'feishu': '飞书',
+        'telegram': 'Telegram',
+        'discord': 'Discord',
+        'whatsapp': 'WhatsApp',
+      };
+      return channelMap[session.deliveryContext.channel] || session.deliveryContext.channel;
+    }
+    
+    if (sessionKey.includes('feishu')) {
+      return '飞书';
+    }
+    
+    return '网页对话';
   }
 }
