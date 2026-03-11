@@ -4,7 +4,7 @@ import { Task, Project, Stage } from '../types/tasks';
 
 export class MarkdownToJSON {
   async parse(projectId: string): Promise<{ project: Project; tasks: Task[] }> {
-    const tasksMdPath = path.join(process.cwd(), '../../TASKS.md');
+    const tasksMdPath = path.join(process.cwd(), '../../tasks', `${projectId}-TASKS.md`);
 
     try {
       const markdown = fs.readFileSync(tasksMdPath, 'utf-8');

@@ -207,6 +207,17 @@ export default function KanbanBoard() {
     </div>
   )
 
+  // TASKS.md 按钮组件
+  const TASKSButton = ({ projectId }: { projectId: string }) => (
+    <button
+      onClick={() => window.open(`/tasks/${projectId}-TASKS.md`, '_blank')}
+      className="ml-2 px-3 py-1 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors"
+      title="查看任务列表文档"
+    >
+      📄 TASKS.md
+    </button>
+  )
+
   const todoCount = tasks.filter(t => t.status === 'todo').length
   const inProgressCount = tasks.filter(t => t.status === 'in-progress').length
   const doneCount = tasks.filter(t => t.status === 'done').length
