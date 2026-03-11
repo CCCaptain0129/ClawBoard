@@ -289,7 +289,7 @@
       "id": "TASK-028",
       "title": "增强任务看板错误日志",
       "description": "修改 taskService.ts，在 JSON 解析失败时输出详细的错误日志，包括文件路径、错误信息、行号等，便于快速定位问题。",
-      "status": "todo",
+      "status": "done",
       "priority": "P1",
       "labels": [
         "短期优化",
@@ -298,11 +298,17 @@
         "logging"
       ],
       "assignee": null,
-      "claimedBy": null,
+      "claimedBy": "dev-agent-TASK-028",
       "dueDate": null,
       "createdAt": "2026-03-11T14:13:00.000Z",
-      "updatedAt": "2026-03-11T14:13:00.000Z",
-      "comments": []
+      "updatedAt": "2026-03-11T14:34:00.000Z",
+      "comments": [
+        {
+          "author": "dev-agent",
+          "text": "已完成错误日志增强，新增详细错误信息、行号、列号、上下文显示和解决建议。",
+          "timestamp": "2026-03-11T14:34:00.000Z"
+        }
+      ]
     },
     {
       "id": "TASK-029",
