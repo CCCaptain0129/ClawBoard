@@ -11,4 +11,8 @@ export interface Agent {
     total: number;
   };
   lastActive: string;
+  lastActiveRaw?: string;
+  lastRun?: string;
+  lastRunRaw?: string;
+  groupName?: string;  // 新增：友好的群组名称
 }

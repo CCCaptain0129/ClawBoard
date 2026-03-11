@@ -14,6 +14,9 @@ interface AgentCardProps {
       total: number
     }
     lastActive: string
+    lastActiveRaw?: string  // 新增：原始时间戳
+    lastRun?: string  // 新增：格式化后的"多久前"
+    groupName?: string  // 新增：友好的群组名称
   }
   onSelect?: () => void
 }
@@ -52,7 +55,10 @@ export default function AgentCard({ agent, onSelect }: AgentCardProps) {
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <h3 className="text-lg font-bold text-gray-900">{agent.name}</h3>
+          <h3 className="text-lg font-bold text-gray-900">{agent.groupName || agent.name}</h3>
+          {agent.groupName && agent.groupName !== agent.name && (
+            <p className="text-xs text-gray-400 mt-1">{agent.name}</p>
+          )}
         </div>
         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text} ${config.border}`}>
           <span className="mr-1.5">{config.icon}</span>
@@ -60,8 +66,9 @@ export default function AgentCard({ agent, onSelect }: AgentCardProps) {
         </span>
       </div>
 
-      <div className="text-xs text-gray-400 mb-4 font-medium">
-        {new Date(agent.lastActive).toLocaleDateString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' })}
+      <div className="text-xs text-gray-400 mb-4 font-medium flex items-center gap-1">
+        <span>最后更新: </span>
+        <span className="text-gray-600">{agent.lastActive}</span>
       </div>
 
       <div className="space-y-3">
