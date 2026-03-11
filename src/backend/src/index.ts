@@ -8,6 +8,7 @@ import { TaskService } from './services/taskService';
 import { agentRoutes } from './routes/agents';
 import { taskRoutes } from './routes/tasks';
 import { syncRoutes } from './routes/sync';
+import healthCheckRouter from './routes/healthCheck';
 import { WebSocketHandler } from './websocket/server';
 import { AgentTaskScheduler } from './schedulers/agentTaskScheduler';
 import { SyncManager } from './sync/syncManager';
@@ -35,6 +36,7 @@ const scheduler = new AgentTaskScheduler(taskService, wsServer);
 
 app.use('/api/agents', agentRoutes(agentService));
 app.use('/api/tasks', taskRoutes(taskService, wsServer));
+app.use('/api/tasks', healthCheckRouter);
 app.use('/api/sync', syncRoutes(taskService, wsServer));
 
 app.get('/health', (req, res) => {
