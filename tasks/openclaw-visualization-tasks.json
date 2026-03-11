@@ -4,9 +4,67 @@
   "description": "",
   "status": "active",
   "leadAgent": null,
-  "createdAt": "2026-03-11T02:26:06.970Z",
-  "updatedAt": "2026-03-11T02:26:06.970Z",
+  "createdAt": "2026-03-11T04:56:56.542Z",
+  "updatedAt": "2026-03-11T04:56:56.542Z",
   "tasks": [
+    {
+      "id": "TASK-014",
+      "title": "检查获取的 Agent 状态是否准确。验证从 OpenClaw Gateway WebSocket 获取的 Agent 状态是否准确反映真实运行状态。对比控制台显示的状态与看板显示的状态，找出差异并修复。",
+      "description": "检查获取的 Agent 状态是否准确。验证从 OpenClaw Gateway WebSocket 获取的 Agent 状态是否准确反映真实运行状态。对比控制台显示的状态与看板显示的状态，找出差异并修复。",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [
+        "阶段 4：Agent 监控优化（P1 - 核心功能）",
+        "backend",
+        "integration",
+        "verification"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-11T04:56:56.542Z",
+      "updatedAt": "2026-03-11T04:56:56.542Z",
+      "comments": []
+    },
+    {
+      "id": "TASK-015",
+      "title": "显示群组名称而不是 ID 号。Agent 卡片优先显示飞书群组的友好名称（如 OpenClaw 集成讨论组），而不是显示 ID 字符串（如 oc_0754a493527ed8a4b28bd0dffdf802de）。从 OpenClaw sessions 中获取真实的群组名称并显示。",
+      "description": "显示群组名称而不是 ID 号。Agent 卡片优先显示飞书群组的友好名称（如 OpenClaw 集成讨论组），而不是显示 ID 字符串（如 oc_0754a493527ed8a4b28bd0dffdf802de）。从 OpenClaw sessions 中获取真实的群组名称并显示。",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [
+        "阶段 4：Agent 监控优化（P1 - 核心功能）",
+        "frontend",
+        "ui",
+        "user-experience"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-11T04:56:56.542Z",
+      "updatedAt": "2026-03-11T04:56:56.542Z",
+      "comments": []
+    },
+    {
+      "id": "TASK-016",
+      "title": "用户可读性优化，减少困惑。简化 Agent 卡片中的技术指标，让普通用户也能理解。减少不必要的详细信息，优先显示用户关心的信息（如最后活动时间、消息数）。考虑添加图标和颜色提高可读性。",
+      "description": "用户可读性优化，减少困惑。简化 Agent 卡片中的技术指标，让普通用户也能理解。减少不必要的详细信息，优先显示用户关心的信息（如最后活动时间、消息数）。考虑添加图标和颜色提高可读性。",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "阶段 4：Agent 监控优化（P1 - 核心功能）",
+        "frontend",
+        "ui",
+        "user-experience",
+        "optimization"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-11T04:56:56.542Z",
+      "updatedAt": "2026-03-11T04:56:56.542Z",
+      "comments": []
+    },
     {
       "id": "TASK-001",
       "title": "创建 KanbanBoard 组件基础结构",
@@ -19,8 +77,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T02:26:06.970Z",
-      "updatedAt": "2026-03-11T02:26:06.970Z",
+      "createdAt": "2026-03-11T04:56:56.542Z",
+      "updatedAt": "2026-03-11T04:56:56.542Z",
       "comments": []
     },
     {
@@ -35,8 +93,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T02:26:06.970Z",
-      "updatedAt": "2026-03-11T02:26:06.970Z",
+      "createdAt": "2026-03-11T04:56:56.542Z",
+      "updatedAt": "2026-03-11T04:56:56.542Z",
       "comments": []
     },
     {
@@ -51,8 +109,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T02:26:06.970Z",
-      "updatedAt": "2026-03-11T02:26:06.970Z",
+      "createdAt": "2026-03-11T04:56:56.542Z",
+      "updatedAt": "2026-03-11T04:56:56.542Z",
       "comments": []
     },
     {
@@ -67,8 +125,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T02:26:06.970Z",
-      "updatedAt": "2026-03-11T02:26:06.970Z",
+      "createdAt": "2026-03-11T04:56:56.542Z",
+      "updatedAt": "2026-03-11T04:56:56.542Z",
       "comments": []
     },
     {
@@ -83,8 +141,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T02:26:06.970Z",
-      "updatedAt": "2026-03-11T02:26:06.970Z",
+      "createdAt": "2026-03-11T04:56:56.542Z",
+      "updatedAt": "2026-03-11T04:56:56.542Z",
       "comments": []
     },
     {
@@ -99,8 +157,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T02:26:06.970Z",
-      "updatedAt": "2026-03-11T02:26:06.970Z",
+      "createdAt": "2026-03-11T04:56:56.542Z",
+      "updatedAt": "2026-03-11T04:56:56.542Z",
       "comments": []
     },
     {
@@ -115,8 +173,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T02:26:06.970Z",
-      "updatedAt": "2026-03-11T02:26:06.970Z",
+      "createdAt": "2026-03-11T04:56:56.542Z",
+      "updatedAt": "2026-03-11T04:56:56.542Z",
       "comments": []
     },
     {
@@ -131,8 +189,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T02:26:06.970Z",
-      "updatedAt": "2026-03-11T02:26:06.970Z",
+      "createdAt": "2026-03-11T04:56:56.542Z",
+      "updatedAt": "2026-03-11T04:56:56.542Z",
       "comments": []
     },
     {
@@ -147,8 +205,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T02:26:06.970Z",
-      "updatedAt": "2026-03-11T02:26:06.970Z",
+      "createdAt": "2026-03-11T04:56:56.542Z",
+      "updatedAt": "2026-03-11T04:56:56.542Z",
       "comments": []
     },
     {
@@ -163,8 +221,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T02:26:06.970Z",
-      "updatedAt": "2026-03-11T02:26:06.970Z",
+      "createdAt": "2026-03-11T04:56:56.542Z",
+      "updatedAt": "2026-03-11T04:56:56.542Z",
       "comments": []
     },
     {
@@ -179,8 +237,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T02:26:06.970Z",
-      "updatedAt": "2026-03-11T02:26:06.970Z",
+      "createdAt": "2026-03-11T04:56:56.542Z",
+      "updatedAt": "2026-03-11T04:56:56.542Z",
       "comments": []
     },
     {
@@ -195,8 +253,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T02:26:06.970Z",
-      "updatedAt": "2026-03-11T02:26:06.970Z",
+      "createdAt": "2026-03-11T04:56:56.542Z",
+      "updatedAt": "2026-03-11T04:56:56.542Z",
       "comments": []
     },
     {
@@ -211,8 +269,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-11T02:26:06.970Z",
-      "updatedAt": "2026-03-11T02:26:06.970Z",
+      "createdAt": "2026-03-11T04:56:56.542Z",
+      "updatedAt": "2026-03-11T04:56:56.542Z",
       "comments": []
     }
   ]
