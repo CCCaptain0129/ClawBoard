@@ -314,7 +314,7 @@
       "id": "TASK-029",
       "title": "添加 JSON 验证中间件",
       "description": "创建 src/backend/src/middleware/jsonValidator.ts，提供 validateJSONFile() 方法，在读取 JSON 文件前验证语法，提前发现错误。",
-      "status": "todo",
+      "status": "done",
       "priority": "P1",
       "labels": [
         "短期优化",
@@ -323,11 +323,17 @@
         "middleware"
       ],
       "assignee": null,
-      "claimedBy": null,
+      "claimedBy": "dev-agent-TASK-029",
       "dueDate": null,
       "createdAt": "2026-03-11T14:13:00.000Z",
-      "updatedAt": "2026-03-11T14:13:00.000Z",
-      "comments": []
+      "updatedAt": "2026-03-11T14:44:00.000Z",
+      "comments": [
+        {
+          "author": "dev-agent",
+          "text": "已完成 JSON 验证中间件，支持单个文件和批量验证，精确定位错误位置。",
+          "timestamp": "2026-03-11T14:44:00.000Z"
+        }
+      ]
     },
     {
       "id": "TASK-030",

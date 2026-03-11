@@ -78,6 +78,7 @@ export default function KanbanBoard() {
   }
 
   const fetchTasks = async () => {
+    setError(null)
     try {
       setLoading(true)
       let url = 'http://localhost:3000/api/tasks/projects/openclaw-visualization/tasks'
@@ -87,11 +88,32 @@ export default function KanbanBoard() {
       }
       
       const response = await fetch(url)
-      if (!response.ok) throw new Error('Failed to fetch tasks')
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
       const data = await response.json()
+      
+      // 检查 API 返回的错误信息
+      if (data.error) {
+        setError(data.error)
+        setTasks([])
+        return
+      }
+      
+      // 检查数据格式
+      if (!Array.isArray(data)) {
+        setError('API 返回的数据格式不正确，期望的是数组')
+        setTasks([])
+        return
+      }
+      
       setTasks(data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      setError(`加载任务失败：${errorMessage}`)
+      setTasks([])
     } finally {
       setLoading(false)
     }
@@ -142,28 +164,48 @@ export default function KanbanBoard() {
     return projects.find(p => p.id === currentProject) || { name: '未知项目', color: '#6366F1', icon: '📁' }
   }
 
-  if (loading && !currentProject) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-500 font-medium">加载中...</p>
+  // 错误提示组件
+  const ErrorAlert = ({ message, suggestion }: { message: string; suggestion?: string }) => (
+    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+      <div className="flex items-start">
+        <div className="flex-shrink-0">
+          <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+          </svg>
+        </div>
+        <div className="ml-3">
+          <h3 className="text-sm font-medium text-red-800">加载失败</h3>
+          <div className="mt-2 text-sm text-red-700">{message}</div>
+          {suggestion && (
+            <div className="mt-2 text-sm text-red-600">
+              💡 建议：{suggestion}
+            </div>
+          )}
         </div>
       </div>
-    )
-  }
+    </div>
+  )
 
-  if (error) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-center">
-          <div className="text-6xl mb-4">❌</div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">加载失败</h2>
-          <p className="text-gray-500">{error}</p>
-        </div>
-      </div>
-    )
-  }
+  // 空状态组件
+  const EmptyState = () => (
+    <div className="text-center py-12">
+      <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+      </svg>
+      <h3 className="mt-2 text-sm font-medium text-gray-900">没有任务</h3>
+      <p className="mt-1 text-sm text-gray-500">
+        {currentProject === 'all' ? '所有项目都没有任务' : '该项目没有任务'}
+      </p>
+    </div>
+  )
+
+  // 加载状态组件
+  const LoadingState = () => (
+    <div className="text-center py-12">
+      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      <p className="mt-4 text-sm text-gray-500">加载任务中...</p>
+    </div>
+  )
 
   const todoCount = tasks.filter(t => t.status === 'todo').length
   const inProgressCount = tasks.filter(t => t.status === 'in-progress').length
@@ -284,8 +326,16 @@ export default function KanbanBoard() {
         </div>
       </div>
 
+      {/* 错误提示、加载状态和空状态 */}
+      {error && <ErrorAlert message={error} suggestion="请检查网络连接或刷新页面重试" />}
+      
+      {loading && <LoadingState />}
+      
+      {!loading && !error && tasks.length === 0 && <EmptyState />}
+
       {/* 看板列 */}
-      <div className="grid grid-cols-3 gap-5">
+      {!loading && !error && tasks.length > 0 && (
+        <div className="grid grid-cols-3 gap-5">
         {columns.map(column => {
           const columnTasks = tasks.filter(t => t.status === column.id)
           return (

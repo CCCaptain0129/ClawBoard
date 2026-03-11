@@ -1,6 +1,7 @@
 import { Task, Project } from '../types/tasks';
 import * as fs from 'fs';
 import * as path from 'path';
+import { validateJSONFile } from '../middleware/jsonValidator';
 
 export class TaskService {
   private tasksPath = path.join(process.cwd(), '../../tasks');
@@ -45,46 +46,31 @@ export class TaskService {
 
   async getTasksByProject(projectId: string): Promise<Task[]> {
     const filePath = path.join(this.tasksPath, `${projectId}-tasks.json`);
-    let data = '';
-    
+
+    // 提前验证 JSON 文件
+    const validation = validateJSONFile(filePath);
+    if (!validation.valid) {
+      console.error(`❌ JSON validation failed for project "${projectId}":`);
+      console.error(`   File path: ${filePath}`);
+      console.error(`   Error: ${validation.error}`);
+      if (validation.line !== undefined) {
+        console.error(`   Location: Line ${validation.line}, Column ${validation.column}`);
+      }
+      if (validation.context) {
+        console.error(`   Context: "${validation.context}"`);
+      }
+      console.error(`   Tip: Use 'python3 -m json.tool <file>' to validate JSON`);
+      return [];
+    }
+
+    // 验证通过，正常读取
     try {
-      data = fs.readFileSync(filePath, 'utf-8');
+      const data = fs.readFileSync(filePath, 'utf-8');
       const project = JSON.parse(data);
       return project.tasks || [];
     } catch (error) {
       console.error(`❌ Failed to load tasks for project "${projectId}":`);
-      console.error(`   File path: ${filePath}`);
       console.error(`   Error: ${error instanceof Error ? error.message : String(error)}`);
-      
-      // 尝试提取错误行号（仅在 JSON 解析错误时）
-      if (error instanceof SyntaxError && data) {
-        const match = /position (\d+)/.exec(error.message);
-        if (match) {
-          const position = parseInt(match[1], 10);
-          const lines = data.split('\n');
-          let line = 1, col = 0;
-          for (let i = 0, count = 0; i < lines.length && count < position; i++) {
-            count += lines[i].length + 1; // +1 for newline
-            if (count <= position) {
-              line = i + 1;
-              col = position - (count - lines[i].length - 1);
-            }
-          }
-          console.error(`   Error location: Line ${line}, Column ${col}`);
-          console.error(`   Context: ${lines[line - 1]?.trim() || '(empty line)'}`);
-        }
-      }
-      
-      if (error instanceof SyntaxError) {
-        console.error(`   This appears to be a JSON syntax error.`);
-        console.error(`   Common issues:`);
-        console.error(`   - Missing quotes around keys`);
-        console.error(`   - Trailing commas`);
-        console.error(`   - Invalid characters`);
-        console.error(`   - Unmatched brackets or braces`);
-        console.error(`   Tip: Use 'python3 -m json.tool <file>' to validate JSON`);
-      }
-      
       return [];
     }
   }
