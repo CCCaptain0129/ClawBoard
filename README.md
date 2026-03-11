@@ -72,6 +72,29 @@ npm run dev
 - 后端 API：http://localhost:3000
 - WebSocket：ws://localhost:3001
 
+### 命令行工具
+
+项目提供了命令行工具 `task-cli`，可以快速创建项目、任务和查看进度：
+
+```bash
+# 查看帮助
+./task-cli help
+
+# 查看所有项目进度
+./task-cli progress
+
+# 创建新项目
+./task-cli create-project --id my-project --name "我的项目"
+
+# 创建任务
+./task-cli create-task --project openclaw-visualization --title "新功能"
+
+# 更新任务状态
+./task-cli update TASK-001 --status done
+```
+
+详见：[命令行工具文档](./PROJECT_TASK_GUIDE.md#命令行工具)
+
 ## API 文档
 
 ### Agent API
@@ -171,7 +194,8 @@ openclaw-visualization/
 
 详细的任务创建规范、最佳实践和示例，请参考：
 
-- 📖 [完整使用说明与模板](./TASK_TEMPLATE.md) - 详细的任务创建指南
+- 📖 [完整项目管理指南](./PROJECT_TASK_GUIDE.md) - 项目创建、任务管理、进度更新全流程
+- 📝 [任务模板与使用说明](./TASK_TEMPLATE.md) - 任务创建规范和最佳实践
 - 🚀 [快速参考](./TASK_QUICK_REF.md) - 常用模板和快捷参考
 
 ### 任务字段说明
