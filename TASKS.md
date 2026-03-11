@@ -1,91 +1,63 @@
-# openclaw-visualization
+# OpenClaw 集成
 
-> OpenClaw Agent 可视化监控平台
+> 将看板与 OpenClaw 深度集成，实现智能项目管理和任务跟踪
 
 ## 统计
 
-- **任务总数**: 16
-- **待处理**: 3
+- **任务总数**: 8
+- **待处理**: 4
 - **进行中**: 0
-- **已完成**: 13
-- **进度**: 81% (13/16)
+- **已完成**: 4
+- **进度**: 50% (4/8)
 
-## 阶段 4：Agent 监控优化（P1 - 核心功能）
+## test
 
 ### 任务列表
 
--  **TASK-014** `P1` `backend` `integration` `verification`
+-  **TASK-001** `P1 `devops` `automation``
+  - 状态: 已完成
+  - 描述: 验证 start.sh/stop.sh/start.bat/stop.bat 在不同平台上的功能正常，包括依赖安装、服务启动、端口检测、日志查看等
+
+## backend
+
+### 任务列表
+
+-  **TASK-002** `P1 `api` `integration``
+  - 状态: 已完成
+  - 描述: Agent 监控页面数据未与 OpenClaw 实时连接，需要实现从 OpenClaw API 或 WebSocket 获取真实的 Agent 状态、Token 使用等信息
+
+## design
+
+### 任务列表
+
+-  **TASK-003** `P1 `architecture` `integration``
   - 状态: 待处理
-  - 描述: 检查获取的 Agent 状态是否准确。验证从 OpenClaw Gateway WebSocket 获取的 Agent 状态是否准确反映真实运行状态。对比控制台显示的状态与看板显示的状态，找出差异并修复。
+  - 描述: 设计 OpenClaw 如何调用看板 API 创建任务、更新状态、查询进度，确定通信方式（HTTP API/WebSocket/CLI）
 
--  **TASK-015** `P1` `frontend` `ui` `user-experience`
+## feature
+
+### 任务列表
+
+-  **TASK-004** `P2 `ai` `automation``
   - 状态: 待处理
-  - 描述: 显示群组名称而不是 ID 号。Agent 卡片优先显示飞书群组的友好名称（如 OpenClaw 集成讨论组），而不是显示 ID 字符串（如 oc_0754a493527ed8a4b28bd0dffdf802de）。从 OpenClaw sessions 中获取真实的群组名称并显示。
+  - 描述: OpenClaw 从对话中提取项目需求，生成标准化的项目文档（README.md、TASKS.md），自动创建项目配置
 
--  **TASK-016** `P2` `frontend` `ui` `user-experience` `optimization`
+-  **TASK-005** `P2 `ai` `automation``
   - 状态: 待处理
-  - 描述: 用户可读性优化，减少困惑。简化 Agent 卡片中的技术指标，让普通用户也能理解。减少不必要的详细信息，优先显示用户关心的信息（如最后活动时间、消息数）。考虑添加图标和颜色提高可读性。
+  - 描述: OpenClaw 根据需求自动拆解任务，按优先级（P1/P2/P3）和领域（frontend/backend）分类，生成任务清单
 
-## 阶段 1：前端基础（P1 - 核心功能）
+-  **TASK-006** `P2 `api` `integration``
+  - 状态: 待处理
+  - 描述: 用户在对话中可以领取任务，完成任务后自动更新看板状态，进度实时反馈
 
-### 任务列表
-
--  **TASK-001** `P1`
-  - 状态: 已完成
-  - 描述: 创建 KanbanBoard 组件基础结构
-
--  **TASK-002** `P1`
-  - 状态: 已完成
-  - 描述: 实现三列布局（待处理、进行中、已完成）
-
--  **TASK-003** `P1`
-  - 状态: 已完成
-  - 描述: 创建 TaskCard 组件（显示任务信息）
-
--  **TASK-004** `P1`
-  - 状态: 已完成
-  - 描述: 实现任务状态过滤（只显示对应列的任务）
-
--  **TASK-005** `P1`
-  - 状态: 已完成
-  - 描述: 从 API 获取任务数据并显示
-
--  **TASK-006** `P1`
-  - 状态: 已完成
-  - 描述: 实现任务数量统计显示
-
-## 阶段 2：样式优化（P2）
+## docs
 
 ### 任务列表
 
--  **TASK-010** `P2`
+-  **TASK-007** `P2 `best-practices``
   - 状态: 已完成
-  - 描述: 优化任务卡片样式（极简风格）
+  - 描述: 总结本次开发中 MEMORY 的使用经验，制定 workspace/MEMORY.md 的使用规范和最佳实践
 
--  **TASK-011** `P2`
+-  **TASK-008** `P3 `best-practices``
   - 状态: 已完成
-  - 描述: 添加列标题和图标
-
--  **TASK-012** `P2`
-  - 状态: 已完成
-  - 描述: 优化整体页面布局
-
-## 阶段 3：测试与部署（P2）
-
-### 任务列表
-
--  **TASK-020** `P1`
-  - 状态: 已完成
-  - 描述: 测试任务看板功能
-
--  **TASK-021** `P1`
-  - 状态: 已完成
-  - 描述: 修复发现的 bug
-
--  **TASK-022** `P1`
-  - 状态: 已完成
-  - 描述: 更新 README.md（添加任务看板说明）
-
--  **TASK-023** `P1`
-  - 状态: 已完成
-  - 描述: 提交代码到 GitHub
+  - 描述: 总结本次开发中的良好实践（小步快跑、频繁提交、及时推送、文档同步），形成标准化的开发流程文档
