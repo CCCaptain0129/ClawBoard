@@ -8,10 +8,14 @@ interface Task {
   priority: 'P1' | 'P2' | 'P3'
   labels: string[]
   assignee: string | null
+  projectId?: string
 }
 
 interface TaskCardProps {
   task: Task
+  projectName?: string
+  projectColor?: string
+  projectIcon?: string
   onStatusChange?: (taskId: string, newStatus: 'todo' | 'in-progress' | 'done') => void
 }
 
@@ -27,15 +31,27 @@ const statusColors = {
   done: 'border-l-4 border-green-500',
 }
 
-const priorityOrder = { P1: 3, P2: 2, P3: 1 }
-
-export default function TaskCard({ task, onStatusChange }: TaskCardProps) {
+export default function TaskCard({ 
+  task, 
+  projectName, 
+  projectColor = '#3B82F6', 
+  projectIcon = '📊',
+  onStatusChange 
+}: TaskCardProps) {
   const mainLabel = task.labels.find(l => 
     !['todo', 'in-progress', 'done', 'P1', 'P2', 'P3'].includes(l)
   ) || '其他'
   
   return (
     <div className={`bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer ${statusColors[task.status]} group`}>
+      {/* 项目标签（多项目时显示） */}
+      {projectName && (
+        <div className="flex items-center gap-1.5 mb-2 text-xs font-medium" style={{ color: projectColor }}>
+          <span>{projectIcon}</span>
+          <span>{projectName}</span>
+        </div>
+      )}
+      
       <div className="flex items-start justify-between mb-2">
         <span className={`px-2 py-0.5 text-xs font-medium rounded border ${priorityColors[task.priority]}`}>
           {task.priority}
