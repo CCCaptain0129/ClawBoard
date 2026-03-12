@@ -7,15 +7,18 @@
   "color": "#F59E0B",
   "icon": "⚡",
   "createdAt": "2026-03-11T00:00:00.000Z",
-  "updatedAt": "2026-03-11T00:00:00.000Z",
+  "updatedAt": "2026-03-12T01:33:40.775Z",
   "tasks": [
     {
-      "id": "TASK-200",
+      "id": "EXB-001",
       "title": "前端页面开发",
       "description": "使用 React 开发登录、注册页面",
       "status": "todo",
       "priority": "P1",
-      "labels": ["frontend", "feature"],
+      "labels": [
+        "frontend",
+        "feature"
+      ],
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
@@ -24,12 +27,15 @@
       "comments": []
     },
     {
-      "id": "TASK-201",
+      "id": "EXB-002",
       "title": "UI 设计稿",
       "description": "完成首页和用户中心的设计稿",
       "status": "in-progress",
       "priority": "P2",
-      "labels": ["design", "ui"],
+      "labels": [
+        "design",
+        "ui"
+      ],
       "assignee": "charlie",
       "claimedBy": null,
       "dueDate": null,
@@ -38,12 +44,15 @@
       "comments": []
     },
     {
-      "id": "TASK-202",
+      "id": "EXB-003",
       "title": "组件库搭建",
       "description": "搭建基础组件库（按钮、表单、卡片等）",
       "status": "done",
       "priority": "P1",
-      "labels": ["frontend", "refactor"],
+      "labels": [
+        "frontend",
+        "refactor"
+      ],
       "assignee": "david",
       "claimedBy": null,
       "dueDate": null,

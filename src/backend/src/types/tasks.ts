@@ -19,6 +19,9 @@ export interface Project {
   description: string;
   status: string;
   leadAgent: string | null;
+  color: string;
+  icon: string;
+  taskPrefix: string;
   createdAt: string;
   updatedAt: string;
 }

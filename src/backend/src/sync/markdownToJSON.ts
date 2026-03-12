@@ -48,6 +48,9 @@ export class MarkdownToJSON {
         description: projectInfo.description || '',
         status: projectInfo.status || 'active',
         leadAgent: projectInfo.leadAgent || null,
+        color: projectInfo.color || '#3B82F6',
+        icon: projectInfo.icon || '📊',
+        taskPrefix: projectInfo.taskPrefix || 'TASK',
         createdAt: projectInfo.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };

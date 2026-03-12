@@ -14,11 +14,11 @@
 
 ### 任务列表
 
--  **TASK-100** `P1 `feature` `auth``
+-  **EXA-001** `P1 `feature` `auth``
   - 状态: 待处理
   - 描述: 实现用户登录、注册、JWT 认证
 
--  **TASK-101** `P1 `design` `database``
+-  **EXA-002** `P1 `design` `database``
   - 状态: 进行中
   - 描述: 设计用户、权限、项目相关数据表
   - 负责人: @alice
@@ -27,7 +27,7 @@
 
 ### 任务列表
 
--  **TASK-102** `P2 `api``
+-  **EXA-003** `P2 `api``
   - 状态: 已完成
   - 描述: 使用 Swagger 编写 API 接口文档
   - 负责人: @bob

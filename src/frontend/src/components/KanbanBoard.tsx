@@ -17,6 +17,7 @@ interface Project {
   description: string
   color: string
   icon: string
+  taskPrefix: string
 }
 
 const columns = [

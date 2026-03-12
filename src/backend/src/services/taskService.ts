@@ -23,9 +23,21 @@ export class TaskService {
   }
 
   async createTask(projectId: string, task: Partial<Task>): Promise<Task> {
+    const project = await this.getProjectById(projectId);
+    if (!project) {
+      throw new Error(`Project ${projectId} not found`);
+    }
+
     const tasks = await this.getTasksByProject(projectId);
+
+    // 获取当前项目的任务前缀，并生成序号
+    const prefix = project.taskPrefix || 'TASK';
+    const existingTaskIds = tasks.map(t => t.id);
+    const nextNumber = this.getNextTaskNumber(prefix, existingTaskIds);
+    const taskId = `${prefix}-${nextNumber.toString().padStart(3, '0')}`;
+
     const newTask: Task = {
-      id: task.id || `TASK-${Date.now()}`,
+      id: task.id || taskId,
       title: task.title || 'New Task',
       description: task.description || '',
       status: 'todo',
@@ -38,10 +50,22 @@ export class TaskService {
       updatedAt: new Date().toISOString(),
       comments: [],
     };
-    
+
     tasks.push(newTask);
     await this.saveTasks(projectId, tasks);
     return newTask;
+  }
+
+  private getNextTaskNumber(prefix: string, existingTaskIds: string[]): number {
+    const prefixPattern = new RegExp(`^${prefix}-(\\d+)$`);
+    const numbers = existingTaskIds
+      .map(id => {
+        const match = id.match(prefixPattern);
+        return match ? parseInt(match[1], 10) : 0;
+      })
+      .filter(num => num > 0);
+
+    return numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
   }
 
   async getTasksByProject(projectId: string): Promise<Task[]> {
