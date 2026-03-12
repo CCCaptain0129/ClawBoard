@@ -105,16 +105,22 @@ export FEISHU_APP_SECRET="你的app_secret"
 
 ## 快速开始
 
-### 一键启动（推荐）
+### 启动方式
 
-**macOS/Linux:**
+**普通模式（推荐用于开发）：**
+
 ```bash
-./start.sh
+./start.sh      # macOS/Linux
+start.bat       # Windows
 ```
 
-**Windows:**
-```cmd
-start.bat
+**守护进程模式（推荐用于生产环境）：**
+
+以守护进程模式启动，服务会在后台运行，并自动监控服务状态，崩溃时自动重启。
+
+```bash
+./start.sh --daemon      # macOS/Linux
+start.bat --daemon       # Windows
 ```
 
 一键启动脚本会自动：
@@ -122,11 +128,13 @@ start.bat
 - ✅ 自动安装依赖（首次运行）
 - ✅ 启动后端服务（端口 3000 / 3001）
 - ✅ 启动前端服务（端口 5173）
+- ✅ 守护模式：自动监控服务状态
 
 **停止服务：**
+
 ```bash
-./stop.sh  # macOS/Linux
-stop.bat    # Windows
+./stop.sh       # macOS/Linux
+stop.bat        # Windows
 ```
 
 ### 手动启动
@@ -356,8 +364,8 @@ pm2 serve dist 5173 --name openclaw-frontend
 - 🔄 [开发流程](./docs/DEVELOPMENT_WORKFLOW.md) - 开发工作流和规范
 
 ### 运维文档
-- 🤖 [守护进程管理](./DAEMON.md) - 守护进程启动、停止和管理
 - ⚡ [快速参考](./QUICK_REFERENCE.md) - 常用命令和快速查询
+- 🚀 [部署指南](./docs/DEPLOY.md) - 生产环境部署说明（包含 PM2 守护进程配置）
 
 ### 内部文档
 - 📋 [产品需求文档](./docs/PRD.md) - 产品功能和需求定义

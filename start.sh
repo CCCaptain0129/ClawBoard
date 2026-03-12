@@ -401,11 +401,142 @@ function show_access_info() {
     echo ""
 }
 
+# 显示帮助信息
+function show_help() {
+    echo "OpenClaw Visualization 启动脚本"
+    echo ""
+    echo "用法:"
+    echo "  $0 [选项]"
+    echo ""
+    echo "选项:"
+    echo "  --daemon, -d    以守护进程模式启动（后台运行，启动监控）"
+    echo "  --help, -h      显示此帮助信息"
+    echo ""
+    echo "示例:"
+    echo "  $0              普通模式启动"
+    echo "  $0 --daemon     守护进程模式启动"
+    exit 0
+}
+
+# 预处理命令行参数（在 main 之前）
+function pre_parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help|-h)
+                show_help
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+}
+
+# 启动监控脚本（内嵌监控逻辑）
+function start_watch() {
+    print_info "启动监控进程..."
+
+    # 创建临时目录
+    mkdir -p "$PROJECT_ROOT/tmp"
+
+    # 监控配置
+    local watch_log="$PROJECT_ROOT/tmp/daemon.log"
+    local watch_pid_file="$PROJECT_ROOT/tmp/watch.pid"
+    local restart_history="$PROJECT_ROOT/tmp/restart-history.log"
+    local check_interval=30
+
+    # 在后台启动监控进程
+    (
+        while true; do
+            # 检查后端服务
+            if [ -f "$BACKEND_PID_FILE" ]; then
+                local backend_pid=$(cat "$BACKEND_PID_FILE")
+                if ! ps -p $backend_pid > /dev/null 2>&1 || ! curl -s --max-time 5 "http://localhost:3000/health" > /dev/null 2>&1; then
+                    echo "[$(date '+%Y-%m-%d %H:%M:%S')] 后端服务异常，尝试重启..." >> "$watch_log"
+                    cd "$BACKEND_DIR"
+                    nohup npm run dev > "$BACKEND_LOG" 2>&1 &
+                    echo $! > "$BACKEND_PID_FILE"
+                    sleep 5
+                    if curl -s --max-time 5 "http://localhost:3000/health" > /dev/null 2>&1; then
+                        echo "[$(date '+%Y-%m-%d %H:%M:%S')] 后端服务重启成功" >> "$watch_log"
+                        echo "[$(date '+%Y-%m-%d %H:%M:%S')] 后端服务 - 自动重启" >> "$restart_history"
+                    fi
+                fi
+            fi
+
+            # 检查前端服务
+            if [ -f "$FRONTEND_PID_FILE" ]; then
+                local frontend_pid=$(cat "$FRONTEND_PID_FILE")
+                local frontend_port=5173
+                [ -f "$FRONTEND_PORT_FILE" ] && frontend_port=$(cat "$FRONTEND_PORT_FILE")
+
+                if ! ps -p $frontend_pid > /dev/null 2>&1 || ! curl -s --max-time 5 "http://localhost:$frontend_port" > /dev/null 2>&1; then
+                    echo "[$(date '+%Y-%m-%d %H:%M:%S')] 前端服务异常，尝试重启..." >> "$watch_log"
+                    cd "$FRONTEND_DIR"
+                    nohup npm run dev > "$FRONTEND_LOG" 2>&1 &
+                    echo $! > "$FRONTEND_PID_FILE"
+                    sleep 5
+                    # 检测实际端口
+                    local detected_port=$(grep -oE "Local:.*http://localhost:([0-9]+)" "$FRONTEND_LOG" | tail -1 | grep -oE "[0-9]+$" || echo "5173")
+                    echo $detected_port > "$FRONTEND_PORT_FILE"
+                    if curl -s --max-time 5 "http://localhost:$detected_port" > /dev/null 2>&1; then
+                        echo "[$(date '+%Y-%m-%d %H:%M:%S')] 前端服务重启成功 (端口: $detected_port)" >> "$watch_log"
+                        echo "[$(date '+%Y-%m-%d %H:%M:%S')] 前端服务 - 自动重启" >> "$restart_history"
+                    fi
+                fi
+            fi
+
+            sleep $check_interval
+        done
+    ) > "$watch_log" 2>&1 &
+
+    local watch_pid=$!
+    echo $watch_pid > "$watch_pid_file"
+
+    # 等待一下让进程启动
+    sleep 2
+
+    # 检查监控进程是否成功启动
+    if ps -p $watch_pid > /dev/null 2>&1; then
+        print_success "监控进程已启动 (PID: $watch_pid)"
+        return 0
+    fi
+
+    print_warning "监控进程启动失败"
+    return 1
+}
+
 # 主函数
 function main() {
+    local daemon_mode=false
+
+    # 解析命令行参数
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --daemon|-d)
+                daemon_mode=true
+                shift
+                ;;
+            --help|-h)
+                show_help
+                exit 0
+                ;;
+            *)
+                print_error "未知参数: $1"
+                echo ""
+                show_help
+                exit 1
+                ;;
+        esac
+    done
+
     echo ""
     echo "=========================================="
-    echo "OpenClaw Visualization 一键启动脚本 (优化版)"
+    if [ "$daemon_mode" = true ]; then
+        echo "OpenClaw Visualization 守护进程启动"
+    else
+        echo "OpenClaw Visualization 一键启动脚本 (优化版)"
+    fi
     echo "=========================================="
     echo ""
 
@@ -424,9 +555,29 @@ function main() {
     start_frontend
     echo ""
 
-    # 显示访问信息
-    show_access_info
+    # 如果是守护模式，启动监控脚本
+    if [ "$daemon_mode" = true ]; then
+        start_watch
+        echo ""
+
+        echo "=========================================="
+        echo -e "${GREEN}✅ 守护进程已启动${NC}"
+        echo "=========================================="
+        echo ""
+        echo "📝 监控日志: tail -f $PROJECT_ROOT/tmp/daemon.log"
+        echo "📝 重启历史: tail -f $PROJECT_ROOT/tmp/restart-history.log"
+        echo ""
+        echo "🛑 停止守护进程: ./stop.sh"
+        echo "=========================================="
+        echo ""
+    else
+        # 显示访问信息
+        show_access_info
+    fi
 }
 
+# 预处理命令行参数（提前处理 --help）
+pre_parse_args "$@"
+
 # 运行主函数
-main
+main "$@"
