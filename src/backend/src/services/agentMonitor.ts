@@ -1,6 +1,7 @@
 import WebSocket from 'ws';
 import * as http from 'http';
 import { feishuService, FeishuGroupInfo } from './feishuService';
+import { getConfig } from '../config/config';
 
 export interface AgentStatus {
   id: string;
@@ -25,10 +26,16 @@ export interface AgentStatus {
 
 export class OpenClawAgentMonitor {
   private ws: WebSocket | null = null;
-  private gatewayUrl: string = 'ws://127.0.0.1:18789';
-  private token: string = '57d11dfee3fa0b04fae66be5a74559513c1d5f521ba196f2';
+  private gatewayUrl: string;
+  private token: string;
   private requestId: number = 1;
   private messageTimestampCache: Map<string, number> = new Map();
+
+  constructor() {
+    const config = getConfig();
+    this.gatewayUrl = config.gateway.url;
+    this.token = config.gateway.token;
+  }
 
   /**
    * 从 sessionFile 读取最后一条消息的时间戳
@@ -196,9 +203,21 @@ export class OpenClawAgentMonitor {
   private async parseGatewaySession(session: any, sessionKey?: string): Promise<AgentStatus> {
     const key = sessionKey || session.key || session.id || '';
 
-    // DEBUG: 打印所有飞书群组的 session 数据
-    if (key.includes('feishu:group:') || key.includes('oc_')) {
-      console.log(`DEBUG: Full session data for ${key}:`, JSON.stringify(session, null, 2));
+    // DEBUG: 打印所有飞书群组的完整 session 数据
+    if (key.includes('feishu') || key.includes('oc_')) {
+      console.log(`\n========== DEBUG: Feishu Session ==========`);
+      console.log(`Session Key: ${key}`);
+      console.log(`Full session data:`, JSON.stringify(session, null, 2));
+      console.log(`\nKey fields:`);
+      console.log(`  - session.to: ${session.to}`);
+      console.log(`  - session.key: ${session.key}`);
+      console.log(`  - session.id: ${session.id}`);
+      console.log(`  - session.chatId: ${session.chatId}`);
+      console.log(`  - session.chat_id: ${session.chat_id}`);
+      console.log(`  - session.origin?.id: ${session.origin?.id}`);
+      console.log(`  - session.origin?.key: ${session.origin?.key}`);
+      console.log(`  - session.deliveryContext?.chat_id: ${session.deliveryContext?.chat_id}`);
+      console.log(`============================================\n`);
     }
 
     // 优先从 sessionFile 读取真实的最后消息时间
@@ -237,18 +256,68 @@ export class OpenClawAgentMonitor {
 
     // 获取群组名称（如果是飞书群组）
     let groupName = '';
-    console.log(`DEBUG: key=${key}, session.to=${session.to}`);
-
-    // 尝试从 key 中提取 chat_id
     let chatId = '';
-    if (session.to && session.to.startsWith('chat:oc_')) {
-      chatId = session.to;
-    } else if (key.includes('feishu:group:oc_')) {
-      const match = key.match(/feishu:group:(oc_[a-f0-9]+)/);
-      if (match) {
-        chatId = `chat:${match[1]}`;
+
+    // 尝试从多个字段中提取 chat_id
+    const extractChatId = () => {
+      // 1. 直接检查 session.to
+      if (session.to && session.to.startsWith('chat:oc_')) {
+        console.log(`  → Found chat_id in session.to: ${session.to}`);
+        return session.to;
       }
-    }
+
+      // 2. 检查 key 格式：agent:main:feishu:group:oc_xxx
+      if (key.includes('feishu:group:oc_')) {
+        const match = key.match(/feishu:group:(oc_[a-f0-9]+)/);
+        if (match) {
+          const extracted = `chat:${match[1]}`;
+          console.log(`  → Extracted chat_id from key: ${extracted}`);
+          return extracted;
+        }
+      }
+
+      // 3. 检查 session.chatId
+      if (session.chatId && session.chatId.startsWith('chat:oc_')) {
+        console.log(`  → Found chat_id in session.chatId: ${session.chatId}`);
+        return session.chatId;
+      }
+
+      // 4. 检查 session.chat_id
+      if (session.chat_id && session.chat_id.startsWith('chat:oc_')) {
+        console.log(`  → Found chat_id in session.chat_id: ${session.chat_id}`);
+        return session.chat_id;
+      }
+
+      // 5. 检查 session.chat_id（不带 chat: 前缀的情况）
+      if (session.chat_id && session.chat_id.startsWith('oc_')) {
+        const extracted = `chat:${session.chat_id}`;
+        console.log(`  → Extracted chat_id from session.chat_id: ${extracted}`);
+        return extracted;
+      }
+
+      // 6. 检查 origin.id 或 origin.key
+      if (session.origin?.id && session.origin.id.startsWith('oc_')) {
+        const extracted = `chat:${session.origin.id}`;
+        console.log(`  → Extracted chat_id from origin.id: ${extracted}`);
+        return extracted;
+      }
+      if (session.origin?.key && session.origin.key.startsWith('chat:oc_')) {
+        console.log(`  → Found chat_id in origin.key: ${session.origin.key}`);
+        return session.origin.key;
+      }
+
+      // 7. 检查 deliveryContext.chat_id
+      if (session.deliveryContext?.chat_id && session.deliveryContext.chat_id.startsWith('oc_')) {
+        const extracted = `chat:${session.deliveryContext.chat_id}`;
+        console.log(`  → Extracted chat_id from deliveryContext.chat_id: ${extracted}`);
+        return extracted;
+      }
+
+      console.log(`  → No chat_id found in session`);
+      return null;
+    };
+
+    chatId = extractChatId();
 
     if (chatId) {
       try {
@@ -349,21 +418,56 @@ export class OpenClawAgentMonitor {
     } else if (inactiveTime > 7 * 24 * 60 * 60 * 1000) {
       status = 'stopped';
     }
-    
+
     const totalTokens = session.totalTokens || 0;
     const inputTokens = session.inputTokens || session.contextTokens || 0;
     const outputTokens = session.outputTokens || (totalTokens - inputTokens);
 
-    // 获取群组名称
+    // 获取群组名称 - 使用相同的提取逻辑
     let groupName = '';
-    if (session.to && session.to.startsWith('chat:oc_')) {
-      const chatId = session.to;
+    let chatId = '';
+
+    // 尝试从多个字段中提取 chat_id
+    const extractChatId = () => {
+      if (session.to && session.to.startsWith('chat:oc_')) {
+        return session.to;
+      }
+      if (key.includes('feishu:group:oc_')) {
+        const match = key.match(/feishu:group:(oc_[a-f0-9]+)/);
+        if (match) return `chat:${match[1]}`;
+      }
+      if (session.chatId && session.chatId.startsWith('chat:oc_')) {
+        return session.chatId;
+      }
+      if (session.chat_id && session.chat_id.startsWith('oc_')) {
+        return `chat:${session.chat_id}`;
+      }
+      if (session.origin?.id && session.origin.id.startsWith('oc_')) {
+        return `chat:${session.origin.id}`;
+      }
+      if (session.origin?.key && session.origin.key.startsWith('chat:oc_')) {
+        return session.origin.key;
+      }
+      return null;
+    };
+
+    chatId = extractChatId();
+
+    console.log(`\n========== fetchGroupName ==========`);
+    console.log(`Session Key: ${key}`);
+    console.log(`Extracted chatId: ${chatId}`);
+
+    if (chatId) {
+      console.log(`Calling feishuService.getCachedGroupInfo...`);
       try {
         const groupInfo = await feishuService.getCachedGroupInfo(chatId);
         groupName = groupInfo.name;
+        console.log(`Result: groupName = "${groupName}"`);
       } catch (error) {
         console.warn(`Failed to fetch group info for ${chatId}:`, error);
       }
+    } else {
+      console.log(`No chatId available, skipping group name fetch`);
     }
 
     return {

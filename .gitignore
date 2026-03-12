@@ -14,6 +14,10 @@ build/
 .env.production
 .env.development
 
+# Configuration files (contain sensitive data)
+src/backend/config/openclaw.json
+openclaw.json
+
 # IDE
 .vscode/
 .idea/

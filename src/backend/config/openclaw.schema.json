@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OpenClaw Configuration",
+  "type": "object",
+  "required": ["gateway"],
+  "properties": {
+    "gateway": {
+      "type": "object",
+      "description": "OpenClaw Gateway 配置",
+      "required": ["url", "token"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "Gateway WebSocket 地址，例如：ws://127.0.0.1:18789",
+          "format": "uri"
+        },
+        "token": {
+          "type": "string",
+          "description": "Gateway Token，通过 'openclaw gateway status' 获取"
+        }
+      }
+    },
+    "feishu": {
+      "type": "object",
+      "description": "飞书应用配置（可选）",
+      "properties": {
+        "appId": {
+          "type": "string",
+          "description": "飞书应用 ID"
+        },
+        "appSecret": {
+          "type": "string",
+          "description": "飞书应用密钥"
+        }
+      }
+    },
+    "notes": {
+      "type": "object",
+      "description": "配置说明（不会被读取）"
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import WebSocket from 'ws';
 import * as fs from 'fs';
 import * as path from 'path';
+import { getConfig } from '../config/config';
 
 export class OpenClawWebSocket {
   private ws: WebSocket | null = null;
@@ -8,12 +9,19 @@ export class OpenClawWebSocket {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 5000;
+  private gatewayUrl: string = '';
+  private token: string = '';
 
   constructor(
-    private gatewayUrl: string = 'ws://127.0.0.1:18789',
-    private token: string = '57d11dfee3fa0b04fae66be5a74559513c1d5f521ba196f2',
+    gatewayUrl?: string,
+    token?: string,
     private onAgentsUpdate?: (agents: any[]) => void
-  ) {}
+  ) {
+    // 如果提供了参数，使用参数；否则从配置文件读取
+    const config = getConfig();
+    this.gatewayUrl = gatewayUrl || config.gateway.url;
+    this.token = token || config.gateway.token;
+  }
 
   connect(): void {
     const url = `${this.gatewayUrl}?token=${this.token}`;

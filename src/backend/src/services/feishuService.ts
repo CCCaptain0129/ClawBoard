@@ -1,4 +1,5 @@
 import * as crypto from 'crypto';
+import { getConfig, hasFeishuConfig } from '../config/config';
 
 export interface FeishuGroupInfo {
   name: string;
@@ -8,9 +9,21 @@ export interface FeishuGroupInfo {
 }
 
 export class FeishuService {
-  private appId: string = 'cli_a9285709db78dbef';
-  private appSecret: string = 'kSgiXCzM1gUXWcRYzw8TnDhNr4QSwlSoS';
+  private appId: string | undefined;
+  private appSecret: string | undefined;
   private baseUrl: string = 'https://open.feishu.cn/open-apis';
+  private enabled: boolean;
+
+  constructor() {
+    const config = getConfig();
+    if (config.feishu?.appId && config.feishu?.appSecret) {
+      this.appId = config.feishu.appId;
+      this.appSecret = config.feishu.appSecret;
+      this.enabled = true;
+    } else {
+      this.enabled = false;
+    }
+  }
   
   private accessToken: string | null = null;
   private tokenExpireTime: number = 0;
@@ -19,6 +32,10 @@ export class FeishuService {
    * 获取访问令牌
    */
   async getAccessToken(): Promise<string> {
+    // 如果未配置飞书应用，抛出错误
+    if (!this.enabled || !this.appId || !this.appSecret) {
+      throw new Error('Feishu service is not configured. Please set appId and appSecret in config.');
+    }
     // 如果 token 还有有效期，直接返回
     if (this.accessToken && Date.now() < this.tokenExpireTime) {
       return this.accessToken;
@@ -75,7 +92,7 @@ export class FeishuService {
    */
   private generateSignature(timestamp: number): string {
     const signString = `${timestamp}\n${this.appSecret}`;
-    const hmac = crypto.createHmac('sha256', this.appSecret);
+    const hmac = crypto.createHmac('sha256', this.appSecret!);
     return hmac.update(signString).digest('base64');
   }
 
@@ -83,10 +100,26 @@ export class FeishuService {
    * 获取群组信息
    */
   async getGroupInfo(chatId: string): Promise<FeishuGroupInfo> {
-    try {
-      const token = await this.getAccessToken();
+    // 如果未配置飞书应用，返回默认值
+    if (!this.enabled || !this.appId || !this.appSecret) {
+      return {
+        name: chatId,
+        chat_id: chatId,
+        avatar: '',
+        tenant_key: '',
+      };
+    }
 
-      const response = await fetch(`${this.baseUrl}/im/v1/chats/${chatId}`, {
+    try {
+      console.log(`\n========== Feishu API Call ==========`);
+      console.log(`Fetching group info for: ${chatId}`);
+      const token = await this.getAccessToken();
+      console.log(`Access token: ${token ? 'OK' : 'NULL'}`);
+
+      const url = `${this.baseUrl}/im/v1/chats/${chatId}`;
+      console.log(`Request URL: ${url}`);
+
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -94,7 +127,12 @@ export class FeishuService {
         },
       });
 
-      const data = await response.json();
+      console.log(`Response status: ${response.status}`);
+
+      const text = await response.text();
+      console.log(`Response body:`, text);
+
+      const data = JSON.parse(text);
 
       if (data.code !== 0) {
         console.warn(`Feishu API warning: ${data.code} - ${data.msg}`);
@@ -142,13 +180,20 @@ export class FeishuService {
   private groupInfoCache: Map<string, FeishuGroupInfo> = new Map();
 
   async getCachedGroupInfo(chatId: string): Promise<FeishuGroupInfo> {
+    console.log(`\n========== getCachedGroupInfo ==========`);
+    console.log(`Chat ID: ${chatId}`);
+    console.log(`Cache keys: ${Array.from(this.groupInfoCache.keys()).join(', ')}`);
+
     if (this.groupInfoCache.has(chatId)) {
-      return this.groupInfoCache.get(chatId)!;
+      const cached = this.groupInfoCache.get(chatId)!;
+      console.log(`Cache HIT: ${cached.name}`);
+      return cached;
     }
 
+    console.log(`Cache MISS, calling API...`);
     const groupInfo = await this.getGroupInfo(chatId);
     this.groupInfoCache.set(chatId, groupInfo);
-
+    console.log(`API returned: ${groupInfo.name}`);
     return groupInfo;
   }
 }

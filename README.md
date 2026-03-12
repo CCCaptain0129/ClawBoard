@@ -36,6 +36,73 @@
 - WebSocket 服务
 - 文件系统操作
 
+## 配置
+
+本项目需要配置 OpenClaw Gateway Token 才能连接到 OpenClaw 服务。飞书应用配置是可选的，用于获取群组名称。
+
+### 获取 Gateway Token
+
+1. 确保已安装 OpenClaw 并启动 Gateway：
+   ```bash
+   openclaw gateway status
+   openclaw gateway start
+   ```
+
+2. 获取 Gateway Token：
+   ```bash
+   openclaw gateway status
+   ```
+   输出中会显示 `Gateway Token`，复制该值。
+
+### 配置方式
+
+本项目支持两种配置方式：
+
+#### 方式 1：配置文件（推荐）
+
+1. 复制示例配置文件：
+   ```bash
+   cd src/backend/config
+   cp openclaw.json.example openclaw.json
+   ```
+
+2. 编辑 `openclaw.json`，填入你的配置：
+   ```json
+   {
+     "gateway": {
+       "url": "ws://127.0.0.1:18789",
+       "token": "你的-gateway-token-here"
+     },
+     "feishu": {
+       "appId": "cli_你的app_id",
+       "appSecret": "你的app_secret"
+     }
+   }
+   ```
+
+3. 飞书配置是可选的，如果不配置将跳过群组名称获取功能。
+
+#### 方式 2：环境变量
+
+设置环境变量（推荐在 `.env` 文件或 shell 配置中）：
+
+```bash
+export OPENCLAW_GATEWAY_URL="ws://127.0.0.1:18789"
+export OPENCLAW_GATEWAY_TOKEN="你的-gateway-token-here"
+export FEISHU_APP_ID="cli_你的app_id"
+export FEISHU_APP_SECRET="你的app_secret"
+```
+
+**配置优先级：** 环境变量 > 配置文件 > 默认值
+
+### 飞书应用配置（可选）
+
+如果需要获取飞书群组名称，需要配置飞书应用：
+
+1. 在[飞书开放平台](https://open.feishu.cn/)创建应用
+2. 获取 `app_id` 和 `app_secret`
+3. 在配置文件或环境变量中填入上述值
+
 ## 快速开始
 
 ### 一键启动（推荐）
@@ -118,7 +185,7 @@ npm run dev
 ./task-cli create-task --project openclaw-visualization --title "新功能"
 
 # 更新任务状态
-./task-cli update TASK-001 --status done
+./task-cli update VIS-004 --status done
 ```
 
 详见：[用户指南](./USER_GUIDE.md#命令行工具)

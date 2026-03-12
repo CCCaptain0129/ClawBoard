@@ -1,0 +1,22 @@
+{
+  "$schema": "./openclaw.schema.json",
+  "gateway": {
+    "url": "ws://127.0.0.1:18789",
+    "token": "your-gateway-token-here"
+  },
+  "feishu": {
+    "appId": "cli_your_app_id_here",
+    "appSecret": "your_app_secret_here"
+  },
+  "notes": {
+    "gateway": {
+      "url": "OpenClaw Gateway WebSocket 地址，默认为 ws://127.0.0.1:18789",
+      "token": "Gateway Token，通过运行 'openclaw gateway status' 获取"
+    },
+    "feishu": {
+      "appId": "飞书应用 ID（app_id），可选配置",
+      "appSecret": "飞书应用密钥（app_secret），可选配置",
+      "optional": "如果不配置飞书应用，将跳过群组名称获取功能"
+    }
+  }
+}
