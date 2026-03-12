@@ -165,6 +165,11 @@ export default function KanbanBoard() {
     return projects.find(p => p.id === currentProject) || { name: '未知项目', color: '#6366F1', icon: '📁' }
   }
 
+  // 根据任务 ID 前缀查找对应的项目
+  const findProjectByTaskPrefix = (taskId: string) => {
+    return projects.find(p => taskId.startsWith(p.taskPrefix))
+  }
+
   // 错误提示组件
   const ErrorAlert = ({ message, suggestion }: { message: string; suggestion?: string }) => (
     <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
@@ -367,28 +372,19 @@ export default function KanbanBoard() {
                     暂无任务
                   </div>
                 ) : (
-                  columnTasks.map(task => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      projectName={currentProject === 'all' ? projects.find(p => task.id.startsWith('TASK-') && (
-                        (task.id.startsWith('TASK-0') && p.id === 'openclaw-visualization') ||
-                        (task.id.startsWith('TASK-1') && p.id === 'example-project-1') ||
-                        (task.id.startsWith('TASK-2') && p.id === 'example-project-2')
-                      ))?.name : undefined}
-                      projectColor={currentProject === 'all' ? projects.find(p => task.id.startsWith('TASK-') && (
-                        (task.id.startsWith('TASK-0') && p.id === 'openclaw-visualization') ||
-                        (task.id.startsWith('TASK-1') && p.id === 'example-project-1') ||
-                        (task.id.startsWith('TASK-2') && p.id === 'example-project-2')
-                      ))?.color : undefined}
-                      projectIcon={currentProject === 'all' ? projects.find(p => task.id.startsWith('TASK-') && (
-                        (task.id.startsWith('TASK-0') && p.id === 'openclaw-visualization') ||
-                        (task.id.startsWith('TASK-1') && p.id === 'example-project-1') ||
-                        (task.id.startsWith('TASK-2') && p.id === 'example-project-2')
-                      ))?.icon : undefined}
-                      onStatusChange={handleStatusChange}
-                    />
-                  ))
+                  columnTasks.map(task => {
+                    const project = currentProject === 'all' ? findProjectByTaskPrefix(task.id) : undefined
+                    return (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        projectName={project?.name}
+                        projectColor={project?.color}
+                        projectIcon={project?.icon}
+                        onStatusChange={handleStatusChange}
+                      />
+                    )
+                  })
                 )}
               </div>
             </div>

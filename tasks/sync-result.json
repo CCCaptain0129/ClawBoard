@@ -1,0 +1,48 @@
+{
+  "success": true,
+  "projects": [
+    {
+      "projectId": "openclaw-visualization",
+      "projectName": "OpenClaw 可视化",
+      "status": "success",
+      "taskCount": 30,
+      "updatedCount": 2,
+      "conflictCount": 0,
+      "updatedTasks": [
+        "VIS-019 (done → todo)",
+        "VIS-026 (done → in-progress)"
+      ]
+    },
+    {
+      "projectId": "example-project-1",
+      "projectName": "示例项目 A",
+      "status": "success",
+      "taskCount": 3,
+      "updatedCount": 0,
+      "conflictCount": 0,
+      "updatedTasks": []
+    },
+    {
+      "projectId": "example-project-2",
+      "projectName": "示例项目 B",
+      "status": "success",
+      "taskCount": 0,
+      "updatedCount": 0,
+      "conflictCount": 0,
+      "updatedTasks": []
+    },
+    {
+      "projectId": "openclaw-integration",
+      "projectName": "OpenClaw 集成",
+      "status": "success",
+      "taskCount": 9,
+      "updatedCount": 0,
+      "conflictCount": 0,
+      "updatedTasks": []
+    }
+  ],
+  "totalTasks": 42,
+  "updatedTasks": 2,
+  "conflicts": 0,
+  "errors": []
+}

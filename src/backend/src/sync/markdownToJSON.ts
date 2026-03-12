@@ -29,7 +29,7 @@ export class MarkdownToJSON {
           continue;
         }
 
-        if (line.match(/^-\s+(?:\[x?\]|\*\*TASK-\d+\*\*)/)) {
+        if (line.match(/^-\s+(?:\[x?\]|\*\*[A-Z]+-\d+\*\*)/)) {
           const task = this.parseTask(line, lines, i + 1, currentStage?.name || '');
           if (currentStage) {
             currentStage.tasks.push(task);
@@ -71,7 +71,7 @@ export class MarkdownToJSON {
     let status: 'todo' | 'in-progress' | 'done' = 'todo';
     let assignee: string | null = null;
 
-    const format2Match = line.match(/^-\s+\*\*(TASK-\d+)\*\*\s+(.*)$/);
+    const format2Match = line.match(/^-\s+\*\*([A-Z]+-\d+)\*\*\s+(.*)$/);
     
     if (format2Match) {
       taskId = format2Match[1];

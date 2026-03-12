@@ -5,6 +5,7 @@ import path from 'path';
 import { WebSocketServer } from 'ws';
 import { AgentService } from './services/agentService';
 import { TaskService } from './services/taskService';
+import { StatusSyncService } from './services/statusSyncService';
 import { agentRoutes } from './routes/agents';
 import { taskRoutes } from './routes/tasks';
 import { syncRoutes } from './routes/sync';
@@ -33,6 +34,7 @@ const taskService = new TaskService();
 const wsHandler = new WebSocketServer({ port: WS_PORT });
 const wsServer = new WebSocketHandler(wsHandler);
 const scheduler = new AgentTaskScheduler(taskService, wsServer);
+const statusSyncService = new StatusSyncService(taskService, wsServer);
 
 app.use('/api/agents', agentRoutes(agentService));
 app.use('/api/tasks', taskRoutes(taskService, wsServer));
@@ -57,6 +59,10 @@ const syncManager = new SyncManager(markdownToJSON, jsonToMarkdown, taskService)
 syncManager.syncFromMarkdown('openclaw-visualization')
   .then(() => console.log('✅ Initial sync completed'))
   .catch(err => console.error('❌ Initial sync failed:', err));
+
+// 启动状态同步服务（监控 SUBAGENTS任务分发记录.md）
+statusSyncService.start();
+console.log('📋 Status sync service started');
 
 // Start polling
 setInterval(async () => {
