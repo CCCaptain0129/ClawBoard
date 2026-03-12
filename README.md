@@ -347,6 +347,27 @@ pm2 serve dist 5173 --name openclaw-frontend
 ### 前端无法连接后端
 检查 CORS 配置和后端服务状态。
 
+## 相关文档
+
+### 核心文档
+- 📖 [用户指南](./USER_GUIDE.md) - 任务管理、命令行工具使用说明
+- 🏗️ [架构设计](./docs/ARCHITECTURE.md) - 系统架构和设计决策
+- 🚀 [部署指南](./docs/DEPLOY.md) - 生产环境部署说明
+- 🔄 [开发流程](./docs/DEVELOPMENT_WORKFLOW.md) - 开发工作流和规范
+
+### 运维文档
+- 🤖 [守护进程管理](./DAEMON.md) - 守护进程启动、停止和管理
+- ⚡ [快速参考](./QUICK_REFERENCE.md) - 常用命令和快速查询
+
+### 内部文档
+- 📋 [产品需求文档](./docs/PRD.md) - 产品功能和需求定义
+- 🔌 [OpenClaw 集成](./docs/OPENCLAW_INTEGRATION.md) - OpenClaw 集成实现
+- 🧠 [内存使用分析](./docs/MEMORY_USAGE.md) - 内存使用和优化建议
+- 🛠️ [集成设计](./docs/INTEGRATION_DESIGN.md) - 各模块集成设计
+
+### 归档文档
+- 📁 [归档文档](./docs/archive/) - 历史测试文件和临时文档
+
 ## 许可证
 
 MIT License
