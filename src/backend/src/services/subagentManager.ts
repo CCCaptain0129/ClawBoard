@@ -219,15 +219,16 @@ export class SubagentManager {
     const escapedId = subagentId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
     // 使用更精确的匹配：从 Subagent ID 到任务标题
-    // 格式：**Subagent ID**: `subagentId` ... **任务**: TASK-XXX - title
+    // 支持多种任务ID格式：VIS-xxx, INT-xxx, EXA-xxx, TASK-xxx, TASK-TEST-xxx 等
+    // 格式：PREFIX(XXX)-NNN 或 PREFIX(XXX)-PREFIX(XXX)-NNN
     const pattern = new RegExp(
-      'Subagent ID.*`' + escapedId + '`[\\s\\S]*?\\*\\*任务\\*\\*:\\s*TASK-(\\d+)',
+      'Subagent ID.*`' + escapedId + '`[\\s\\S]*?\\*\\*任务\\*\\*:\\s*([A-Z][A-Z0-9-]*\\d{3,4})',
       's'
     );
     const match = content.match(pattern);
 
     if (match) {
-      const taskId = `TASK-${match[1]}`;
+      const taskId = match[1];
       console.log(`[SubagentManager] findTaskIdBySubagentId: Found taskId = ${taskId}`);
       return taskId;
     }

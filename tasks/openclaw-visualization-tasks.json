@@ -6,8 +6,9 @@
   "leadAgent": null,
   "color": "#3B82F6",
   "icon": "📊",
+  "taskPrefix": "VIS",
   "createdAt": "2026-03-10T00:00:00.000Z",
-  "updatedAt": "2026-03-12T01:33:40.718Z",
+  "updatedAt": "2026-03-12T02:12:40.283Z",
   "tasks": [
     {
       "id": "VIS-001",
@@ -411,9 +412,9 @@
     },
     {
       "id": "VIS-026",
-      "title": "修复任务状态同步问题。Subagent完成或开始任务时，看板任务状态未自动更新。需要实现：Subagent创建时任务状态→in-progress，Subagent完成时任务状态→done，确保看板实时反映真实状态。",
-      "description": "修复任务状态同步问题。Subagent完成或开始任务时，看板任务状态未自动更新。需要实现：Subagent创建时任务状态→in-progress，Subagent完成时任务状态→done，确保看板实时反映真实状态。",
-      "status": "in-progress",
+      "title": "修复任务状态同步问题。Subagent完成或开始任务时，看板任务状态未自动更新。需要实现：Subagent创建时任务状态→in-progress，Subagent完成时任务状态→done，确保看板实时反映真实状态。（已完成修复：问题1 - 优化任务ID查找正则表达式支持多种格式 VIS-xxx, TASK-xxx, TASK-TEST-xxx 等；问题2 - 任务持久化功能已验证正常工作）",
+      "description": "修复任务状态同步问题。Subagent完成或开始任务时，看板任务状态未自动更新。需要实现：Subagent创建时任务状态→in-progress，Subagent完成时任务状态→done，确保看板实时反映真实状态。（已完成修复：问题1 - 优化任务ID查找正则表达式支持多种格式 VIS-xxx, TASK-xxx, TASK-TEST-xxx 等；问题2 - 任务持久化功能已验证正常工作）",
+      "status": "done",
       "priority": "P2",
       "labels": [
         "阶段 5：任务管理增强（P0 - 紧急修复）"
@@ -471,6 +472,22 @@
       "dueDate": null,
       "createdAt": "2026-03-11T23:46:45.202Z",
       "updatedAt": "2026-03-11T23:46:45.202Z",
+      "comments": []
+    },
+    {
+      "id": "TASK-SYNC-001",
+      "title": "状态同步测试任务",
+      "description": "测试状态同步机制是否正常工作",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "测试"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T02:06:31.215Z",
+      "updatedAt": "2026-03-12T02:06:31.215Z",
       "comments": []
     }
   ]

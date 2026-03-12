@@ -239,7 +239,7 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
       const fs = await import('fs');
       const recordingPath = '/Users/ot/.openclaw/workspace/projects/openclaw-visualization/docs/internal/SUBAGENTS任务分发记录.md';
       const content = fs.readFileSync(recordingPath, 'utf-8');
-      const match = content.match(new RegExp(`Subagent ID.*\`${subagentId}\`.*任务:\\s*(TASK-\\d+)`, 's'));
+      const match = content.match(new RegExp(`Subagent ID.*\`${subagentId}\`.*任务:\\s*([A-Z][A-Z0-9-]*\\d{3,4})`, 's'));
       const taskId = match ? match[1] : null;
 
       await subagentManager.markSubagentComplete(subagentId, {
