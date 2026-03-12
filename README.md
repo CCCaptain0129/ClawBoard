@@ -22,19 +22,23 @@
 - 优先级和标签分类
 - 响应式设计，极简风格
 
-## 技术栈
+## 开发指南
 
-### 前端
-- React 18 + TypeScript
-- Vite
-- Tailwind CSS
-- WebSocket 客户端
+### 开发原则
 
-### 后端
-- Node.js + Express
-- TypeScript
-- WebSocket 服务
-- 文件系统操作
+1. **小步快跑**：每完成一个小任务就进行测试
+2. **测试优先**：开发新功能前先编写测试用例
+3. **定期推送**：每完成一个功能模块就推送到 GitHub
+4. **文档同步**：代码变更后立即更新相关文档
+
+### 重要教训
+
+- 修改代码前先提交到 git，避免数据丢失
+
+### 技术栈
+
+- **前端**: React 18 + TypeScript + Vite + Tailwind CSS
+- **后端**: Node.js + Express + WebSocket
 
 ## 配置
 
