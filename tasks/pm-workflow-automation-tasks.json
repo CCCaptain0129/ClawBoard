@@ -554,19 +554,25 @@
       "id": "PMW-033",
       "title": "修复 Subagent 执行时看板 in-progress 为空的问题",
       "description": "当 main agent 使用 sessions_spawn 创建 subagent 执行开发任务时，看板任务应自动进入 in-progress 状态并显示 claimedBy。Subagent 完成后应自动变为 done。实现：增强 SubagentMonitorService 以自动检测 OpenClaw sessions.json 中的新 subagent 会话，从 label 中解析任务 ID，自动注册并更新任务状态。",
-      "status": "in-progress",
+      "status": "done",
       "priority": "P0",
       "labels": [
         "阶段 6：闭环补齐（P0 - 核心）"
       ],
       "assignee": null,
-      "claimedBy": "agent:main:subagent:29cb82e8-4631-408f-bb3c-caa48cdac058",
+      "claimedBy": null,
       "dueDate": null,
       "startTime": null,
-      "completeTime": null,
+      "completeTime": "2026-03-13T09:15:00.000Z",
       "createdAt": "2026-03-13T09:10:00.000Z",
-      "updatedAt": "2026-03-13T09:10:00.000Z",
-      "comments": []
+      "updatedAt": "2026-03-13T09:15:00.000Z",
+      "comments": [
+        {
+          "author": "subagent",
+          "content": "已实现：增强 SubagentMonitorService 以自动检测 OpenClaw sessions.json 中的新 subagent 会话，从 label 解析任务 ID，自动注册并更新任务状态。使用方法见 docs/SUBAGENT_KANBAN_BINDING_GUIDE.md",
+          "createdAt": "2026-03-13T09:15:00.000Z"
+        }
+      ]
     },
     {
       "id": "PMW-024",
