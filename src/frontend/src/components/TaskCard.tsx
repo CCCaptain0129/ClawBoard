@@ -45,7 +45,7 @@ const statusColors = {
  */
 function formatSubagentId(claimedBy: string | null): string | null {
   if (!claimedBy) return null
-  
+
   // 提取 subagent 后的 UUID 或数字
   const match = claimedBy.match(/subagent:([a-f0-9-]+|\d+)/i)
   if (match) {
@@ -57,7 +57,7 @@ function formatSubagentId(claimedBy: string | null): string | null {
     // 如果是数字，取后8位
     return 'subagent:' + id.slice(-8)
   }
-  
+
   // 通用处理：取后12位
   return claimedBy.slice(-12)
 }
@@ -67,7 +67,7 @@ function formatSubagentId(claimedBy: string | null): string | null {
  */
 function formatTime(isoString: string | null | undefined): string | null {
   if (!isoString) return null
-  
+
   try {
     const date = new Date(isoString)
     const now = new Date()
@@ -75,12 +75,12 @@ function formatTime(isoString: string | null | undefined): string | null {
     const diffMins = Math.floor(diffMs / 60000)
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)
-    
+
     if (diffMins < 1) return '刚刚'
     if (diffMins < 60) return `${diffMins}分钟前`
     if (diffHours < 24) return `${diffHours}小时前`
     if (diffDays < 7) return `${diffDays}天前`
-    
+
     return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
   } catch {
     return null
@@ -93,14 +93,14 @@ function formatTime(isoString: string | null | undefined): string | null {
  */
 function calculateDuration(startTime: string | null | undefined, completeTime: string | null | undefined): string | null {
   if (!startTime) return null
-  
+
   const start = new Date(startTime).getTime()
   const end = completeTime ? new Date(completeTime).getTime() : Date.now()
   const durationMs = end - start
-  
+
   const hours = Math.floor(durationMs / 3600000)
   const minutes = Math.floor((durationMs % 3600000) / 60000)
-  
+
   if (hours > 0) {
     return `${hours}小时${minutes > 0 ? `${minutes}分钟` : ''}`
   }
@@ -116,20 +116,20 @@ function calculateDuration(startTime: string | null | undefined, completeTime: s
  */
 function isTaskOverdue(task: Task): boolean {
   if (task.status !== 'in-progress' || !task.startTime || !task.estimatedTime) return false
-  
+
   const startTime = new Date(task.startTime).getTime()
   const elapsedMs = Date.now() - startTime
-  
+
   // 解析 estimatedTime
   const hourMatch = task.estimatedTime.match(/(\d+)小时/)
   const minMatch = task.estimatedTime.match(/(\d+)分钟/)
-  
+
   let estimatedMs = 0
   if (hourMatch) estimatedMs += parseInt(hourMatch[1]) * 3600000
   if (minMatch) estimatedMs += parseInt(minMatch[1]) * 60000
-  
+
   if (estimatedMs === 0) return false
-  
+
   return elapsedMs > estimatedMs
 }
 
@@ -139,21 +139,21 @@ function isTaskOverdue(task: Task): boolean {
  */
 function formatLogSummary(comments: any[] | undefined): string | null {
   if (!comments || comments.length === 0) return null
-  
+
   const latestComment = comments[comments.length - 1]
   if (!latestComment) return null
-  
+
   // 如果 comment 是字符串，直接返回前50字符
   if (typeof latestComment === 'string') {
     return latestComment.length > 50 ? latestComment.slice(0, 50) + '...' : latestComment
   }
-  
+
   // 如果 comment 是对象，尝试提取 text 或 content
   const text = latestComment.text || latestComment.content || latestComment.message
   if (text) {
     return typeof text === 'string' && text.length > 50 ? text.slice(0, 50) + '...' : text
   }
-  
+
   return null
 }
 
@@ -165,10 +165,6 @@ export default function TaskCard({
   onStatusChange,
   onDelete // JSON-first: 删除任务
 }: TaskCardProps) {
-  const mainLabel = task.labels.find(l =>
-    !['todo', 'in-progress', 'done', 'P1', 'P2', 'P3'].includes(l)
-  ) || '其他'
-
   const shortSubagentId = formatSubagentId(task.claimedBy)
   const startTimeDisplay = formatTime(task.startTime)
   const isInProgress = task.status === 'in-progress'
@@ -180,7 +176,14 @@ export default function TaskCard({
 
   // PMW-010: 日志摘要
   const logSummary = formatLogSummary(task.comments)
-      
+
+  return (
+    <div className={`bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer ${statusColors[task.status]} group relative`}>
+      {/* 进行中状态 - 顶部高亮条 */}
+      {isInProgress && (
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 rounded-t-lg animate-pulse" />
+      )}
+
       {/* 项目标签（多项目时显示） */}
       {projectName && (
         <div className="flex items-center gap-1.5 mb-2 text-xs font-medium" style={{ color: projectColor }}>
@@ -188,7 +191,7 @@ export default function TaskCard({
           <span>{projectName}</span>
         </div>
       )}
-      
+
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className={`px-2 py-0.5 text-xs font-medium rounded border ${priorityColors[task.priority]}`}>
@@ -203,18 +206,18 @@ export default function TaskCard({
         </div>
         <span className="text-xs text-gray-400 font-mono">{task.id}</span>
       </div>
-      
+
       <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
         {task.title}
       </h3>
-      
+
       {task.description && (
         <p className="text-sm text-gray-600 mb-3 line-clamp-2">{task.description}</p>
       )}
-      
+
       {task.labels.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-3">
-          {task.labels.slice(0, 2).map(label => {
+          {task.labels.slice(0, 2).map((label) => {
             if (['todo', 'in-progress', 'done', 'P1', 'P2', 'P3'].includes(label)) return null
             return (
               <span key={label} className="px-2 py-0.5 text-xs bg-slate-100 text-slate-600 rounded-full font-medium">
@@ -222,18 +225,18 @@ export default function TaskCard({
               </span>
             )
           }).filter(Boolean)}
-          {task.labels.filter(l => 
+          {task.labels.filter((l) =>
             !['todo', 'in-progress', 'done', 'P1', 'P2', 'P3'].includes(l)
           ).length > 2 && (
             <span className="px-2 py-0.5 text-xs bg-slate-50 text-slate-400 rounded-full">
-              +{task.labels.filter(l => 
+              +{task.labels.filter((l) =>
                 !['todo', 'in-progress', 'done', 'P1', 'P2', 'P3'].includes(l)
               ).length - 2}
             </span>
           )}
         </div>
       )}
-      
+
       {/* Subagent 分配信息 - 优先显示 */}
       {shortSubagentId && (
         <div className={`mb-3 p-2 rounded-lg border ${
@@ -335,9 +338,9 @@ export default function TaskCard({
             <span className="text-xs text-gray-400">未分配</span>
           </div>
         ) : (
-          <div /> // 占位，当有 subagent 但无 assignee 时
+          <div />
         )}
-        
+
         <div className="flex items-center gap-2">
           {/* JSON-first: 删除按钮 - 仅 todo 状态显示 */}
           {onDelete && task.status === 'todo' && (
@@ -354,7 +357,7 @@ export default function TaskCard({
               🗑️ 删除
             </button>
           )}
-          
+
           {onStatusChange && task.status !== 'done' && (
             <button
               onClick={(e) => {
