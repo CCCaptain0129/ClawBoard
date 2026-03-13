@@ -1,0 +1,19 @@
+{
+  "$schema": "./pm-agent-dispatcher.schema.json",
+  "projectAllowlist": [],
+  "pollIntervalMs": 30000,
+  "maxConcurrent": 3,
+  "backendUrl": "http://localhost:3000",
+  "tasksDir": "./tasks",
+  "logsDir": "./tmp/logs",
+  "promptLogFile": "./tmp/logs/pm-prompts.log",
+  "dispatchRecordFile": "./docs/internal/SUBAGENTS任务分发记录.md",
+  "globalConstraints": {
+    "codeStyle": "TypeScript/Node.js，遵循项目现有代码风格",
+    "commitStyle": "使用 conventional commits 格式：feat/fix/docs/style/refactor/test/chore",
+    "testRequired": false,
+    "docRequired": true,
+    "timeoutMinutes": 30,
+    "defaultModel": "bailian/glm-4.7"
+  }
+}

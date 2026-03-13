@@ -513,6 +513,57 @@ EOF
     
     print_success "Project-Manager workspace 已创建"
     print_info "位置: $pm_agent"
+    
+    # 6. 创建 PM-Agent 调度器配置
+    print_substep "创建 PM-Agent 调度器配置..."
+    local config_dir="$PROJECT_ROOT/config"
+    mkdir -p "$config_dir"
+    
+    # PM-Agent 调度器配置文件
+    local pm_config="$config_dir/pm-agent-dispatcher.json"
+    if [ ! -f "$pm_config" ]; then
+        cat > "$pm_config" << EOF
+{
+  "\$schema": "./pm-agent-dispatcher.schema.json",
+  "projectAllowlist": [],
+  "pollIntervalMs": 30000,
+  "maxConcurrent": 3,
+  "backendUrl": "http://localhost:${BACKEND_PORT}",
+  "tasksDir": "./tasks",
+  "logsDir": "./tmp/logs",
+  "promptLogFile": "./tmp/logs/pm-prompts.log",
+  "dispatchRecordFile": "./docs/internal/SUBAGENTS任务分发记录.md",
+  "globalConstraints": {
+    "codeStyle": "TypeScript/Node.js，遵循项目现有代码风格",
+    "commitStyle": "使用 conventional commits 格式：feat/fix/docs/style/refactor/test/chore",
+    "testRequired": false,
+    "docRequired": true,
+    "timeoutMinutes": 30,
+    "defaultModel": "bailian/glm-4.7"
+  }
+}
+EOF
+        print_success "pm-agent-dispatcher.json 已创建"
+    else
+        print_info "pm-agent-dispatcher.json 已存在"
+    fi
+    
+    # 7. 创建 docs/internal 目录
+    print_substep "创建文档目录..."
+    mkdir -p "$PROJECT_ROOT/docs/internal"
+    touch "$PROJECT_ROOT/docs/internal/.gitkeep"
+    
+    # 创建 SUBAGENTS任务分发记录.md（如果不存在）
+    local dispatch_record="$PROJECT_ROOT/docs/internal/SUBAGENTS任务分发记录.md"
+    if [ ! -f "$dispatch_record" ]; then
+        cat > "$dispatch_record" << 'EOF'
+# SUBAGENTS 任务分发记录
+
+此文件记录任务分发给 subagent 的历史。
+
+EOF
+        print_success "SUBAGENTS任务分发记录.md 已创建"
+    fi
 }
 
 # ===== Phase 7: 配置 Agent 绑定 =====
@@ -717,6 +768,7 @@ show_completion() {
     echo "  项目目录:    $PROJECT_ROOT"
     echo "  配置文件:    src/backend/config/openclaw.json"
     echo "  Agent 目录:  ~/.openclaw/agents/project-manager"
+    echo "  PM-Agent 配置: config/pm-agent-dispatcher.json"
     echo ""
     
     echo -e "${BOLD}下一步操作：${NC}"
@@ -745,15 +797,27 @@ show_completion() {
         echo ""
     fi
     
+    echo -e "${BOLD}PM-Agent 调度器：${NC}"
+    echo ""
+    echo "  # 单次执行（心跳模式）"
+    echo "  node scripts/pm-agent-dispatcher.mjs --once"
+    echo ""
+    echo "  # 持续运行（守护模式）"
+    echo "  node scripts/pm-agent-dispatcher.mjs"
+    echo ""
+    echo "  # 使用自定义配置"
+    echo "  node scripts/pm-agent-dispatcher.mjs --config ./config/pm-agent-dispatcher.json"
+    echo ""
+    
     echo -e "${BOLD}常用命令：${NC}"
     echo ""
     echo "  ./start.sh         启动服务"
     echo "  ./stop.sh          停止服务"
     echo "  ./verify.sh        验证状态"
-    echo "  node scripts/heartbeat-loop.mjs  运行心跳脚本"
     echo ""
     echo -e "${BOLD}文档：${NC}"
     echo ""
+    echo "  PM-Agent 文档: docs/PROJECT-MANAGER-AGENT.md"
     echo "  安装指南: docs/INSTALL-PACKAGE.md"
     echo "  用户指南: docs/USER_GUIDE.md"
     echo ""

@@ -2,34 +2,46 @@
 
 ## 心跳任务
 
-每次心跳时执行以下操作：
+每次心跳时执行 PM-Agent 调度脚本：
 
-### 1. 检查待办任务
+### 1. 执行调度脚本
 
 ```bash
-cd __PROJECT_ROOT__/scripts
-node heartbeat-loop.mjs
+cd __PROJECT_ROOT__
+node scripts/pm-agent-dispatcher.mjs --once
 ```
 
 ### 2. 功能说明
 
-- 拉取 pm-workflow-automation 项目的 todo 任务
+- 拉取所有项目的任务
+- 筛选 `status=in-progress` 且 `claimedBy` 为空的任务
 - 按优先级排序（P0→P1→P2→P3）
-- 限制并发 subagent 数量 = 3
-- 对高优先级任务调用 `/api/tasks/subagent/create`
-- 记录到 `docs/internal/SUBAGENTS任务分发记录.md`
+- 检查并发限制（默认最大 3 个）
+- 生成高质量 Prompt（全局约束 + 任务信息）
+- 调用 OpenClaw sessions_spawn 创建 subagent
+- 更新任务 `claimedBy` 字段
+- 记录 Prompt 到 `tmp/logs/pm-prompts.log`
+- 记录分发到 `docs/internal/SUBAGENTS任务分发记录.md`
 
 ### 3. 汇报规则
 
 - **有新任务分配**: 在群组中汇报任务 ID 和 subagent 状态
-- **任务完成**: 简要汇报结果
-- **无待办任务**: 回复 `HEARTBEAT_OK`
+- **任务完成**: SubagentMonitorService 自动检测并更新
+- **无待分配任务**: 回复 `HEARTBEAT_OK`
+- **达到并发上限**: 回复 `HEARTBEAT_OK:max_concurrency`
 
-### 4. 脚本位置
+### 4. 配置文件
 
-- 心跳脚本: `__PROJECT_ROOT__/scripts/heartbeat-loop.mjs`
-- 任务数据: `__PROJECT_ROOT__/tasks/pm-workflow-automation-tasks.json`
-- 分发记录: `__PROJECT_ROOT__/docs/internal/SUBAGENTS任务分发记录.md`
+- 主配置: `config/pm-agent-dispatcher.json`
+- 任务数据: `tasks/*.json`
+- 分发记录: `docs/internal/SUBAGENTS任务分发记录.md`
+- Prompt 日志: `tmp/logs/pm-prompts.log`
+
+### 5. 关键文件位置
+
+- 调度脚本: `__PROJECT_ROOT__/scripts/pm-agent-dispatcher.mjs`
+- 配置文件: `__PROJECT_ROOT__/config/pm-agent-dispatcher.json`
+- 文档: `__PROJECT_ROOT__/docs/PROJECT-MANAGER-AGENT.md`
 
 ---
 
@@ -50,6 +62,28 @@ node heartbeat-loop.mjs
     }]
   }
 }
+```
+
+---
+
+## 手动操作
+
+### 单次执行
+
+```bash
+node scripts/pm-agent-dispatcher.mjs --once
+```
+
+### 持续运行
+
+```bash
+node scripts/pm-agent-dispatcher.mjs
+```
+
+### 使用自定义配置
+
+```bash
+node scripts/pm-agent-dispatcher.mjs --config ./my-config.json
 ```
 
 ---
