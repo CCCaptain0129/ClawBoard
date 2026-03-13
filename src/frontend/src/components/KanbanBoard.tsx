@@ -9,6 +9,9 @@ interface Task {
   priority: 'P1' | 'P2' | 'P3'
   labels: string[]
   assignee: string | null
+  claimedBy: string | null
+  startTime?: string | null
+  completeTime?: string | null
 }
 
 interface Project {
