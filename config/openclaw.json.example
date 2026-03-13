@@ -1,0 +1,15 @@
+{
+  "gateway": {
+    "url": "ws://127.0.0.1:18789",
+    "token": "your-gateway-token-here"
+  },
+  "feishu": {
+    "appId": "cli_xxxxxxxxx",
+    "appSecret": "your-app-secret-here",
+    "groupNameMap": {
+      "oc_0754a493527ed8a4b28bd0dffdf802de": "OpenClaw 集成讨论组",
+      "oc_00087c97b2f8a756b2e133d5e8c0ab17": "测试群组",
+      "oc_49db5e0b3f3ab28b88d251cd1f59a807": "开发讨论组"
+    }
+  }
+}

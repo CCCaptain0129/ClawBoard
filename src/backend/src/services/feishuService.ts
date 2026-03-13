@@ -13,6 +13,11 @@ export class FeishuService {
   private appSecret: string | undefined;
   private baseUrl: string = 'https://open.feishu.cn/open-apis';
   private enabled: boolean;
+  private accessToken: string | null = null;
+  private tokenExpireTime: number = 0;
+  private groupInfoCache: Map<string, FeishuGroupInfo> = new Map();
+  // 群组名称映射表：ID -> 友好名称
+  private groupNameMap: Map<string, string> = new Map();
 
   constructor() {
     const config = getConfig();
@@ -23,10 +28,42 @@ export class FeishuService {
     } else {
       this.enabled = false;
     }
+    // 初始化群组名称映射
+    this.loadGroupNameMap();
+
+    if (this.enabled) {
+      console.log(`✅ Feishu service enabled with app: ${this.appId}`);
+    } else {
+      console.log(`⚠️  Feishu service disabled: missing app credentials, will use name mapping`);
+    }
   }
-  
-  private accessToken: string | null = null;
-  private tokenExpireTime: number = 0;
+
+  /**
+   * 加载群组名称映射表
+   * 可以从配置文件读取
+   */
+  private loadGroupNameMap() {
+    try {
+      const config = getConfig();
+      if (config.feishu?.groupNameMap) {
+        Object.entries(config.feishu.groupNameMap).forEach(([id, name]) => {
+          this.groupNameMap.set(id, String(name));
+        });
+        console.log(`✅ Loaded ${this.groupNameMap.size} group name mappings`);
+      }
+    } catch (error) {
+      console.warn(`⚠️  Failed to load group name map:`, error);
+    }
+  }
+
+  /**
+   * 添加或更新群组名称映射
+   */
+  public setGroupNameMapping(chatId: string, groupName: string): void {
+    const normalizedId = chatId.startsWith('chat:') ? chatId.slice(5) : chatId;
+    this.groupNameMap.set(normalizedId, groupName);
+    console.log(`✅ Set group name mapping: ${normalizedId} -> ${groupName}`);
+  }
 
   /**
    * 获取访问令牌
@@ -98,25 +135,45 @@ export class FeishuService {
 
   /**
    * 获取群组信息
+   * 优先使用本地映射表，如果未配置飞书应用则使用映射表
    */
   async getGroupInfo(chatId: string): Promise<FeishuGroupInfo> {
-    // 如果未配置飞书应用，返回默认值
-    if (!this.enabled || !this.appId || !this.appSecret) {
+    // 转换 chatId 格式：chat:oc_xxx -> oc_xxx
+    const normalizedChatId = chatId.startsWith('chat:') ? chatId.slice(5) : chatId;
+
+    console.log(`\n========== getGroupInfo ==========`);
+    console.log(`Fetching group info for: ${chatId}`);
+    console.log(`Normalized chat_id: ${normalizedChatId}`);
+
+    // 优先检查本地映射表
+    if (this.groupNameMap.has(normalizedChatId)) {
+      const groupName = this.groupNameMap.get(normalizedChatId)!;
+      console.log(`✅ Found in local mapping: ${groupName}`);
       return {
-        name: chatId,
-        chat_id: chatId,
+        name: groupName,
+        chat_id: normalizedChatId,
         avatar: '',
         tenant_key: '',
       };
     }
 
+    // 如果未配置飞书应用，返回默认值
+    if (!this.enabled || !this.appId || !this.appSecret) {
+      console.log(`⚠️  Feishu service not configured. Returning chatId as fallback.`);
+      return {
+        name: chatId,
+        chat_id: normalizedChatId,
+        avatar: '',
+        tenant_key: '',
+      };
+    }
+
+    // 调用飞书 API
     try {
-      console.log(`\n========== Feishu API Call ==========`);
-      console.log(`Fetching group info for: ${chatId}`);
       const token = await this.getAccessToken();
       console.log(`Access token: ${token ? 'OK' : 'NULL'}`);
 
-      const url = `${this.baseUrl}/im/v1/chats/${chatId}`;
+      const url = `${this.baseUrl}/im/v1/chats/${normalizedChatId}`;
       console.log(`Request URL: ${url}`);
 
       const response = await fetch(url, {
@@ -135,26 +192,34 @@ export class FeishuService {
       const data = JSON.parse(text);
 
       if (data.code !== 0) {
-        console.warn(`Feishu API warning: ${data.code} - ${data.msg}`);
+        console.warn(`⚠️  Feishu API warning: ${data.code} - ${data.msg}`);
+        // 如果 API 调用失败，也尝试使用本地映射或返回 chatId
         return {
           name: chatId,
-          chat_id: chatId,
+          chat_id: normalizedChatId,
           avatar: '',
           tenant_key: '',
         };
       }
 
+      const groupName = data.data.name || '';
+      console.log(`✅ Successfully fetched group name: ${groupName}`);
+
+      // 缓存到本地映射表
+      this.groupNameMap.set(normalizedChatId, groupName);
+
       return {
-        name: data.data.name || '',
-        chat_id: data.data.chat_id || chatId,
+        name: groupName,
+        chat_id: data.data.chat_id || normalizedChatId,
         avatar: data.data.avatar || '',
         tenant_key: data.data.tenant_key || '',
       };
     } catch (error) {
-      console.error('Failed to get Feishu group info:', error);
+      console.error('❌ Failed to get Feishu group info:', error);
+      // 如果出错，返回 chatId
       return {
         name: chatId,
-        chat_id: chatId,
+        chat_id: normalizedChatId,
         avatar: '',
         tenant_key: '',
       };
@@ -174,11 +239,6 @@ export class FeishuService {
     return null;
   }
 
-  /**
-   * 缓存群组信息
-   */
-  private groupInfoCache: Map<string, FeishuGroupInfo> = new Map();
-
   async getCachedGroupInfo(chatId: string): Promise<FeishuGroupInfo> {
     console.log(`\n========== getCachedGroupInfo ==========`);
     console.log(`Chat ID: ${chatId}`);
@@ -186,14 +246,14 @@ export class FeishuService {
 
     if (this.groupInfoCache.has(chatId)) {
       const cached = this.groupInfoCache.get(chatId)!;
-      console.log(`Cache HIT: ${cached.name}`);
+      console.log(`✅ Cache HIT: "${cached.name}"`);
       return cached;
     }
 
-    console.log(`Cache MISS, calling API...`);
+    console.log(`🔄 Cache MISS, calling API...`);
     const groupInfo = await this.getGroupInfo(chatId);
     this.groupInfoCache.set(chatId, groupInfo);
-    console.log(`API returned: ${groupInfo.name}`);
+    console.log(`📦 Cached result: "${groupInfo.name}"`);
     return groupInfo;
   }
 }

@@ -12,6 +12,7 @@ export interface OpenClawConfig {
   feishu?: {
     appId: string;
     appSecret: string;
+    groupNameMap?: Record<string, string>;
   };
 }
 
@@ -77,6 +78,16 @@ class ConfigLoader {
       },
     };
 
+    // 尝试从环境变量加载群组名称映射（JSON 字符串）
+    let groupNameMapFromEnv: Record<string, string> = {};
+    try {
+      if (process.env.FEISHU_GROUP_NAME_MAP) {
+        groupNameMapFromEnv = JSON.parse(process.env.FEISHU_GROUP_NAME_MAP);
+      }
+    } catch (error) {
+      console.warn(`⚠️  Failed to parse FEISHU_GROUP_NAME_MAP:`, error);
+    }
+
     // 3. 合并配置（环境变量 > 配置文件 > 默认值）
     this.config = {
       gateway: {
@@ -86,6 +97,7 @@ class ConfigLoader {
       feishu: {
         appId: envConfig.feishu.appId || fileConfig.feishu?.appId || '',
         appSecret: envConfig.feishu.appSecret || fileConfig.feishu?.appSecret || '',
+        groupNameMap: groupNameMapFromEnv || fileConfig.feishu?.groupNameMap || {},
       },
     };
 

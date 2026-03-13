@@ -12,6 +12,9 @@ interface Task {
   startTime?: string | null
   completeTime?: string | null
   projectId?: string
+  dueDate?: string | null
+  estimatedTime?: string | null
+  comments?: any[]  // PMW-010: 执行日志
 }
 
 interface TaskCardProps {

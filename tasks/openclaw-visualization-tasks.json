@@ -1,14 +1,14 @@
 {
   "id": "openclaw-visualization",
-  "name": "openclaw-visualization",
-  "description": "",
+  "name": "OpenClaw 可视化",
+  "description": "OpenClaw Agent 可视化监控平台",
   "status": "active",
   "leadAgent": null,
   "color": "#3B82F6",
   "icon": "📊",
-  "taskPrefix": "TASK",
-  "createdAt": "2026-03-13T15:46:42.656Z",
-  "updatedAt": "2026-03-13T15:46:42.656Z",
+  "taskPrefix": "VIS",
+  "createdAt": "2026-03-10T00:00:00.000Z",
+  "updatedAt": "2026-03-13T16:08:44.046Z",
   "tasks": [
     {
       "id": "VIS-001",
@@ -24,15 +24,15 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.027Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
       "id": "VIS-002",
       "title": "显示群组名称而不是 ID 号。Agent 卡片优先显示飞书群组的友好名称（如 OpenClaw 集成讨论组），而不是显示 ID 字符串（如 oc_0754a493527ed8a4b28bd0dffdf802de）。从 OpenClaw sessions 中获取真实的群组名称并显示。",
       "description": "显示群组名称而不是 ID 号。Agent 卡片优先显示飞书群组的友好名称（如 OpenClaw 集成讨论组），而不是显示 ID 字符串（如 oc_0754a493527ed8a4b28bd0dffdf802de）。从 OpenClaw sessions 中获取真实的群组名称并显示。",
-      "status": "todo",
+      "status": "done",
       "priority": "P1",
       "labels": [
         "阶段 4：Agent 监控优化（P1 - 核心功能）"
@@ -42,8 +42,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.046Z",
       "comments": []
     },
     {
@@ -60,8 +60,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -78,8 +78,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -96,8 +96,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -114,8 +114,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -132,8 +132,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -150,8 +150,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -168,8 +168,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -186,8 +186,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -204,8 +204,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -222,8 +222,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -240,8 +240,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -258,8 +258,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -276,8 +276,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -294,8 +294,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -312,8 +312,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -330,8 +330,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -348,8 +348,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -366,8 +366,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -384,8 +384,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -402,8 +402,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -420,8 +420,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -438,8 +438,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -456,8 +456,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -474,8 +474,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -492,8 +492,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -510,8 +510,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -528,8 +528,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     },
     {
@@ -546,8 +546,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T15:46:42.656Z",
-      "updatedAt": "2026-03-13T15:46:42.656Z",
+      "createdAt": "2026-03-13T16:08:44.028Z",
+      "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
     }
   ]
