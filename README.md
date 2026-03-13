@@ -109,7 +109,27 @@ export FEISHU_APP_SECRET="你的app_secret"
 
 ## 快速开始
 
-### 启动方式
+### 一键安装（推荐）
+
+首次使用推荐使用一键安装脚本：
+
+```bash
+# macOS/Linux
+./install.sh
+
+# Windows
+install.bat
+```
+
+安装脚本会自动：
+- ✅ 检查 Node.js/npm 版本
+- ✅ 创建临时目录
+- ✅ 检查/创建配置文件
+- ✅ 安装后端和前端依赖
+
+详细安装指南请参考：📖 [安装指南](./docs/INSTALL.md)
+
+### 启动服务
 
 **普通模式（推荐用于开发）：**
 
@@ -140,6 +160,29 @@ start.bat --daemon       # Windows
 ./stop.sh       # macOS/Linux
 stop.bat        # Windows
 ```
+
+### 验证服务
+
+启动后可使用验证脚本检查服务状态：
+
+```bash
+# macOS/Linux
+./verify.sh           # 标准验证
+./verify.sh --quick   # 快速检查
+./verify.sh --full    # 完整检查
+
+# Windows
+verify.bat           # 标准验证
+verify.bat --quick   # 快速检查
+verify.bat --full    # 完整检查
+```
+
+验证脚本会检查：
+- ✅ 后端/前端进程状态
+- ✅ 端口监听状态
+- ✅ 健康检查端点
+- ✅ 文件监听服务（--full 模式）
+- ✅ 同步锁服务（--full 模式）
 
 ### 手动启动
 
@@ -362,6 +405,7 @@ pm2 serve dist 5173 --name openclaw-frontend
 ## 相关文档
 
 ### 核心文档
+- 📥 [安装指南](./docs/INSTALL.md) - 15分钟快速启动（新用户必读）
 - 📖 [用户指南](./USER_GUIDE.md) - 任务管理、命令行工具使用说明
 - 🏗️ [架构设计](./docs/ARCHITECTURE.md) - 系统架构和设计决策
 - 🚀 [部署指南](./docs/DEPLOY.md) - 生产环境部署说明

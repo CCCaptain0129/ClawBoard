@@ -49,5 +49,6 @@ Thumbs.db
 MEMORY.md
 CHANGELOG.md
 PROGRESS.md
-docs/
 tmp/
+docs/internal/
+docs/archive/
