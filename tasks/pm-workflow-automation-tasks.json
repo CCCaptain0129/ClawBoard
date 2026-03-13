@@ -8,7 +8,7 @@
   "icon": "🔄",
   "taskPrefix": "PMW",
   "createdAt": "2026-03-12T17:49:00.000Z",
-  "updatedAt": "2026-03-13T12:30:45.436Z",
+  "updatedAt": "2026-03-13T13:13:21.454Z",
   "tasks": [
     {
       "id": "PMW-001",
@@ -25,7 +25,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:00.845Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": [
         {
           "author": "project-manager",
@@ -49,7 +49,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -67,7 +67,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:00.847Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": [
         {
           "author": "project-manager",
@@ -91,7 +91,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -109,7 +109,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:00.848Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": [
         {
           "author": "project-manager",
@@ -133,7 +133,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:21.994Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": [
         {
           "author": "project-manager",
@@ -157,7 +157,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": [
         {
           "author": "project-manager",
@@ -181,7 +181,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:21.996Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": [
         {
           "author": "project-manager",
@@ -205,7 +205,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": [
         {
           "author": "project-manager",
@@ -229,7 +229,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:21.999Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": [
         {
           "author": "project-manager",
@@ -253,7 +253,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -271,7 +271,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:22.001Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": [
         {
           "author": "project-manager",
@@ -284,18 +284,18 @@
       "id": "PMW-035",
       "title": "PMW-013升级：安装包一键初始化（agents/skills/规范/流程）",
       "description": "",
-      "status": "in-progress",
+      "status": "done",
       "priority": "P0",
       "labels": [
         "阶段 4：一键复用安装"
       ],
       "assignee": null,
-      "claimedBy": "agent:main:subagent:4e210479-1bda-4672-b6a8-c286885d5a8d",
+      "claimedBy": null,
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T12:21:12.457Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -313,7 +313,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:22.001Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -331,7 +331,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -349,7 +349,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:22.002Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -367,7 +367,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -385,7 +385,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:22.003Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -403,7 +403,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -421,7 +421,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:22.005Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -439,7 +439,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -457,7 +457,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T02:49:50.955Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -475,7 +475,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -493,7 +493,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T02:49:50.958Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -511,7 +511,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:19:09.529Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -529,7 +529,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -547,7 +547,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:19:09.529Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -565,7 +565,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T08:59:29.234Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -583,7 +583,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T11:48:17.354Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -601,7 +601,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T02:49:50.959Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -619,7 +619,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -637,7 +637,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T02:49:50.961Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -655,7 +655,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     },
     {
@@ -673,7 +673,43 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T02:49:50.964Z",
-      "updatedAt": "2026-03-13T12:30:45.436Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-036",
+      "title": "测试新增任务",
+      "description": "",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "阶段 7：后续优化（待定）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-13T13:04:50.972Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-037",
+      "title": "测试",
+      "description": "",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "阶段 7：后续优化（待定）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-13T13:13:17.429Z",
+      "updatedAt": "2026-03-13T13:13:21.454Z",
       "comments": []
     }
   ]

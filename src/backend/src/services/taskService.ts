@@ -151,6 +151,41 @@ export class TaskService {
   }
 
   /**
+   * 删除任务
+   * JSON-first: 只允许删除 todo 状态的任务
+   * 
+   * @param projectId - 项目ID
+   * @param taskId - 任务ID
+   * @returns 删除的任务，如果任务不存在或状态不允许删除则返回 null
+   */
+  async deleteTask(projectId: string, taskId: string): Promise<{ success: boolean; task?: Task; error?: string }> {
+    const tasks = await this.getTasksByProject(projectId);
+    const taskIndex = tasks.findIndex(t => t.id === taskId);
+    
+    if (taskIndex === -1) {
+      return { success: false, error: 'Task not found' };
+    }
+    
+    const taskToDelete = tasks[taskIndex];
+    
+    // JSON-first: 只允许删除 todo 状态的任务
+    if (taskToDelete.status !== 'todo') {
+      return { 
+        success: false, 
+        error: `Cannot delete task with status "${taskToDelete.status}". Only "todo" tasks can be deleted.` 
+      };
+    }
+    
+    // 删除任务
+    tasks.splice(taskIndex, 1);
+    await this.saveTasks(projectId, tasks);
+    
+    console.log(`[TaskService] Task ${taskId} deleted from project ${projectId}`);
+    
+    return { success: true, task: taskToDelete };
+  }
+
+  /**
    * 检查是否需要触发进度同步
    *
    * 监听字段: status, claimedBy, assignee, startTime, completeTime

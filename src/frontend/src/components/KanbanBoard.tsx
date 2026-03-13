@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import TaskCard from './TaskCard'
 import CreateTaskModal from './CreateTaskModal'
+import { deleteTask, generateProgressDoc } from '../services/taskService'
 
 interface Task {
   id: string
@@ -62,6 +63,9 @@ export default function KanbanBoard() {
   // PMW-036: 新增任务弹窗状态
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null)
+  
+  // JSON-first: 生成04进度跟踪状态
+  const [generatingProgress, setGeneratingProgress] = useState(false)
 
   // 加载项目列表
   useEffect(() => {
@@ -182,6 +186,45 @@ export default function KanbanBoard() {
     setTimeout(() => {
       fetchTasks()
     }, 1000)
+  }
+
+  // ========================================
+  // JSON-first: 删除任务（仅 todo 状态）
+  // ========================================
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      const projectId = currentProject === 'all' ? 'openclaw-visualization' : currentProject
+      const result = await deleteTask(projectId, taskId)
+      
+      if (result.success) {
+        // 从本地状态移除任务
+        setTasks(tasks.filter(t => t.id !== taskId))
+        alert(`✅ 任务 ${taskId} 已删除`)
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      alert(`❌ 删除失败：${errorMessage}`)
+    }
+  }
+
+  // ========================================
+  // JSON-first: 生成 04-进度跟踪.md
+  // ========================================
+  const handleGenerateProgress = async () => {
+    setGeneratingProgress(true)
+    try {
+      const projectId = currentProject === 'all' ? 'openclaw-visualization' : currentProject
+      const result = await generateProgressDoc(projectId)
+      
+      if (result.success) {
+        alert(`✅ 进度跟踪文档已生成！\n\n路径: ${projectId}/docs/04-进度跟踪.md\n\n更新内容:\n- ${result.updatedSections?.join('\n- ') || '进度统计已更新'}`)
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      alert(`❌ 生成失败：${errorMessage}`)
+    } finally {
+      setGeneratingProgress(false)
+    }
   }
 
   // 获取当前项目信息（包含 taskPrefix）
@@ -334,6 +377,29 @@ export default function KanbanBoard() {
               新增任务
             </button>
           )}
+          
+          {/* JSON-first: 生成04进度跟踪按钮 */}
+          {currentProject !== 'all' && (
+            <button
+              onClick={handleGenerateProgress}
+              disabled={generatingProgress}
+              className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all text-sm font-semibold shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="生成 04-进度跟踪.md 文档"
+            >
+              {generatingProgress ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  生成中...
+                </>
+              ) : (
+                <>
+                  <span>📊</span>
+                  生成进度文档
+                </>
+              )}
+            </button>
+          )}
+          
           <button
             onClick={handleSync}
             disabled={syncing || currentProject === 'all'}
@@ -432,6 +498,7 @@ export default function KanbanBoard() {
                           projectColor={project?.color}
                           projectIcon={project?.icon}
                           onStatusChange={handleStatusChange}
+                          onDelete={handleDeleteTask}
                         />
                       </div>
                     )

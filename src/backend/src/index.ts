@@ -73,11 +73,17 @@ console.log('📊 Progress orchestrator service initialized');
 // ========================================
 // PMW-023 Phase 2: 文件监听服务初始化
 // ========================================
-// PMW-032: 将 progressOrchestrator 传入 fileWatcherService，实现 03 变更触发 04 刷新
+// JSON-first: 默认不监听 taskDoc(03)，仅手动 API 触发初始化
+// 如需启用自动监听，设置 watchTaskDoc: true
 const fileWatcherService = new FileWatcherService(
   safeSyncService,
   wsServer,
-  progressOrchestrator // PMW-032: 注入 progressOrchestrator
+  progressOrchestrator, // PMW-032: 注入 progressOrchestrator
+  {
+    watchTaskDoc: false, // JSON-first: 禁用 taskDoc 自动同步
+    debounceMs: 1000,
+    ignoreInitial: true,
+  }
 );
 
 // PMW-030: 将 fileWatcherService 注入到 progressOrchestrator（避免回环）

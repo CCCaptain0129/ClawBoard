@@ -20,6 +20,7 @@ interface TaskCardProps {
   projectColor?: string
   projectIcon?: string
   onStatusChange?: (taskId: string, newStatus: 'todo' | 'in-progress' | 'done') => void
+  onDelete?: (taskId: string) => void // JSON-first: 删除任务
 }
 
 const priorityColors = {
@@ -88,7 +89,8 @@ export default function TaskCard({
   projectName, 
   projectColor = '#3B82F6', 
   projectIcon = '📊',
-  onStatusChange 
+  onStatusChange,
+  onDelete // JSON-first: 删除任务
 }: TaskCardProps) {
   const mainLabel = task.labels.find(l => 
     !['todo', 'in-progress', 'done', 'P1', 'P2', 'P3'].includes(l)
@@ -205,18 +207,36 @@ export default function TaskCard({
           <div /> // 占位，当有 subagent 但无 assignee 时
         )}
         
-        {onStatusChange && task.status !== 'done' && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              const nextStatus = task.status === 'todo' ? 'in-progress' : 'done'
-              onStatusChange(task.id, nextStatus)
-            }}
-            className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
-          >
-            {task.status === 'todo' ? '开始 →' : '完成 ✓'}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* JSON-first: 删除按钮 - 仅 todo 状态显示 */}
+          {onDelete && task.status === 'todo' && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                if (confirm(`确定要删除任务 "${task.title}" 吗？\n\n注意：只有 todo 状态的任务可以删除。`)) {
+                  onDelete(task.id)
+                }
+              }}
+              className="text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+              title="删除任务（仅 todo 状态）"
+            >
+              🗑️ 删除
+            </button>
+          )}
+          
+          {onStatusChange && task.status !== 'done' && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                const nextStatus = task.status === 'todo' ? 'in-progress' : 'done'
+                onStatusChange(task.id, nextStatus)
+              }}
+              className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+            >
+              {task.status === 'todo' ? '开始 →' : '完成 ✓'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )

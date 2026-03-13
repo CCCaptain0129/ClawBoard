@@ -15,11 +15,13 @@ import { ProgressOrchestrator } from './progressOrchestrator'; // PMW-032
 export interface FileWatcherOptions {
   debounceMs?: number;    // 防抖延迟（毫秒）
   ignoreInitial?: boolean; // 是否忽略初始扫描
+  watchTaskDoc?: boolean;  // JSON-first: 是否监听 taskDoc(03) 变更（默认 false）
 }
 
 const DEFAULT_OPTIONS: FileWatcherOptions = {
   debounceMs: 1000,      // 默认 1 秒防抖
   ignoreInitial: true,   // 忽略初始扫描
+  watchTaskDoc: false,   // JSON-first: 默认不监听 taskDoc，仅手动触发初始化
 };
 
 export class FileWatcherService {
@@ -127,22 +129,31 @@ export class FileWatcherService {
 
   /**
    * 监听单个项目的文档
+   * 
+   * JSON-first 架构：
+   * - taskDoc(03): 默认不监听，仅作为初始化源（手动 API 触发）
+   * - progressDoc(04): 监听可选，通常不需要监听
    */
   private watchProject(config: ProjectDocConfig): void {
     const filesToWatch: string[] = [];
     
-    // 添加任务文档
-    if (config.taskDoc) {
+    // JSON-first: taskDoc 仅作为初始化源，不监听变更
+    // 如需监听，需显式设置 watchTaskDoc: true
+    if (this.options.watchTaskDoc && config.taskDoc) {
       filesToWatch.push(path.join(config.projectPath, config.taskDoc));
+      console.log(`📁 [JSON-first WARNING] Watching taskDoc for ${config.projectId} - changes will auto-sync to JSON`);
+    } else if (config.taskDoc) {
+      console.log(`📁 [JSON-first] taskDoc(${config.taskDoc}) NOT watched for ${config.projectId} - use manual API to initialize`);
     }
     
-    // 添加进度文档（可选）
+    // 添加进度文档（可选，通常不需要监听）
     if (config.progressDoc) {
-      filesToWatch.push(path.join(config.projectPath, config.progressDoc));
+      // 进度文档也默认不监听，避免循环
+      console.log(`📁 [JSON-first] progressDoc(${config.progressDoc}) NOT watched for ${config.projectId}`);
     }
 
     if (filesToWatch.length === 0) {
-      console.log(`⚠️ No files to watch for project: ${config.projectId}`);
+      console.log(`📁 [JSON-first] No files to watch for project: ${config.projectId} (taskDoc/progressDoc auto-sync disabled)`);
       return;
     }
 
@@ -280,6 +291,7 @@ export class FileWatcherService {
   getStatus(): {
     isRunning: boolean;
     isPaused: boolean; // PMW-030
+    watchTaskDoc: boolean; // JSON-first
     watchedProjects: string[];
     watchedFiles: number;
   } {
@@ -287,6 +299,7 @@ export class FileWatcherService {
     return {
       isRunning: this.isRunning,
       isPaused: this.isPaused, // PMW-030
+      watchTaskDoc: this.options.watchTaskDoc || false, // JSON-first
       watchedProjects,
       watchedFiles: watchedProjects.length,
     };

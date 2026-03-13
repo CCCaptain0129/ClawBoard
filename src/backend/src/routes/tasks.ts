@@ -48,24 +48,18 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
   });
 
   // 创建单个任务
-  // 注意：对于 pm-workflow-automation 项目，禁用直接 JSON 创建
-  // 请使用 POST /api/task-doc/:projectId/tasks 写入 03 文档
+  // JSON-first: 直接写入 JSON 文件
   router.post('/projects/:id/tasks', async (req, res) => {
     try {
       const { id } = req.params;
       const task = req.body;
 
-      // PMW-036: 为 pm-workflow-automation 项目禁用直接 JSON 创建任务
-      // 要求使用新增任务功能（写入03文档）
-      if (id === 'pm-workflow-automation') {
-        return res.status(400).json({
-          error: '此项目禁止直接创建 JSON 任务，请使用新增任务功能（写入 03-任务分解.md）',
-          hint: '请使用 POST /api/task-doc/pm-workflow-automation/tasks 接口创建任务',
-          code: 'USE_TASK_DOC_API',
-        });
-      }
-
+      // JSON-first: 所有项目都支持直接创建 JSON 任务
       const newTask = await taskService.createTask(id, task);
+      
+      // 广播任务创建
+      wsServer.broadcastTaskUpdate(id, newTask);
+      
       res.json(newTask);
     } catch (error) {
       res.status(500).json({ error: 'Failed to create task' });
@@ -159,6 +153,49 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
       });
     } catch (error) {
       res.status(500).json({ error: 'Failed to update tasks' });
+    }
+  });
+
+  // ========================================
+  // JSON-first: 删除任务（仅 todo 状态）
+  // ========================================
+  router.delete('/projects/:id/tasks/:taskId', async (req, res) => {
+    try {
+      const { id, taskId } = req.params;
+      
+      const result = await taskService.deleteTask(id, taskId);
+      
+      if (!result.success) {
+        // 任务不存在或状态不允许删除
+        if (result.error?.includes('not found')) {
+          return res.status(404).json({ 
+            success: false, 
+            error: result.error 
+          });
+        }
+        // 状态不允许删除
+        return res.status(400).json({ 
+          success: false, 
+          error: result.error,
+          hint: 'Only tasks with status "todo" can be deleted. In-progress or done tasks cannot be removed.'
+        });
+      }
+      
+      // 广播任务删除事件
+      wsServer.broadcastTaskUpdate(id, { ...result.task, deleted: true });
+      
+      res.json({
+        success: true,
+        task: result.task,
+        message: `Task ${taskId} deleted successfully`
+      });
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to delete task',
+        details: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
