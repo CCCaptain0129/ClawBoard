@@ -58,7 +58,6 @@ export default function KanbanBoard() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [syncing, setSyncing] = useState(false)
   
   // PMW-036: 新增任务弹窗状态
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -154,21 +153,6 @@ export default function KanbanBoard() {
     }
   }
 
-  const handleSync = async () => {
-    setSyncing(true)
-    try {
-      const projectId = currentProject === 'all' ? 'openclaw-visualization' : currentProject
-      await fetch(`http://localhost:3000/api/sync/to-markdown/${projectId}`, {
-        method: 'POST',
-      })
-      alert(`✅ 同步成功！${projectId}-TASKS.md 已更新`)
-    } catch (err) {
-      console.error('Error syncing:', err)
-      alert('❌ 同步失败，请重试')
-    } finally {
-      setSyncing(false)
-    }
-  }
 
   // PMW-036: 处理新增任务成功
   const handleCreateTaskSuccess = async (taskId: string) => {
@@ -288,16 +272,6 @@ export default function KanbanBoard() {
     </div>
   )
 
-  // TASKS.md 按钮组件
-  const TASKSButton = ({ projectId }: { projectId: string }) => (
-    <button
-      onClick={() => window.open(`/tasks/${projectId}-TASKS.md`, '_blank')}
-      className="ml-2 px-3 py-1 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors"
-      title="查看任务列表文档"
-    >
-      📄 TASKS.md
-    </button>
-  )
 
   const todoCount = tasks.filter(t => t.status === 'todo').length
   const inProgressCount = tasks.filter(t => t.status === 'in-progress').length
@@ -362,7 +336,6 @@ export default function KanbanBoard() {
               {currentProject === 'all' ? '查看所有项目的任务' : projectInfo.description}
             </p>
           </div>
-          {currentProject !== 'all' && <TASKSButton projectId={currentProject} />}
         </div>
         <div className="flex items-center gap-3">
           {/* PMW-036: 新增任务按钮 */}
@@ -399,26 +372,7 @@ export default function KanbanBoard() {
               )}
             </button>
           )}
-          
-          <button
-            onClick={handleSync}
-            disabled={syncing || currentProject === 'all'}
-            className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {syncing ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                同步中...
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                同步到 Markdown
-              </>
-            )}
-          </button>
+
         </div>
       </div>
 
