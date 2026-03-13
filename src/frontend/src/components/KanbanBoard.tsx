@@ -14,6 +14,9 @@ interface Task {
   claimedBy: string | null
   startTime?: string | null
   completeTime?: string | null
+  dueDate?: string | null
+  estimatedTime?: string | null
+  comments?: any[]  // PMW-010: 执行日志
 }
 
 interface Project {

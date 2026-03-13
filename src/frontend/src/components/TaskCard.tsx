@@ -87,28 +87,99 @@ function formatTime(isoString: string | null | undefined): string | null {
   }
 }
 
-export default function TaskCard({ 
-  task, 
-  projectName, 
-  projectColor = '#3B82F6', 
+/**
+ * PMW-010: 计算执行耗时
+ * 返回格式：X小时Y分钟 或 X分钟
+ */
+function calculateDuration(startTime: string | null | undefined, completeTime: string | null | undefined): string | null {
+  if (!startTime) return null
+  
+  const start = new Date(startTime).getTime()
+  const end = completeTime ? new Date(completeTime).getTime() : Date.now()
+  const durationMs = end - start
+  
+  const hours = Math.floor(durationMs / 3600000)
+  const minutes = Math.floor((durationMs % 3600000) / 60000)
+  
+  if (hours > 0) {
+    return `${hours}小时${minutes > 0 ? `${minutes}分钟` : ''}`
+  }
+  if (minutes > 0) {
+    return `${minutes}分钟`
+  }
+  return '1分钟内'
+}
+
+/**
+ * PMW-010: 检测任务是否超时
+ * 基于 estimatedTime 字段，格式为 "30分钟"、"1小时" 等
+ */
+function isTaskOverdue(task: Task): boolean {
+  if (task.status !== 'in-progress' || !task.startTime || !task.estimatedTime) return false
+  
+  const startTime = new Date(task.startTime).getTime()
+  const elapsedMs = Date.now() - startTime
+  
+  // 解析 estimatedTime
+  const hourMatch = task.estimatedTime.match(/(\d+)小时/)
+  const minMatch = task.estimatedTime.match(/(\d+)分钟/)
+  
+  let estimatedMs = 0
+  if (hourMatch) estimatedMs += parseInt(hourMatch[1]) * 3600000
+  if (minMatch) estimatedMs += parseInt(minMatch[1]) * 60000
+  
+  if (estimatedMs === 0) return false
+  
+  return elapsedMs > estimatedMs
+}
+
+/**
+ * PMW-010: 格式化日志摘要
+ * 从 comments 数组中提取最新的一条作为摘要
+ */
+function formatLogSummary(comments: any[] | undefined): string | null {
+  if (!comments || comments.length === 0) return null
+  
+  const latestComment = comments[comments.length - 1]
+  if (!latestComment) return null
+  
+  // 如果 comment 是字符串，直接返回前50字符
+  if (typeof latestComment === 'string') {
+    return latestComment.length > 50 ? latestComment.slice(0, 50) + '...' : latestComment
+  }
+  
+  // 如果 comment 是对象，尝试提取 text 或 content
+  const text = latestComment.text || latestComment.content || latestComment.message
+  if (text) {
+    return typeof text === 'string' && text.length > 50 ? text.slice(0, 50) + '...' : text
+  }
+  
+  return null
+}
+
+export default function TaskCard({
+  task,
+  projectName,
+  projectColor = '#3B82F6',
   projectIcon = '📊',
   onStatusChange,
   onDelete // JSON-first: 删除任务
 }: TaskCardProps) {
-  const mainLabel = task.labels.find(l => 
+  const mainLabel = task.labels.find(l =>
     !['todo', 'in-progress', 'done', 'P1', 'P2', 'P3'].includes(l)
   ) || '其他'
-  
+
   const shortSubagentId = formatSubagentId(task.claimedBy)
   const startTimeDisplay = formatTime(task.startTime)
   const isInProgress = task.status === 'in-progress'
-  
-  return (
-    <div className={`bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer ${statusColors[task.status]} group relative`}>
-      {/* 进行中状态 - 顶部高亮条 */}
-      {isInProgress && (
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 rounded-t-lg animate-pulse" />
-      )}
+  const isDone = task.status === 'done'
+
+  // PMW-010: 计算执行耗时
+  const duration = calculateDuration(task.startTime, task.completeTime)
+  const isOverdue = isTaskOverdue(task)
+
+  // PMW-010: 日志摘要
+  const logSummary = formatLogSummary(task.comments)
       
       {/* 项目标签（多项目时显示） */}
       {projectName && (
@@ -165,29 +236,86 @@ export default function TaskCard({
       
       {/* Subagent 分配信息 - 优先显示 */}
       {shortSubagentId && (
-        <div className="mb-3 p-2 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full flex items-center justify-center shadow-sm">
+        <div className={`mb-3 p-2 rounded-lg border ${
+          isOverdue
+            ? 'bg-gradient-to-r from-red-50 to-orange-50 border-red-300'
+            : 'bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200'
+        }`}>
+          <div className="flex items-center gap-2 mb-2">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center shadow-sm ${
+              isOverdue ? 'bg-gradient-to-br from-red-500 to-orange-500' : 'bg-gradient-to-br from-purple-500 to-indigo-500'
+            }`}>
               <span className="text-xs">🤖</span>
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-xs font-semibold text-purple-700">分配给 Subagent</div>
-              <div className="text-xs text-purple-600 font-mono truncate" title={task.claimedBy || ''}>
+              <div className={`text-xs font-semibold ${isOverdue ? 'text-red-700' : 'text-purple-700'}`}>
+                {isOverdue ? '⚠️ 执行超时' : '分配给 Subagent'}
+              </div>
+              <div className={`text-xs font-mono truncate ${isOverdue ? 'text-red-600' : 'text-purple-600'}`} title={task.claimedBy || ''}>
                 {shortSubagentId}
               </div>
             </div>
+          </div>
+
+          {/* PMW-010: 执行时间信息 */}
+          <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-purple-200/50">
+            {/* 开始时间 */}
             {startTimeDisplay && (
-              <div className="text-xs text-purple-500 flex items-center gap-1" title={`开始时间: ${task.startTime}`}>
+              <div className={`flex items-center gap-1 ${isOverdue ? 'text-red-500' : 'text-purple-500'}`} title={`开始时间: ${task.startTime}`}>
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                {startTimeDisplay}
+                <span>{startTimeDisplay}</span>
+              </div>
+            )}
+
+            {/* PMW-010: 执行耗时 */}
+            {duration && (
+              <div className={`flex items-center gap-1 ${
+                isOverdue ? 'text-red-600 font-medium' : (isDone ? 'text-green-600' : 'text-purple-500')
+              }`} title={isDone ? `完成时间: ${task.completeTime}` : '已执行时间'}>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span>{duration}</span>
               </div>
             )}
           </div>
+
+          {/* PMW-010: 预计时间提示（进行中且未超时时） */}
+          {isInProgress && !isOverdue && task.estimatedTime && (
+            <div className="text-xs text-purple-400 mt-1 flex items-center gap-1">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <span>预计: {task.estimatedTime}</span>
+            </div>
+          )}
         </div>
       )}
-      
+
+      {/* PMW-010: 执行日志摘要 */}
+      {(logSummary || (task.comments && task.comments.length > 0)) && (
+        <div className="mb-3 p-2 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg border border-amber-200">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-5 h-5 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-full flex items-center justify-center shadow-sm">
+              <span className="text-xs">📝</span>
+            </div>
+            <div className="text-xs font-semibold text-amber-700">
+              执行日志
+              {task.comments && task.comments.length > 1 && (
+                <span className="ml-1 text-amber-500 font-normal">({task.comments.length}条)</span>
+              )}
+            </div>
+          </div>
+          {logSummary && (
+            <div className="text-xs text-amber-600 line-clamp-2" title="最新执行记录">
+              {logSummary}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="flex items-center justify-between pt-2 border-t border-slate-100">
         {/* Assignee 显示 */}
         {task.assignee ? (

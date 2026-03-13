@@ -8,7 +8,7 @@
   "icon": "📊",
   "taskPrefix": "VIS",
   "createdAt": "2026-03-10T00:00:00.000Z",
-  "updatedAt": "2026-03-13T16:08:44.046Z",
+  "updatedAt": "2026-03-13T16:16:15.861Z",
   "tasks": [
     {
       "id": "VIS-001",
@@ -549,6 +549,63 @@
       "createdAt": "2026-03-13T16:08:44.028Z",
       "updatedAt": "2026-03-13T16:08:44.028Z",
       "comments": []
+    },
+    {
+      "id": "VIS-042",
+      "title": "PMW-010 测试：任务执行超时检测",
+      "description": "测试超时检测功能：预计30分钟，实际已执行1小时",
+      "status": "in-progress",
+      "priority": "P2",
+      "labels": [
+        "PMW-010",
+        "测试"
+      ],
+      "assignee": null,
+      "claimedBy": "agent:main:subagent:test-timeout-task-1234567890ab",
+      "dueDate": null,
+      "startTime": "2026-03-13T15:16:15.862Z",
+      "completeTime": null,
+      "estimatedTime": "30分钟",
+      "createdAt": "2026-03-13T16:16:15.861Z",
+      "updatedAt": "2026-03-13T16:16:15.861Z",
+      "comments": [
+        "开始执行任务...",
+        "正在处理中...",
+        "⚠️ 任务执行时间超过预计时间"
+      ]
+    },
+    {
+      "id": "VIS-043",
+      "title": "PMW-010 测试：带执行日志的任务",
+      "description": "测试执行日志展示功能",
+      "status": "done",
+      "priority": "P3",
+      "labels": [
+        "PMW-010",
+        "测试"
+      ],
+      "assignee": null,
+      "claimedBy": "agent:main:subagent:log-test-abc123def456",
+      "dueDate": null,
+      "startTime": "2026-03-13T14:16:15.862Z",
+      "completeTime": "2026-03-13T15:16:15.862Z",
+      "estimatedTime": "1小时",
+      "createdAt": "2026-03-13T16:16:15.861Z",
+      "updatedAt": "2026-03-13T16:16:15.861Z",
+      "comments": [
+        "初始化任务环境...",
+        "配置测试参数完成",
+        "开始执行主要逻辑...",
+        "✅ 任务执行成功",
+        "完成时间: 2026-03-13T15:16:15.862Z"
+      ]
     }
-  ]
+  ],
+  "stats": {
+    "total": 32,
+    "todo": 10,
+    "inProgress": 1,
+    "done": 21,
+    "progress": 66
+  }
 }
