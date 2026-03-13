@@ -11,6 +11,7 @@ import { SafeSyncService } from './services/safeSyncService';
 import { FileWatcherService } from './services/fileWatcherService';
 import { ProgressToDocService } from './services/progressToDocService';
 import { ProgressOrchestrator } from './services/progressOrchestrator';
+import { SyncLockService } from './services/syncLockService'; // PMW-030
 import { agentRoutes } from './routes/agents';
 import { taskRoutes } from './routes/tasks';
 import { syncRoutes } from './routes/sync';
@@ -49,13 +50,21 @@ const safeSyncService = new SafeSyncService(taskService);
 const fileWatcherService = new FileWatcherService(safeSyncService, wsServer);
 
 // ========================================
+// PMW-030: 同步锁服务初始化
+// ========================================
+const syncLockService = new SyncLockService(5000); // 5秒超时
+console.log('🔒 Sync lock service initialized (timeout: 5000ms)');
+
+// ========================================
 // PMW-029: 进度编排服务初始化
 // ========================================
 const progressToDocService = new ProgressToDocService(taskService);
 const progressOrchestrator = new ProgressOrchestrator(
   progressToDocService,
   safeSyncService,
-  wsServer
+  wsServer,
+  syncLockService, // PMW-030
+  fileWatcherService // PMW-030
 );
 
 // 注册进度同步回调到 TaskService
@@ -150,4 +159,9 @@ process.on('SIGINT', () => {
 // 文件监听状态端点
 app.get('/api/file-watcher/status', (req, res) => {
   res.json(fileWatcherService.getStatus());
+});
+
+// PMW-030: 同步锁状态端点
+app.get('/api/sync-lock/status', (req, res) => {
+  res.json(syncLockService.getStatus());
 });

@@ -216,8 +216,8 @@ export class SafeSyncService {
         const priority = taskMatch[2] as 'P0' | 'P1' | 'P2' | 'P3';
         const title = taskMatch[3].trim();
         
-        // 解析任务详情
-        const task = this.parseTaskDetails(lines, i + 1, {
+        // 解析任务详情，返回任务和解析的行数
+        const { task, linesConsumed } = this.parseTaskDetails(lines, i + 1, {
           id: taskId,
           title,
           priority,
@@ -226,7 +226,7 @@ export class SafeSyncService {
         });
         
         tasks.push(task);
-        i += 10; // 跳过已解析的行
+        i += linesConsumed + 1; // 跳过标题行 + 详情行
         continue;
       }
 
@@ -238,25 +238,30 @@ export class SafeSyncService {
 
   /**
    * 解析任务详情行
+   * 返回任务对象和解析的行数
    */
   private parseTaskDetails(
     lines: string[],
     startIndex: number,
     meta: { id: string; title: string; priority: string; stage: string; projectId: string }
-  ): Task {
+  ): { task: Task; linesConsumed: number } {
     let description = '';
     let status: 'todo' | 'in-progress' | 'done' = 'todo';
     let assignee: string | null = null;
     let dueDate: string | null = null;
     let dependencies: string[] = [];
+    let linesConsumed = 0;
 
     // 扫描接下来的行，直到遇到空行或新任务
-    for (let i = startIndex; i < lines.length && i < startIndex + 10; i++) {
+    for (let i = startIndex; i < lines.length; i++) {
       const line = lines[i].trim();
       
+      // 遇到空行或新的任务/阶段标题，停止解析
       if (!line || line.startsWith('###') || line.startsWith('##')) {
         break;
       }
+      
+      linesConsumed++;
 
       // 状态: 已完成 / 进行中 / 待处理
       if (line.startsWith('- 状态:') || line.startsWith('- 状态：')) {
@@ -297,20 +302,23 @@ export class SafeSyncService {
     }
 
     return {
-      id: meta.id,
-      title: meta.title,
-      description,
-      status,
-      priority: meta.priority as 'P0' | 'P1' | 'P2' | 'P3',
-      labels: meta.stage ? [meta.stage] : [],
-      assignee,
-      claimedBy: null,
-      dueDate,
-      startTime: null,
-      completeTime: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      comments: [],
+      task: {
+        id: meta.id,
+        title: meta.title,
+        description,
+        status,
+        priority: meta.priority as 'P0' | 'P1' | 'P2' | 'P3',
+        labels: meta.stage ? [meta.stage] : [],
+        assignee,
+        claimedBy: null,
+        dueDate,
+        startTime: null,
+        completeTime: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        comments: [],
+      },
+      linesConsumed,
     };
   }
 

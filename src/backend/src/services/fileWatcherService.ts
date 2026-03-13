@@ -28,6 +28,7 @@ export class FileWatcherService {
   private watchers: Map<string, chokidar.FSWatcher> = new Map();
   private debounceTimers: Map<string, NodeJS.Timeout> = new Map();
   private isRunning: boolean = false;
+  private isPaused: boolean = false; // PMW-030: 暂停状态
 
   constructor(
     safeSyncService: SafeSyncService,
@@ -79,6 +80,31 @@ export class FileWatcherService {
 
     this.isRunning = false;
     console.log('📁 FileWatcherService stopped');
+  }
+
+  /**
+   * PMW-030: 暂停文件监听（临时禁用）
+   * 用于防止回环：在写回 04-进度跟踪.md 时暂停 watcher
+   */
+  pause(): void {
+    if (this.isPaused) {
+      console.log('⚠️ FileWatcherService is already paused');
+      return;
+    }
+    this.isPaused = true;
+    console.log('⏸️ FileWatcherService paused');
+  }
+
+  /**
+   * PMW-030: 恢复文件监听
+   */
+  resume(): void {
+    if (!this.isPaused) {
+      console.log('⚠️ FileWatcherService is not paused');
+      return;
+    }
+    this.isPaused = false;
+    console.log('▶️ FileWatcherService resumed');
   }
 
   /**
@@ -134,6 +160,12 @@ export class FileWatcherService {
    * 处理文件变更（带防抖）
    */
   private handleFileChange(filePath: string, projectId: string): void {
+    // PMW-030: 如果已暂停，忽略文件变更
+    if (this.isPaused) {
+      console.log(`⏸️ [FileWatcher] Ignoring file change (watcher paused): ${filePath}`);
+      return;
+    }
+
     // 清除之前的定时器
     const existingTimer = this.debounceTimers.get(filePath);
     if (existingTimer) {
@@ -215,12 +247,14 @@ export class FileWatcherService {
    */
   getStatus(): {
     isRunning: boolean;
+    isPaused: boolean; // PMW-030
     watchedProjects: string[];
     watchedFiles: number;
   } {
     const watchedProjects = Array.from(this.watchers.keys());
     return {
       isRunning: this.isRunning,
+      isPaused: this.isPaused, // PMW-030
       watchedProjects,
       watchedFiles: watchedProjects.length,
     };

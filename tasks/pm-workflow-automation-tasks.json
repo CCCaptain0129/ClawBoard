@@ -8,7 +8,7 @@
   "icon": "🔄",
   "taskPrefix": "PMW",
   "createdAt": "2026-03-12T17:49:00.000Z",
-  "updatedAt": "2026-03-13T04:13:37.116Z",
+  "updatedAt": "2026-03-13T05:33:53.279Z",
   "tasks": [
     {
       "id": "PMW-001",
@@ -22,8 +22,10 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
       "createdAt": "2026-03-12T17:52:00.845Z",
-      "updatedAt": "2026-03-13T04:13:37.115Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
       "comments": [
         {
           "author": "project-manager",
@@ -31,6 +33,24 @@
           "createdAt": "2026-03-13T03:15:50.000Z"
         }
       ]
+    },
+    {
+      "id": "PMW-002",
+      "title": "实现心跳触发时的任务检查逻辑",
+      "description": "",
+      "status": "done",
+      "priority": "P0",
+      "labels": [
+        "阶段 1：心跳循环机制"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-13T05:33:18.798Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
+      "comments": []
     },
     {
       "id": "PMW-003",
@@ -44,8 +64,10 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
       "createdAt": "2026-03-12T17:52:00.847Z",
-      "updatedAt": "2026-03-13T04:13:37.115Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
       "comments": [
         {
           "author": "project-manager",
@@ -53,6 +75,24 @@
           "createdAt": "2026-03-13T03:15:50.000Z"
         }
       ]
+    },
+    {
+      "id": "PMW-004",
+      "title": "实现 Subagent 执行监控",
+      "description": "",
+      "status": "done",
+      "priority": "P0",
+      "labels": [
+        "阶段 1：心跳循环机制"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-13T05:33:18.798Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
+      "comments": []
     },
     {
       "id": "PMW-005",
@@ -66,8 +106,10 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
       "createdAt": "2026-03-12T17:52:00.848Z",
-      "updatedAt": "2026-03-13T04:13:37.115Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
       "comments": [
         {
           "author": "project-manager",
@@ -88,8 +130,10 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
       "createdAt": "2026-03-12T17:52:21.994Z",
-      "updatedAt": "2026-03-13T04:13:37.115Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
       "comments": [
         {
           "author": "project-manager",
@@ -97,6 +141,24 @@
           "createdAt": "2026-03-13T03:20:00.000Z"
         }
       ]
+    },
+    {
+      "id": "PMW-007",
+      "title": "实现 JSON → Markdown 同步",
+      "description": "",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [
+        "阶段 2：文档与看板同步"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-13T05:33:18.798Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
+      "comments": []
     },
     {
       "id": "PMW-008",
@@ -110,8 +172,10 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
       "createdAt": "2026-03-12T17:52:21.996Z",
-      "updatedAt": "2026-03-13T04:13:37.115Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
       "comments": [
         {
           "author": "project-manager",
@@ -119,6 +183,24 @@
           "createdAt": "2026-03-13T03:20:00.000Z"
         }
       ]
+    },
+    {
+      "id": "PMW-009",
+      "title": "实现同步触发机制",
+      "description": "",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [
+        "阶段 2：文档与看板同步"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-13T05:33:18.798Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
+      "comments": []
     },
     {
       "id": "PMW-010",
@@ -132,8 +214,10 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
       "createdAt": "2026-03-12T17:52:21.999Z",
-      "updatedAt": "2026-03-13T04:13:37.115Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
       "comments": [
         {
           "author": "project-manager",
@@ -141,6 +225,24 @@
           "createdAt": "2026-03-13T03:20:00.000Z"
         }
       ]
+    },
+    {
+      "id": "PMW-011",
+      "title": "实现看板 WebSocket 实时更新（可选增强）",
+      "description": "",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "阶段 3：看板增强"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-13T05:33:18.798Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
+      "comments": []
     },
     {
       "id": "PMW-012",
@@ -154,8 +256,10 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
       "createdAt": "2026-03-12T17:52:22.001Z",
-      "updatedAt": "2026-03-13T04:13:37.115Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
       "comments": [
         {
           "author": "project-manager",
@@ -176,8 +280,28 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
       "createdAt": "2026-03-12T17:52:22.001Z",
-      "updatedAt": "2026-03-13T04:13:37.115Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-014",
+      "title": "创建配置向导",
+      "description": "",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [
+        "阶段 4：一键复用安装"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-13T05:33:18.798Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
       "comments": []
     },
     {
@@ -192,8 +316,28 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
       "createdAt": "2026-03-12T17:52:22.002Z",
-      "updatedAt": "2026-03-13T04:13:37.115Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-016",
+      "title": "创建项目模板",
+      "description": "",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "阶段 4：一键复用安装"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-13T05:33:18.798Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
       "comments": []
     },
     {
@@ -208,8 +352,28 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
       "createdAt": "2026-03-12T17:52:22.003Z",
-      "updatedAt": "2026-03-13T04:13:37.115Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-018",
+      "title": "编写 API 文档",
+      "description": "",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "阶段 5：文档和测试"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-13T05:33:18.798Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
       "comments": []
     },
     {
@@ -224,8 +388,28 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
       "createdAt": "2026-03-12T17:52:22.005Z",
-      "updatedAt": "2026-03-13T04:13:37.115Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-020",
+      "title": "端到端测试和修复",
+      "description": "",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [
+        "阶段 5：文档和测试"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-13T05:33:18.798Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
       "comments": []
     },
     {
@@ -240,15 +424,17 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
       "createdAt": "2026-03-13T02:49:50.955Z",
-      "updatedAt": "2026-03-13T04:13:37.115Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
       "comments": []
     },
     {
-      "id": "PMW-023",
-      "title": "实现文档 ↔ 看板双向同步（最小闭环）",
+      "id": "PMW-022",
+      "title": "补齐 Subagent 完成回调/自动 complete 机制（监控断层修复）",
       "description": "",
-      "status": "in-progress",
+      "status": "done",
       "priority": "P0",
       "labels": [
         "阶段 6：闭环补齐（P0 - 核心）"
@@ -256,8 +442,82 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-13T05:33:18.798Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-023",
+      "title": "【测试】修改标题测试同步功能",
+      "description": "",
+      "status": "done",
+      "priority": "P0",
+      "labels": [
+        "阶段 6：闭环补齐（P0 - 核心）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
       "createdAt": "2026-03-13T02:49:50.958Z",
-      "updatedAt": "2026-03-13T04:13:37.115Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-029",
+      "title": "看板运行态自动回写到 04-进度跟踪.md（闭环补齐）",
+      "description": "",
+      "status": "todo",
+      "priority": "P0",
+      "labels": [
+        "阶段 6：闭环补齐（P0 - 核心）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-13T05:19:09.529Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-030",
+      "title": "防回环机制（SyncLock + watcher pause/resume）",
+      "description": "",
+      "status": "todo",
+      "priority": "P0",
+      "labels": [
+        "阶段 6：闭环补齐（P0 - 核心）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-13T05:33:18.798Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-031",
+      "title": "同步审计日志（记录变更来源，便于回溯）",
+      "description": "",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [
+        "阶段 6：闭环补齐（P0 - 核心）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-13T05:19:09.529Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
       "comments": []
     },
     {
@@ -272,8 +532,28 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
       "createdAt": "2026-03-13T02:49:50.959Z",
-      "updatedAt": "2026-03-13T04:13:37.115Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-025",
+      "title": "实现任务依赖检查（前置任务未完成不分配）【待定】",
+      "description": "",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "阶段 7：后续优化（待定）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-13T05:33:18.798Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
       "comments": []
     },
     {
@@ -288,8 +568,28 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
       "createdAt": "2026-03-13T02:49:50.961Z",
-      "updatedAt": "2026-03-13T04:13:37.115Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-027",
+      "title": "实现优先级动态调整（紧急任务插队）【待定】",
+      "description": "",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "阶段 7：后续优化（待定）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-13T05:33:18.798Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
       "comments": []
     },
     {
@@ -304,8 +604,10 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
       "createdAt": "2026-03-13T02:49:50.964Z",
-      "updatedAt": "2026-03-13T04:13:37.115Z",
+      "updatedAt": "2026-03-13T05:33:53.278Z",
       "comments": []
     }
   ]

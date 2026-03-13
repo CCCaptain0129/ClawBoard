@@ -13,6 +13,8 @@
 import { ProgressToDocService } from './progressToDocService';
 import { SafeSyncService } from './safeSyncService';
 import { WebSocketHandler } from '../websocket/server';
+import { SyncLockService } from './syncLockService';
+import { FileWatcherService } from './fileWatcherService';
 
 // 去抖配置
 const DEBOUNCE_MS = 1000; // 1秒去抖
@@ -28,16 +30,22 @@ export class ProgressOrchestrator {
   private progressService: ProgressToDocService;
   private safeSyncService: SafeSyncService;
   private wsServer: WebSocketHandler;
+  private syncLockService: SyncLockService; // PMW-030
+  private fileWatcherService: FileWatcherService | null; // PMW-030
   private pendingUpdates: Map<string, PendingUpdate>;
 
   constructor(
     progressService: ProgressToDocService,
     safeSyncService: SafeSyncService,
-    wsServer: WebSocketHandler
+    wsServer: WebSocketHandler,
+    syncLockService?: SyncLockService, // PMW-030
+    fileWatcherService?: FileWatcherService // PMW-030
   ) {
     this.progressService = progressService;
     this.safeSyncService = safeSyncService;
     this.wsServer = wsServer;
+    this.syncLockService = syncLockService || new SyncLockService(); // PMW-030
+    this.fileWatcherService = fileWatcherService || null; // PMW-030
     this.pendingUpdates = new Map();
   }
 
@@ -88,9 +96,28 @@ export class ProgressOrchestrator {
   /**
    * 执行实际的进度同步
    *
+   * PMW-030: 增加防回环机制
+   * 1. 获取锁
+   * 2. 暂停文件监听
+   * 3. 执行同步
+   * 4. 恢复文件监听
+   * 5. 释放锁
+   *
    * @param projectId - 项目ID
    */
   private async performSync(projectId: string): Promise<void> {
+    // PMW-030: 获取锁
+    const lockKey = `progress-sync-${projectId}`;
+    if (!this.syncLockService.acquire(lockKey, projectId)) {
+      console.warn(`⚠️ [ProgressOrchestrator] Failed to acquire lock for ${projectId}, skipping sync`);
+      return;
+    }
+
+    // PMW-030: 暂停文件监听
+    if (this.fileWatcherService) {
+      this.fileWatcherService.pause();
+    }
+
     try {
       // 获取项目配置
       const config = this.safeSyncService.getProjectConfig(projectId);
@@ -122,6 +149,14 @@ export class ProgressOrchestrator {
       }
     } catch (error) {
       console.error(`❌ [ProgressOrchestrator] Failed to sync progress for ${projectId}:`, error);
+    } finally {
+      // PMW-030: 恢复文件监听
+      if (this.fileWatcherService) {
+        this.fileWatcherService.resume();
+      }
+
+      // PMW-030: 释放锁
+      this.syncLockService.release(lockKey);
     }
   }
 
