@@ -3,7 +3,7 @@ export interface Task {
   title: string;
   description: string;
   status: 'todo' | 'in-progress' | 'done';
-  priority: 'P1' | 'P2' | 'P3';
+  priority: 'P0' | 'P1' | 'P2' | 'P3';
   labels: string[];
   assignee: string | null;
   claimedBy: string | null;

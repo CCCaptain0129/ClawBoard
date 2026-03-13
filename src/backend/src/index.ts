@@ -7,6 +7,8 @@ import { AgentService } from './services/agentService';
 import { TaskService } from './services/taskService';
 import { StatusSyncService } from './services/statusSyncService';
 import { SubagentMonitorService } from './services/subagentMonitor';
+import { SafeSyncService } from './services/safeSyncService';
+import { FileWatcherService } from './services/fileWatcherService';
 import { agentRoutes } from './routes/agents';
 import { taskRoutes } from './routes/tasks';
 import { syncRoutes } from './routes/sync';
@@ -38,10 +40,16 @@ const scheduler = new AgentTaskScheduler(taskService, wsServer);
 const statusSyncService = new StatusSyncService(taskService, wsServer);
 const subagentMonitorService = new SubagentMonitorService(taskService);
 
+// ========================================
+// PMW-023 Phase 2: 安全同步服务初始化
+// ========================================
+const safeSyncService = new SafeSyncService(taskService);
+const fileWatcherService = new FileWatcherService(safeSyncService, wsServer);
+
 app.use('/api/agents', agentRoutes(agentService));
 app.use('/api/tasks', taskRoutes(taskService, wsServer));
 app.use('/api/tasks', healthCheckRouter);
-app.use('/api/sync', syncRoutes(taskService, wsServer));
+app.use('/api/sync', syncRoutes(taskService, wsServer, safeSyncService));
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -70,6 +78,24 @@ console.log('📋 Status sync service started');
 subagentMonitorService.start();
 console.log('🔍 Subagent monitor service started');
 
+// ========================================
+// PMW-023 Phase 2: 启动文件监听服务
+// ========================================
+fileWatcherService.start();
+console.log('📁 File watcher service started');
+
+// ========================================
+// 初始同步（可选）
+// ========================================
+// 初始同步 pm-workflow-automation 项目
+safeSyncService.safeSyncFromMarkdown('pm-workflow-automation')
+  .then(result => {
+    if (result.success) {
+      console.log(`✅ Initial safe sync completed: ${result.tasks.length} tasks`);
+    }
+  })
+  .catch(err => console.error('❌ Initial safe sync failed:', err));
+
 // Start polling
 setInterval(async () => {
   const agents = await agentService.getAllAgents();
@@ -81,9 +107,26 @@ console.log(`🔄 Polling OpenClaw every 3000ms`);
 console.log(`⏱️  Task scheduler running every 60000ms`);
 
 process.on('SIGTERM', () => {
+  fileWatcherService.stop();
   wsServer.stop();
   scheduler.stop();
   statusSyncService.stop?.();
   subagentMonitorService.stop();
   server.close();
+});
+
+process.on('SIGINT', () => {
+  console.log('\n🛑 Shutting down gracefully...');
+  fileWatcherService.stop();
+  wsServer.stop();
+  scheduler.stop();
+  statusSyncService.stop?.();
+  subagentMonitorService.stop();
+  server.close();
+  process.exit(0);
+});
+
+// 文件监听状态端点
+app.get('/api/file-watcher/status', (req, res) => {
+  res.json(fileWatcherService.getStatus());
 });
