@@ -15,6 +15,7 @@ import { SyncLockService } from './services/syncLockService'; // PMW-030
 import { agentRoutes } from './routes/agents';
 import { taskRoutes } from './routes/tasks';
 import { syncRoutes } from './routes/sync';
+import { taskDocRoutes } from './routes/taskDoc'; // PMW-036: 任务文档写入路由
 import healthCheckRouter from './routes/healthCheck';
 import { WebSocketHandler } from './websocket/server';
 import { AgentTaskScheduler } from './schedulers/agentTaskScheduler';
@@ -94,6 +95,7 @@ app.use('/api/agents', agentRoutes(agentService));
 app.use('/api/tasks', taskRoutes(taskService, wsServer));
 app.use('/api/tasks', healthCheckRouter);
 app.use('/api/sync', syncRoutes(taskService, wsServer, safeSyncService));
+app.use('/api/task-doc', taskDocRoutes(taskService, safeSyncService, wsServer, progressOrchestrator)); // PMW-036: 任务文档写入
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

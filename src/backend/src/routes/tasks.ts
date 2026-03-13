@@ -48,10 +48,23 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
   });
 
   // 创建单个任务
+  // 注意：对于 pm-workflow-automation 项目，禁用直接 JSON 创建
+  // 请使用 POST /api/task-doc/:projectId/tasks 写入 03 文档
   router.post('/projects/:id/tasks', async (req, res) => {
     try {
       const { id } = req.params;
       const task = req.body;
+
+      // PMW-036: 为 pm-workflow-automation 项目禁用直接 JSON 创建任务
+      // 要求使用新增任务功能（写入03文档）
+      if (id === 'pm-workflow-automation') {
+        return res.status(400).json({
+          error: '此项目禁止直接创建 JSON 任务，请使用新增任务功能（写入 03-任务分解.md）',
+          hint: '请使用 POST /api/task-doc/pm-workflow-automation/tasks 接口创建任务',
+          code: 'USE_TASK_DOC_API',
+        });
+      }
+
       const newTask = await taskService.createTask(id, task);
       res.json(newTask);
     } catch (error) {

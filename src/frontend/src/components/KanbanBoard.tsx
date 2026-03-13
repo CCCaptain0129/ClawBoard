@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import TaskCard from './TaskCard'
+import CreateTaskModal from './CreateTaskModal'
 
 interface Task {
   id: string
@@ -57,6 +58,10 @@ export default function KanbanBoard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
+  
+  // PMW-036: 新增任务弹窗状态
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null)
 
   // 加载项目列表
   useEffect(() => {
@@ -159,6 +164,30 @@ export default function KanbanBoard() {
     } finally {
       setSyncing(false)
     }
+  }
+
+  // PMW-036: 处理新增任务成功
+  const handleCreateTaskSuccess = async (taskId: string) => {
+    console.log(`✅ Task created via doc: ${taskId}`)
+    
+    // 设置高亮任务ID
+    setHighlightedTaskId(taskId)
+    
+    // 3秒后取消高亮
+    setTimeout(() => {
+      setHighlightedTaskId(null)
+    }, 3000)
+    
+    // 刷新任务列表（延迟1秒，等待 watcher 触发同步）
+    setTimeout(() => {
+      fetchTasks()
+    }, 1000)
+  }
+
+  // 获取当前项目信息（包含 taskPrefix）
+  const getCurrentProjectData = () => {
+    if (currentProject === 'all') return null
+    return projects.find(p => p.id === currentProject)
   }
 
   const getCurrentProjectInfo = () => {
@@ -292,25 +321,39 @@ export default function KanbanBoard() {
           </div>
           {currentProject !== 'all' && <TASKSButton projectId={currentProject} />}
         </div>
-        <button
-          onClick={handleSync}
-          disabled={syncing || currentProject === 'all'}
-          className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          {syncing ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-              同步中...
-            </>
-          ) : (
-            <>
+        <div className="flex items-center gap-3">
+          {/* PMW-036: 新增任务按钮 */}
+          {currentProject !== 'all' && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-all text-sm font-semibold shadow-sm hover:shadow flex items-center gap-2"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              同步到 Markdown
-            </>
+              新增任务
+            </button>
           )}
-        </button>
+          <button
+            onClick={handleSync}
+            disabled={syncing || currentProject === 'all'}
+            className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {syncing ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                同步中...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                同步到 Markdown
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* 统计卡片 */}
@@ -377,15 +420,20 @@ export default function KanbanBoard() {
                 ) : (
                   columnTasks.map(task => {
                     const project = currentProject === 'all' ? findProjectByTaskPrefix(task.id) : undefined
+                    const isHighlighted = highlightedTaskId === task.id
                     return (
-                      <TaskCard
+                      <div
                         key={task.id}
-                        task={task}
-                        projectName={project?.name}
-                        projectColor={project?.color}
-                        projectIcon={project?.icon}
-                        onStatusChange={handleStatusChange}
-                      />
+                        className={`transition-all duration-500 ${isHighlighted ? 'ring-2 ring-indigo-500 ring-offset-2 rounded-lg' : ''}`}
+                      >
+                        <TaskCard
+                          task={task}
+                          projectName={project?.name}
+                          projectColor={project?.color}
+                          projectIcon={project?.icon}
+                          onStatusChange={handleStatusChange}
+                        />
+                      </div>
                     )
                   })
                 )}
@@ -395,6 +443,20 @@ export default function KanbanBoard() {
         })}
       </div>
       )}
+
+      {/* PMW-036: 新增任务弹窗 */}
+      {showCreateModal && currentProject !== 'all' && (() => {
+        const projectData = getCurrentProjectData()
+        return projectData ? (
+          <CreateTaskModal
+            projectId={currentProject}
+            projectName={projectData.name}
+            taskPrefix={projectData.taskPrefix}
+            onClose={() => setShowCreateModal(false)}
+            onSuccess={handleCreateTaskSuccess}
+          />
+        ) : null
+      })()}
     </div>
   )
 }
