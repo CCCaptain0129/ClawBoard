@@ -8,7 +8,7 @@
   "icon": "📊",
   "taskPrefix": "VIS",
   "createdAt": "2026-03-10T00:00:00.000Z",
-  "updatedAt": "2026-03-13T08:24:43.544Z",
+  "updatedAt": "2026-03-13T11:51:21.480Z",
   "tasks": [
     {
       "id": "VIS-001",
@@ -24,8 +24,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.518Z",
-      "updatedAt": "2026-03-13T08:24:43.518Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -42,8 +42,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.518Z",
-      "updatedAt": "2026-03-13T08:24:43.543Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.479Z",
       "comments": []
     },
     {
@@ -60,8 +60,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.518Z",
-      "updatedAt": "2026-03-13T08:24:43.518Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -78,8 +78,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.518Z",
-      "updatedAt": "2026-03-13T08:24:43.518Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -96,8 +96,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.518Z",
-      "updatedAt": "2026-03-13T08:24:43.518Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -114,8 +114,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.518Z",
-      "updatedAt": "2026-03-13T08:24:43.518Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -132,8 +132,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.518Z",
-      "updatedAt": "2026-03-13T08:24:43.518Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -150,8 +150,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -168,8 +168,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -186,8 +186,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -204,8 +204,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -222,8 +222,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -240,8 +240,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -258,8 +258,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -276,8 +276,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -294,8 +294,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -312,8 +312,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -330,8 +330,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -348,8 +348,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.544Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.479Z",
       "comments": []
     },
     {
@@ -366,8 +366,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -384,8 +384,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -402,8 +402,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -420,8 +420,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -438,8 +438,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -456,8 +456,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -474,8 +474,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -492,8 +492,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.544Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.480Z",
       "comments": []
     },
     {
@@ -510,8 +510,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -528,8 +528,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     },
     {
@@ -546,46 +546,8 @@
       "dueDate": null,
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-13T08:24:43.519Z",
-      "updatedAt": "2026-03-13T08:24:43.519Z",
-      "comments": []
-    },
-    {
-      "id": "VIS-TEST-001",
-      "title": "【测试】展示 Subagent 分配 - 进行中状态",
-      "description": "这是一个测试任务，用于验证看板中 Subagent 分配信息的显示效果。当前状态：进行中，已分配给 subagent:ui-show-subagent-assignment。",
-      "status": "in-progress",
-      "priority": "P1",
-      "labels": [
-        "测试任务",
-        "UI展示验证"
-      ],
-      "assignee": null,
-      "claimedBy": "agent:main:subagent:ui-show-subagent-assignment-glm5",
-      "dueDate": null,
-      "startTime": "2026-03-13T09:30:00.000Z",
-      "completeTime": null,
-      "createdAt": "2026-03-13T09:25:00.000Z",
-      "updatedAt": "2026-03-13T09:30:00.000Z",
-      "comments": []
-    },
-    {
-      "id": "VIS-TEST-002",
-      "title": "【测试】展示历史 Subagent 分配 - 已完成",
-      "description": "这是一个测试任务，用于验证看板中历史 Subagent 分配信息的显示效果。当前状态：已完成，保留最后执行的 subagent 信息。",
-      "status": "done",
-      "priority": "P2",
-      "labels": [
-        "测试任务",
-        "历史记录验证"
-      ],
-      "assignee": null,
-      "claimedBy": "agent:main:subagent:test-historical-subagent-abc123",
-      "dueDate": null,
-      "startTime": "2026-03-12T14:00:00.000Z",
-      "completeTime": "2026-03-12T16:30:00.000Z",
-      "createdAt": "2026-03-12T13:50:00.000Z",
-      "updatedAt": "2026-03-12T16:30:00.000Z",
+      "createdAt": "2026-03-13T11:51:21.456Z",
+      "updatedAt": "2026-03-13T11:51:21.456Z",
       "comments": []
     }
   ]

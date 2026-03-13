@@ -8,7 +8,7 @@
   "icon": "🔄",
   "taskPrefix": "PMW",
   "createdAt": "2026-03-12T17:49:00.000Z",
-  "updatedAt": "2026-03-13T09:01:30.663Z",
+  "updatedAt": "2026-03-13T12:21:14.976Z",
   "tasks": [
     {
       "id": "PMW-001",
@@ -25,7 +25,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:00.845Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.975Z",
       "comments": [
         {
           "author": "project-manager",
@@ -49,7 +49,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.975Z",
       "comments": []
     },
     {
@@ -67,7 +67,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:00.847Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": [
         {
           "author": "project-manager",
@@ -91,7 +91,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
@@ -109,7 +109,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:00.848Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": [
         {
           "author": "project-manager",
@@ -133,7 +133,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:21.994Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": [
         {
           "author": "project-manager",
@@ -157,7 +157,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": [
         {
           "author": "project-manager",
@@ -181,7 +181,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:21.996Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": [
         {
           "author": "project-manager",
@@ -205,7 +205,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": [
         {
           "author": "project-manager",
@@ -229,7 +229,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:21.999Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": [
         {
           "author": "project-manager",
@@ -253,7 +253,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
@@ -271,7 +271,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:22.001Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": [
         {
           "author": "project-manager",
@@ -279,6 +279,24 @@
           "createdAt": "2026-03-13T03:20:00.000Z"
         }
       ]
+    },
+    {
+      "id": "PMW-035",
+      "title": "PMW-013升级：安装包一键初始化（agents/skills/规范/流程）",
+      "description": "",
+      "status": "todo",
+      "priority": "P0",
+      "labels": [
+        "阶段 4：一键复用安装"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-13T12:21:12.457Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
+      "comments": []
     },
     {
       "id": "PMW-013",
@@ -295,7 +313,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:22.001Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
@@ -313,7 +331,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
@@ -331,7 +349,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:22.002Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
@@ -349,7 +367,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
@@ -367,7 +385,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:22.003Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
@@ -385,7 +403,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
@@ -403,7 +421,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-12T17:52:22.005Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
@@ -421,7 +439,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
@@ -439,7 +457,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T02:49:50.955Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
@@ -457,7 +475,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
@@ -475,7 +493,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T02:49:50.958Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
@@ -493,7 +511,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:19:09.529Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
@@ -511,7 +529,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
@@ -529,13 +547,13 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:19:09.529Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
       "id": "PMW-032",
       "title": "实现 03 变更自动触发 04 刷新",
-      "description": "当 03-任务分解.md 发生变更时，自动触发进度刷新，确保 04-进度跟踪.md 与任务定义保持同步。这是文档→看板同步链路的最后一环。",
+      "description": "",
       "status": "done",
       "priority": "P0",
       "labels": [
@@ -547,13 +565,13 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T08:59:29.234Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
-      "id": "PMW-033",
-      "title": "修复 Subagent 执行时看板 in-progress 为空的问题",
-      "description": "当 main agent 使用 sessions_spawn 创建 subagent 执行开发任务时，看板任务应自动进入 in-progress 状态并显示 claimedBy。Subagent 完成后应自动变为 done。实现：增强 SubagentMonitorService 以自动检测 OpenClaw sessions.json 中的新 subagent 会话，从 label 中解析任务 ID，自动注册并更新任务状态。",
+      "id": "PMW-034",
+      "title": "最终演示：端到端自动化闭环",
+      "description": "",
       "status": "done",
       "priority": "P0",
       "labels": [
@@ -563,16 +581,10 @@
       "claimedBy": null,
       "dueDate": null,
       "startTime": null,
-      "completeTime": "2026-03-13T09:15:00.000Z",
-      "createdAt": "2026-03-13T09:10:00.000Z",
-      "updatedAt": "2026-03-13T09:15:00.000Z",
-      "comments": [
-        {
-          "author": "subagent",
-          "content": "已实现：增强 SubagentMonitorService 以自动检测 OpenClaw sessions.json 中的新 subagent 会话，从 label 解析任务 ID，自动注册并更新任务状态。使用方法见 docs/SUBAGENT_KANBAN_BINDING_GUIDE.md",
-          "createdAt": "2026-03-13T09:15:00.000Z"
-        }
-      ]
+      "completeTime": null,
+      "createdAt": "2026-03-13T11:48:17.354Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
+      "comments": []
     },
     {
       "id": "PMW-024",
@@ -589,7 +601,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T02:49:50.959Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
@@ -607,7 +619,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
@@ -625,7 +637,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T02:49:50.961Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
@@ -643,7 +655,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T05:33:18.798Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     },
     {
@@ -661,7 +673,7 @@
       "startTime": null,
       "completeTime": null,
       "createdAt": "2026-03-13T02:49:50.964Z",
-      "updatedAt": "2026-03-13T09:01:30.663Z",
+      "updatedAt": "2026-03-13T12:21:14.976Z",
       "comments": []
     }
   ]
