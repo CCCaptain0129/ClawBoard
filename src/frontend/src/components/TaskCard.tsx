@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 interface Task {
   id: string
@@ -165,6 +165,8 @@ export default function TaskCard({
   onStatusChange,
   onDelete // JSON-first: 删除任务
 }: TaskCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
   const shortSubagentId = formatSubagentId(task.claimedBy)
   const startTimeDisplay = formatTime(task.startTime)
   const isInProgress = task.status === 'in-progress'
@@ -177,199 +179,317 @@ export default function TaskCard({
   // PMW-010: 日志摘要
   const logSummary = formatLogSummary(task.comments)
 
+  // 格式化完整时间显示
+  function formatFullTime(isoString: string | null | undefined): string {
+    if (!isoString) return '-'
+    try {
+      const date = new Date(isoString)
+      return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      })
+    } catch {
+      return '-'
+    }
+  }
+
   return (
-    <div className={`bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer ${statusColors[task.status]} group relative`}>
+    <div
+      className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer ${statusColors[task.status]} group relative ${
+        isExpanded ? 'ring-2 ring-blue-400 ring-offset-1' : ''
+      }`}
+      onClick={() => setIsExpanded(!isExpanded)}
+    >
       {/* 进行中状态 - 顶部高亮条 */}
       {isInProgress && (
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 rounded-t-lg animate-pulse" />
       )}
 
-      {/* 项目标签（多项目时显示） */}
-      {projectName && (
-        <div className="flex items-center gap-1.5 mb-2 text-xs font-medium" style={{ color: projectColor }}>
-          <span>{projectIcon}</span>
-          <span>{projectName}</span>
-        </div>
-      )}
-
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span className={`px-2 py-0.5 text-xs font-medium rounded border ${priorityColors[task.priority]}`}>
-            {task.priority}
-          </span>
-          {/* 进行中状态标签 */}
-          {isInProgress && (
-            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-500 text-white animate-pulse">
-              🔄 执行中
-            </span>
-          )}
-        </div>
-        <span className="text-xs text-gray-400 font-mono">{task.id}</span>
+      {/* 展开指示器 */}
+      <div className="absolute top-4 right-2 z-10">
+        <svg
+          className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+            isExpanded ? 'rotate-180' : ''
+          }`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
       </div>
 
-      <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
-        {task.title}
-      </h3>
-
-      {task.description && (
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{task.description}</p>
-      )}
-
-      {task.labels.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {task.labels.slice(0, 2).map((label) => {
-            if (['todo', 'in-progress', 'done', 'P1', 'P2', 'P3'].includes(label)) return null
-            return (
-              <span key={label} className="px-2 py-0.5 text-xs bg-slate-100 text-slate-600 rounded-full font-medium">
-                {label}
-              </span>
-            )
-          }).filter(Boolean)}
-          {task.labels.filter((l) =>
-            !['todo', 'in-progress', 'done', 'P1', 'P2', 'P3'].includes(l)
-          ).length > 2 && (
-            <span className="px-2 py-0.5 text-xs bg-slate-50 text-slate-400 rounded-full">
-              +{task.labels.filter((l) =>
-                !['todo', 'in-progress', 'done', 'P1', 'P2', 'P3'].includes(l)
-              ).length - 2}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Subagent 分配信息 - 优先显示 */}
-      {shortSubagentId && (
-        <div className={`mb-3 p-2 rounded-lg border ${
-          isOverdue
-            ? 'bg-gradient-to-r from-red-50 to-orange-50 border-red-300'
-            : 'bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200'
-        }`}>
-          <div className="flex items-center gap-2 mb-2">
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center shadow-sm ${
-              isOverdue ? 'bg-gradient-to-br from-red-500 to-orange-500' : 'bg-gradient-to-br from-purple-500 to-indigo-500'
-            }`}>
-              <span className="text-xs">🤖</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className={`text-xs font-semibold ${isOverdue ? 'text-red-700' : 'text-purple-700'}`}>
-                {isOverdue ? '⚠️ 执行超时' : '分配给 Subagent'}
-              </div>
-              <div className={`text-xs font-mono truncate ${isOverdue ? 'text-red-600' : 'text-purple-600'}`} title={task.claimedBy || ''}>
-                {shortSubagentId}
-              </div>
-            </div>
+      <div className={`p-4 ${isExpanded ? '' : ''}`}>
+        {/* 项目标签（多项目时显示） */}
+        {projectName && (
+          <div className="flex items-center gap-1.5 mb-2 text-xs font-medium" style={{ color: projectColor }}>
+            <span>{projectIcon}</span>
+            <span>{projectName}</span>
           </div>
-
-          {/* PMW-010: 执行时间信息 */}
-          <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-purple-200/50">
-            {/* 开始时间 */}
-            {startTimeDisplay && (
-              <div className={`flex items-center gap-1 ${isOverdue ? 'text-red-500' : 'text-purple-500'}`} title={`开始时间: ${task.startTime}`}>
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>{startTimeDisplay}</span>
-              </div>
-            )}
-
-            {/* PMW-010: 执行耗时 */}
-            {duration && (
-              <div className={`flex items-center gap-1 ${
-                isOverdue ? 'text-red-600 font-medium' : (isDone ? 'text-green-600' : 'text-purple-500')
-              }`} title={isDone ? `完成时间: ${task.completeTime}` : '已执行时间'}>
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span>{duration}</span>
-              </div>
-            )}
-          </div>
-
-          {/* PMW-010: 预计时间提示（进行中且未超时时） */}
-          {isInProgress && !isOverdue && task.estimatedTime && (
-            <div className="text-xs text-purple-400 mt-1 flex items-center gap-1">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              <span>预计: {task.estimatedTime}</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* PMW-010: 执行日志摘要 */}
-      {(logSummary || (task.comments && task.comments.length > 0)) && (
-        <div className="mb-3 p-2 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg border border-amber-200">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-5 h-5 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-full flex items-center justify-center shadow-sm">
-              <span className="text-xs">📝</span>
-            </div>
-            <div className="text-xs font-semibold text-amber-700">
-              执行日志
-              {task.comments && task.comments.length > 1 && (
-                <span className="ml-1 text-amber-500 font-normal">({task.comments.length}条)</span>
-              )}
-            </div>
-          </div>
-          {logSummary && (
-            <div className="text-xs text-amber-600 line-clamp-2" title="最新执行记录">
-              {logSummary}
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-        {/* Assignee 显示 */}
-        {task.assignee ? (
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
-              <span className="text-xs text-white font-semibold">
-                {task.assignee.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <span className="text-xs font-medium text-gray-700">{task.assignee}</span>
-          </div>
-        ) : !shortSubagentId ? (
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-              <span className="text-xs text-gray-400">?</span>
-            </div>
-            <span className="text-xs text-gray-400">未分配</span>
-          </div>
-        ) : (
-          <div />
         )}
 
-        <div className="flex items-center gap-2">
-          {/* JSON-first: 删除按钮 - 仅 todo 状态显示 */}
-          {onDelete && task.status === 'todo' && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                if (confirm(`确定要删除任务 "${task.title}" 吗？\n\n注意：只有 todo 状态的任务可以删除。`)) {
-                  onDelete(task.id)
-                }
-              }}
-              className="text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors"
-              title="删除任务（仅 todo 状态）"
-            >
-              🗑️ 删除
-            </button>
+        <div className="flex items-start justify-between mb-2 pr-6">
+          <div className="flex items-center gap-2">
+            <span className={`px-2 py-0.5 text-xs font-medium rounded border ${priorityColors[task.priority]}`}>
+              {task.priority}
+            </span>
+            {/* 进行中状态标签 */}
+            {isInProgress && (
+              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-500 text-white animate-pulse">
+                🔄 执行中
+              </span>
+            )}
+          </div>
+          <span className="text-xs text-gray-400 font-mono">{task.id}</span>
+        </div>
+
+        <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+          {task.title}
+        </h3>
+
+        {/* 展开时显示详细信息 */}
+        {isExpanded ? (
+          <div className="space-y-3">
+            {/* 任务描述 */}
+            {task.description && (
+              <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+                <div className="text-xs font-semibold text-blue-700 mb-1 flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  任务描述
+                </div>
+                <div className="text-sm text-gray-700 leading-relaxed">
+                  {task.description}
+                </div>
+              </div>
+            )}
+
+            {/* 时间信息 */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* 计划完成时间 */}
+              <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                <div className="text-xs font-semibold text-gray-600 mb-1 flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  预计时间
+                </div>
+                <div className="text-sm font-medium text-gray-900">
+                  {task.estimatedTime || '未设定'}
+                </div>
+                {task.dueDate && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    截止: {formatFullTime(task.dueDate)}
+                  </div>
+                )}
+              </div>
+
+              {/* 实际完成时间 */}
+              <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                <div className="text-xs font-semibold text-gray-600 mb-1 flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  实际时间
+                </div>
+                {isDone ? (
+                  <div>
+                    <div className="text-sm font-medium text-green-600">
+                      {duration || '已完成'}
+                    </div>
+                    {task.completeTime && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        完成于: {formatFullTime(task.completeTime)}
+                      </div>
+                    )}
+                  </div>
+                ) : isInProgress ? (
+                  <div>
+                    <div className="text-sm font-medium text-blue-600">
+                      {duration || '进行中'}
+                    </div>
+                    {task.startTime && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        开始于: {formatFullTime(task.startTime)}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-400">未开始</div>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* 收起时显示简化信息 */
+          <>
+            {task.description && (
+              <p className="text-sm text-gray-600 mb-3 line-clamp-2">{task.description}</p>
+            )}
+          </>
+        )}
+
+        {task.labels.length > 0 && !isExpanded && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {task.labels.slice(0, 2).map((label) => {
+              if (['todo', 'in-progress', 'done', 'P1', 'P2', 'P3'].includes(label)) return null
+              return (
+                <span key={label} className="px-2 py-0.5 text-xs bg-slate-100 text-slate-600 rounded-full font-medium">
+                  {label}
+                </span>
+              )
+            }).filter(Boolean)}
+            {task.labels.filter((l) =>
+              !['todo', 'in-progress', 'done', 'P1', 'P2', 'P3'].includes(l)
+            ).length > 2 && (
+              <span className="px-2 py-0.5 text-xs bg-slate-50 text-slate-400 rounded-full">
+                +{task.labels.filter((l) =>
+                  !['todo', 'in-progress', 'done', 'P1', 'P2', 'P3'].includes(l)
+                ).length - 2}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Subagent 分配信息 - 优先显示 */}
+        {shortSubagentId && (
+          <div className={`mb-3 p-2 rounded-lg border ${
+            isOverdue
+              ? 'bg-gradient-to-r from-red-50 to-orange-50 border-red-300'
+              : 'bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200'
+          }`}>
+            <div className="flex items-center gap-2 mb-2">
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center shadow-sm ${
+                isOverdue ? 'bg-gradient-to-br from-red-500 to-orange-500' : 'bg-gradient-to-br from-purple-500 to-indigo-500'
+              }`}>
+                <span className="text-xs">🤖</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className={`text-xs font-semibold ${isOverdue ? 'text-red-700' : 'text-purple-700'}`}>
+                  {isOverdue ? '⚠️ 执行超时' : '分配给 Subagent'}
+                </div>
+                <div className={`text-xs font-mono truncate ${isOverdue ? 'text-red-600' : 'text-purple-600'}`} title={task.claimedBy || ''}>
+                  {shortSubagentId}
+                </div>
+              </div>
+            </div>
+
+            {/* PMW-010: 执行时间信息 */}
+            <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-purple-200/50">
+              {/* 开始时间 */}
+              {startTimeDisplay && (
+                <div className={`flex items-center gap-1 ${isOverdue ? 'text-red-500' : 'text-purple-500'}`} title={`开始时间: ${task.startTime}`}>
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{startTimeDisplay}</span>
+                </div>
+              )}
+
+              {/* PMW-010: 执行耗时 */}
+              {duration && (
+                <div className={`flex items-center gap-1 ${
+                  isOverdue ? 'text-red-600 font-medium' : (isDone ? 'text-green-600' : 'text-purple-500')
+                }`} title={isDone ? `完成时间: ${task.completeTime}` : '已执行时间'}>
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>{duration}</span>
+                </div>
+              )}
+            </div>
+
+            {/* PMW-010: 预计时间提示（进行中且未超时时） */}
+            {isInProgress && !isOverdue && task.estimatedTime && (
+              <div className="text-xs text-purple-400 mt-1 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span>预计: {task.estimatedTime}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* PMW-010: 执行日志摘要 */}
+        {(logSummary || (task.comments && task.comments.length > 0)) && !isExpanded && (
+          <div className="mb-3 p-2 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg border border-amber-200">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-5 h-5 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-full flex items-center justify-center shadow-sm">
+                <span className="text-xs">📝</span>
+              </div>
+              <div className="text-xs font-semibold text-amber-700">
+                执行日志
+                {task.comments && task.comments.length > 1 && (
+                  <span className="ml-1 text-amber-500 font-normal">({task.comments.length}条)</span>
+                )}
+              </div>
+            </div>
+            {logSummary && (
+              <div className="text-xs text-amber-600 line-clamp-2" title="最新执行记录">
+                {logSummary}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+          {/* Assignee 显示 */}
+          {task.assignee ? (
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
+                <span className="text-xs text-white font-semibold">
+                  {task.assignee.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <span className="text-xs font-medium text-gray-700">{task.assignee}</span>
+            </div>
+          ) : !shortSubagentId ? (
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+                <span className="text-xs text-gray-400">?</span>
+              </div>
+              <span className="text-xs text-gray-400">未分配</span>
+            </div>
+          ) : (
+            <div />
           )}
 
-          {onStatusChange && task.status !== 'done' && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                const nextStatus = task.status === 'todo' ? 'in-progress' : 'done'
-                onStatusChange(task.id, nextStatus)
-              }}
-              className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
-            >
-              {task.status === 'todo' ? '开始 →' : '完成 ✓'}
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {/* JSON-first: 删除按钮 - 仅 todo 状态显示 */}
+            {onDelete && task.status === 'todo' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (confirm(`确定要删除任务 "${task.title}" 吗？\n\n注意：只有 todo 状态的任务可以删除。`)) {
+                    onDelete(task.id)
+                  }
+                }}
+                className="text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                title="删除任务（仅 todo 状态）"
+              >
+                🗑️ 删除
+              </button>
+            )}
+
+            {onStatusChange && task.status !== 'done' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const nextStatus = task.status === 'todo' ? 'in-progress' : 'done'
+                  onStatusChange(task.id, nextStatus)
+                }}
+                className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+              >
+                {task.status === 'todo' ? '开始 →' : '完成 ✓'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
