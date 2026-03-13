@@ -147,6 +147,175 @@ function stop_process_by_port() {
     return 1
 }
 
+# 停止指定 PID（温和 kill，超时后 kill -9）
+function stop_process_by_pid() {
+    local pid=$1
+    local name=$2
+    local timeout=5
+
+    if [ -z "$pid" ]; then
+        return 1
+    fi
+
+    if ! ps -p $pid > /dev/null 2>&1; then
+        return 1  # 进程不存在
+    fi
+
+    print_warning "$name 正在运行 (PID: $pid)，正在停止..."
+    kill $pid 2>/dev/null
+
+    # 等待进程退出
+    local waited=0
+    while [ $waited -lt $timeout ]; do
+        if ! ps -p $pid > /dev/null 2>&1; then
+            print_success "$name 已停止"
+            return 0
+        fi
+        sleep 1
+        waited=$((waited + 1))
+    done
+
+    # 强制停止
+    if ps -p $pid > /dev/null 2>&1; then
+        print_warning "强制停止 $name (PID: $pid)..."
+        kill -9 $pid 2>/dev/null
+        sleep 1
+        print_success "$name 已强制停止"
+        return 0
+    fi
+
+    return 1
+}
+
+# 按命令行模式匹配并停止所有 openclaw-visualization 后端进程
+function stop_backend_processes() {
+    local stopped_count=0
+    local killed_count=0
+
+    # 查找所有匹配的进程
+    local pids=$(pgrep -f "ts-node.*src/index.ts" | grep -v grep || true)
+
+    if [ -z "$pids" ]; then
+        print_info "未发现运行中的后端进程"
+        return 0
+    fi
+
+    print_warning "发现 ${#pids[@]} 个旧的后端进程，正在停止..."
+
+    for pid in $pids; do
+        if ps -p $pid > /dev/null 2>&1; then
+            # 温和 kill
+            kill $pid 2>/dev/null
+            stopped_count=$((stopped_count + 1))
+        fi
+    done
+
+    # 等待进程退出
+    sleep 3
+
+    # 检查是否还有进程存活，强制 kill
+    for pid in $pids; do
+        if ps -p $pid > /dev/null 2>&1; then
+            print_warning "强制停止后端进程 (PID: $pid)..."
+            kill -9 $pid 2>/dev/null
+            killed_count=$((killed_count + 1))
+        fi
+    done
+
+    if [ $stopped_count -gt 0 ] || [ $killed_count -gt 0 ]; then
+        print_success "已停止 $stopped_count 个后端进程，强制停止 $killed_count 个"
+    fi
+}
+
+# 停止所有前端进程
+function stop_frontend_processes() {
+    local stopped_count=0
+    local killed_count=0
+
+    # 查找所有匹配的 Vite 进程
+    local pids=$(pgrep -f "vite.*--port" | grep -v grep || true)
+
+    if [ -z "$pids" ]; then
+        return 0
+    fi
+
+    print_info "发现运行中的前端进程，正在停止..."
+
+    for pid in $pids; do
+        if ps -p $pid > /dev/null 2>&1; then
+            # 温和 kill
+            kill $pid 2>/dev/null
+            stopped_count=$((stopped_count + 1))
+        fi
+    done
+
+    # 等待进程退出
+    sleep 2
+
+    # 检查是否还有进程存活，强制 kill
+    for pid in $pids; do
+        if ps -p $pid > /dev/null 2>&1; then
+            kill -9 $pid 2>/dev/null
+            killed_count=$((killed_count + 1))
+        fi
+    done
+
+    if [ $stopped_count -gt 0 ] || [ $killed_count -gt 0 ]; then
+        print_success "已停止 $stopped_count 个前端进程，强制停止 $killed_count 个"
+    fi
+}
+
+# 停止后端服务（优先使用 pidfile，兜底使用进程匹配）
+function stop_backend() {
+    local stopped=0
+
+    # 优先使用 pidfile
+    if [ -f "$BACKEND_PID_FILE" ]; then
+        local pid=$(cat "$BACKEND_PID_FILE")
+        if ps -p $pid > /dev/null 2>&1; then
+            stop_process_by_pid $pid "后端服务"
+            stopped=1
+        else
+            print_info "PID 文件中的进程不存在，清理 PID 文件"
+            rm -f "$BACKEND_PID_FILE"
+        fi
+    fi
+
+    # 兜底：按命令行模式匹配并停止所有后端进程
+    if [ $stopped -eq 0 ]; then
+        stop_backend_processes
+    fi
+
+    # 清理 PID 文件
+    rm -f "$BACKEND_PID_FILE"
+}
+
+# 停止前端服务（优先使用 pidfile，兜底使用进程匹配）
+function stop_frontend() {
+    local stopped=0
+
+    # 优先使用 pidfile
+    if [ -f "$FRONTEND_PID_FILE" ]; then
+        local pid=$(cat "$FRONTEND_PID_FILE")
+        if ps -p $pid > /dev/null 2>&1; then
+            stop_process_by_pid $pid "前端服务"
+            stopped=1
+        else
+            print_info "PID 文件中的进程不存在，清理 PID 文件"
+            rm -f "$FRONTEND_PID_FILE"
+        fi
+    fi
+
+    # 兜底：按命令行模式匹配并停止所有前端进程
+    if [ $stopped -eq 0 ]; then
+        stop_frontend_processes
+    fi
+
+    # 清理 PID 文件和端口文件
+    rm -f "$FRONTEND_PID_FILE"
+    rm -f "$FRONTEND_PORT_FILE"
+}
+
 # 检查端口是否被占用，并提供处理选项
 function handle_port_conflict() {
     local port=$1
@@ -235,20 +404,22 @@ function health_check() {
 function start_backend() {
     print_step "启动后端服务..."
 
-    # 检查是否已有实例
-    if ! check_existing_instance "$BACKEND_PID_FILE" "后端服务"; then
-        print_warning "后端服务已在运行，跳过启动"
-        return
+    # 停止所有旧的后端实例（优先使用 pidfile，兜底使用进程匹配）
+    stop_backend
+
+    # 再次检查端口是否被占用（兜底）
+    if get_port_process 3000 > /dev/null 2>&1; then
+        print_warning "端口 3000 仍被占用，尝试停止占用进程..."
+        stop_process_by_port 3000 "后端 HTTP 服务"
     fi
 
-    # 处理端口冲突
-    if ! handle_port_conflict 3000 "后端 HTTP 服务"; then
-        print_warning "使用已有的后端 HTTP 服务"
+    if get_port_process 3001 > /dev/null 2>&1; then
+        print_warning "端口 3001 仍被占用，尝试停止占用进程..."
+        stop_process_by_port 3001 "后端 WebSocket 服务"
     fi
 
-    if ! handle_port_conflict 3001 "后端 WebSocket 服务"; then
-        print_warning "使用已有的后端 WebSocket 服务"
-    fi
+    # 等待端口释放
+    sleep 2
 
     cd "$BACKEND_DIR"
     nohup npm run dev > "$BACKEND_LOG" 2>&1 &
@@ -261,6 +432,7 @@ function start_backend() {
     # 健康检查
     if ! health_check "http://localhost:3000/health" "后端服务" "$BACKEND_LOG"; then
         print_error "后端服务启动失败"
+        print_error "请查看日志: $BACKEND_LOG"
         # 清理 PID 文件
         rm -f "$BACKEND_PID_FILE"
         exit 1
@@ -271,68 +443,11 @@ function start_backend() {
 function start_frontend() {
     print_step "启动前端服务..."
 
-    # 检查是否已有实例
-    if ! check_existing_instance "$FRONTEND_PID_FILE" "前端服务"; then
-        print_warning "前端服务已在运行，跳过启动"
-        return
-    fi
+    # 停止所有旧的前端实例（优先使用 pidfile，兜底使用进程匹配）
+    stop_frontend
 
-    # 处理端口冲突（Vite 会自动切换端口）
-    local port=5173
-    local actual_port=5173
-
-    # 尝试检测 Vite 是否已运行并使用其他端口
-    for try_port in 5173 5174 5175 5176 5177; do
-        if get_port_process $try_port > /dev/null 2>&1; then
-            local process_info=$(get_port_process $try_port)
-            if echo "$process_info" | grep -q "vite\|node"; then
-                print_warning "检测到 Vite 已在端口 $try_port 运行"
-                actual_port=$try_port
-                break
-            fi
-        fi
-    done
-
-    # 如果端口被占用，询问用户
-    if [ "$actual_port" = "5173" ] && get_port_process 5173 > /dev/null 2>&1; then
-        print_warning "端口 5173 已被占用"
-        echo ""
-        echo "检测到以下进程："
-        get_port_process 5173
-        echo ""
-        echo "请选择操作："
-        echo "  1) 停止旧实例并重新启动"
-        echo "  2) 使用已有实例"
-        echo "  3) 取消启动"
-        echo -n "请输入选项 (1-3): "
-        read choice
-
-        case $choice in
-            1)
-                stop_process_by_port 5173 "前端服务"
-                ;;
-            2)
-                print_info "使用已有的前端服务实例"
-                # 检测实际端口
-                for try_port in 5173 5174 5175 5176 5177; do
-                    if get_port_process $try_port > /dev/null 2>&1; then
-                        actual_port=$try_port
-                        break
-                    fi
-                done
-                echo $actual_port > "$FRONTEND_PORT_FILE"
-                return
-                ;;
-            3)
-                print_error "用户取消启动"
-                exit 1
-                ;;
-            *)
-                print_error "无效选项"
-                exit 1
-                ;;
-        esac
-    fi
+    # 等待端口释放
+    sleep 2
 
     cd "$FRONTEND_DIR"
     nohup npm run dev > "$FRONTEND_LOG" 2>&1 &
@@ -362,6 +477,7 @@ function start_frontend() {
     # 健康检查
     if ! health_check "http://localhost:$actual_port" "前端服务" "$FRONTEND_LOG"; then
         print_error "前端服务启动失败"
+        print_error "请查看日志: $FRONTEND_LOG"
         # 清理 PID 文件
         rm -f "$FRONTEND_PID_FILE"
         rm -f "$FRONTEND_PORT_FILE"

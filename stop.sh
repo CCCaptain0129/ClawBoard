@@ -18,6 +18,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_PID_FILE="$PROJECT_ROOT/tmp/backend.pid"
 FRONTEND_PID_FILE="$PROJECT_ROOT/tmp/frontend.pid"
 FRONTEND_PORT_FILE="$PROJECT_ROOT/tmp/frontend.port"
+WATCH_PID_FILE="$PROJECT_ROOT/tmp/watch.pid"
 
 # 打印带颜色的消息
 function print_info() {
@@ -32,32 +33,139 @@ function print_warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
-# 停止进程
-function stop_process() {
-    local pid_file=$1
+# 停止指定 PID（温和 kill，超时后 kill -9）
+function stop_process_by_pid() {
+    local pid=$1
     local name=$2
+    local timeout=5
 
-    if [ -f "$pid_file" ]; then
-        local pid=$(cat "$pid_file")
+    if [ -z "$pid" ]; then
+        return 1
+    fi
+
+    if ! ps -p $pid > /dev/null 2>&1; then
+        return 1  # 进程不存在
+    fi
+
+    print_info "停止 $name (PID: $pid)..."
+    kill $pid 2>/dev/null
+
+    # 等待进程退出
+    local waited=0
+    while [ $waited -lt $timeout ]; do
+        if ! ps -p $pid > /dev/null 2>&1; then
+            print_success "$name 已停止"
+            return 0
+        fi
+        sleep 1
+        waited=$((waited + 1))
+    done
+
+    # 强制停止
+    if ps -p $pid > /dev/null 2>&1; then
+        print_warning "强制停止 $name (PID: $pid)..."
+        kill -9 $pid 2>/dev/null
+        sleep 1
+        print_success "$name 已强制停止"
+        return 0
+    fi
+
+    return 1
+}
+
+# 按命令行模式匹配并停止所有后端进程
+function stop_backend_processes() {
+    local stopped_count=0
+    local killed_count=0
+
+    # 查找所有匹配的进程
+    local pids=$(pgrep -f "ts-node.*src/index.ts" | grep -v grep || true)
+
+    if [ -z "$pids" ]; then
+        return 0
+    fi
+
+    print_info "发现运行中的后端进程，正在停止..."
+
+    for pid in $pids; do
         if ps -p $pid > /dev/null 2>&1; then
-            print_info "停止 $name (PID: $pid)..."
+            # 温和 kill
             kill $pid 2>/dev/null
-            sleep 2
+            stopped_count=$((stopped_count + 1))
+        fi
+    done
 
-            # 如果进程还在运行，强制停止
+    # 等待进程退出
+    sleep 3
+
+    # 检查是否还有进程存活，强制 kill
+    for pid in $pids; do
+        if ps -p $pid > /dev/null 2>&1; then
+            print_warning "强制停止后端进程 (PID: $pid)..."
+            kill -9 $pid 2>/dev/null
+            killed_count=$((killed_count + 1))
+        fi
+    done
+
+    if [ $stopped_count -gt 0 ] || [ $killed_count -gt 0 ]; then
+        print_success "已停止 $stopped_count 个后端进程，强制停止 $killed_count 个"
+    fi
+}
+
+# 按命令行模式匹配并停止所有前端进程
+function stop_frontend_processes() {
+    local stopped_count=0
+    local killed_count=0
+
+    # 查找所有匹配的 Vite 进程
+    local pids=$(pgrep -f "vite.*--port" | grep -v grep || true)
+
+    if [ -z "$pids" ]; then
+        return 0
+    fi
+
+    print_info "发现运行中的前端进程，正在停止..."
+
+    for pid in $pids; do
+        if ps -p $pid > /dev/null 2>&1; then
+            # 温和 kill
+            kill $pid 2>/dev/null
+            stopped_count=$((stopped_count + 1))
+        fi
+    done
+
+    # 等待进程退出
+    sleep 2
+
+    # 检查是否还有进程存活，强制 kill
+    for pid in $pids; do
+        if ps -p $pid > /dev/null 2>&1; then
+            kill -9 $pid 2>/dev/null
+            killed_count=$((killed_count + 1))
+        fi
+    done
+
+    if [ $stopped_count -gt 0 ] || [ $killed_count -gt 0 ]; then
+        print_success "已停止 $stopped_count 个前端进程，强制停止 $killed_count 个"
+    fi
+}
+
+# 停止监控进程
+function stop_watch() {
+    if [ -f "$WATCH_PID_FILE" ]; then
+        local pid=$(cat "$WATCH_PID_FILE")
+        if ps -p $pid > /dev/null 2>&1; then
+            print_info "停止监控进程 (PID: $pid)..."
+            kill $pid 2>/dev/null
+            sleep 1
+
             if ps -p $pid > /dev/null 2>&1; then
-                print_warning "强制停止 $name..."
                 kill -9 $pid 2>/dev/null
-                sleep 1
             fi
 
-            print_success "$name 已停止"
-        else
-            print_warning "$name 未运行"
+            print_success "监控进程已停止"
         fi
-        rm -f "$pid_file"
-    else
-        print_warning "$name PID 文件不存在"
+        rm -f "$WATCH_PID_FILE"
     fi
 }
 
@@ -97,16 +205,31 @@ function main() {
     echo "=========================================="
     echo ""
 
-    # 停止后端服务
-    stop_process "$BACKEND_PID_FILE" "后端服务"
+    # 停止监控进程
+    stop_watch
 
-    # 停止前端服务
-    stop_process "$FRONTEND_PID_FILE" "前端服务"
+    # 停止后端服务（优先使用 pidfile，兜底使用进程匹配）
+    if [ -f "$BACKEND_PID_FILE" ]; then
+        local pid=$(cat "$BACKEND_PID_FILE")
+        stop_process_by_pid $pid "后端服务"
+        rm -f "$BACKEND_PID_FILE"
+    else
+        stop_backend_processes
+    fi
+
+    # 停止前端服务（优先使用 pidfile，兜底使用进程匹配）
+    if [ -f "$FRONTEND_PID_FILE" ]; then
+        local pid=$(cat "$FRONTEND_PID_FILE")
+        stop_process_by_pid $pid "前端服务"
+        rm -f "$FRONTEND_PID_FILE"
+    else
+        stop_frontend_processes
+    fi
 
     echo ""
 
-    # 清理端口
-    cleanup_ports
+    # 清理端口文件
+    rm -f "$FRONTEND_PORT_FILE" 2>/dev/null
 
     echo ""
     echo "=========================================="
