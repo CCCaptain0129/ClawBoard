@@ -252,16 +252,21 @@ export class SafeSyncService {
     let dependencies: string[] = [];
     let linesConsumed = 0;
 
-    // 扫描接下来的行，直到遇到空行或新任务
+    // 扫描接下来的行，直到遇到新任务
     for (let i = startIndex; i < lines.length; i++) {
       const line = lines[i].trim();
       
-      // 遇到空行或新的任务/阶段标题，停止解析
-      if (!line || line.startsWith('###') || line.startsWith('##')) {
+      // 遇到新的任务/阶段标题，停止解析
+      if (line.startsWith('###') || line.startsWith('##')) {
         break;
       }
       
       linesConsumed++;
+      
+      // 跳过空行，继续解析
+      if (!line) {
+        continue;
+      }
 
       // 状态: 已完成 / 进行中 / 待处理
       if (line.startsWith('- 状态:') || line.startsWith('- 状态：')) {
