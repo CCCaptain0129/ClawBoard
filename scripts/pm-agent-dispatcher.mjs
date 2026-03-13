@@ -6,7 +6,7 @@
  * 1. 监控 tasks JSON（通过 API 或直接读文件）
  * 2. 发现 status=in-progress 且 claimedBy 为空的任务
  * 3. 生成高质量 prompt（全局约束 + 任务信息）
- * 4. 调用 OpenClaw sessions_spawn 创建 subagent
+ * 4. 调用 OpenClaw Gateway RPC 创建 subagent
  * 5. 通过后端 API 更新任务状态
  * 6. 记录生成的 prompt 到日志文件
  * 
@@ -22,16 +22,8 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { createRequire } from 'module';
-
-// 动态导入 WebSocket（如果可用）
-let WebSocket = null;
-try {
-  const wsModule = await import('ws');
-  WebSocket = wsModule.default || wsModule.WebSocket;
-} catch (e) {
-  // WebSocket 不可用，将使用 API 方式
-}
+import { execSync, spawn } from 'child_process';
+import { randomUUID } from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -340,114 +332,159 @@ async function getRunningSubagentCount() {
   }
 }
 
+// ============================================================
+// Gateway RPC 调用
+// ============================================================
+
 /**
- * 通过 OpenClaw Gateway 创建 subagent
+ * 调用 OpenClaw Gateway RPC 方法
+ * 使用 openclaw CLI 的 gateway call 命令，无需手动处理 token
+ */
+async function callGatewayRPC(method, params) {
+  return new Promise((resolve, reject) => {
+    const paramsJson = JSON.stringify(params);
+    const args = ['gateway', 'call', method, '--json', '--params', paramsJson];
+    
+    log(`调用 Gateway RPC: ${method}`, 'DEBUG');
+    
+    const child = spawn('openclaw', args, {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      shell: false
+    });
+    
+    let stdout = '';
+    let stderr = '';
+    
+    child.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+    
+    child.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+    
+    child.on('close', (code) => {
+      if (code === 0) {
+        try {
+          const result = JSON.parse(stdout);
+          resolve(result);
+        } catch (e) {
+          reject(new Error(`解析响应失败: ${e.message}`));
+        }
+      } else {
+        reject(new Error(`Gateway call failed (code ${code}): ${stderr || stdout}`));
+      }
+    });
+    
+    child.on('error', (e) => {
+      reject(new Error(`启动 openclaw CLI 失败: ${e.message}`));
+    });
+    
+    // 30秒超时
+    setTimeout(() => {
+      child.kill();
+      reject(new Error('Gateway call timeout'));
+    }, 30000);
+  });
+}
+
+/**
+ * 通过 OpenClaw Gateway RPC 创建 subagent
+ * 
+ * 流程：
+ * 1. 使用 sessions.patch 创建 session entry
+ * 2. 使用 agent 方法启动 subagent 执行
+ * 
+ * 优势：
+ * - 不需要手动处理 Gateway token
+ * - 使用 openclaw CLI 统一处理认证
+ * - 支持本地 Gateway 运行
  */
 async function spawnSubagent(task, project, prompt) {
-  const subagentLabel = `${task.id}-${Date.now().toString(36)}`;
-  const projectId = project.id;
+  const taskId = task.id;
+  const subagentLabel = `${taskId}-${Date.now().toString(36)}`;
+  const childSessionKey = `agent:main:subagent:${randomUUID()}`;
+  
+  log(`准备创建 subagent: ${childSessionKey} (label: ${subagentLabel})`);
   
   try {
-    // 读取 Gateway 配置
-    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
-    const openclawConfig = JSON.parse(
-      fs.readFileSync(path.join(homeDir, '.openclaw/openclaw.json'), 'utf-8')
-    );
+    // 步骤 1: 使用 sessions.patch 创建 session entry
+    // 这会创建一个 subagent session 并返回 sessionId
+    log(`步骤 1: 创建 session entry (${childSessionKey})`);
     
-    const gatewayUrl = openclawConfig.gateway?.url || 'ws://127.0.0.1:18789';
-    const gatewayToken = openclawConfig.gateway?.token;
-    
-    if (!gatewayToken) {
-      throw new Error('Gateway token not configured');
-    }
-    
-    // 如果 WebSocket 不可用，直接使用 API 方式
-    if (!WebSocket) {
-      throw new Error('WebSocket module not available');
-    }
-    
-    // 构建 spawn 请求
-    const spawnRequest = {
-      action: 'sessions_spawn',
-      label: subagentLabel,
-      requesterChannel: 'internal',
-      task: prompt,
-      model: config.globalConstraints.defaultModel,
-      thinking: 'off'
-    };
-    
-    // WebSocket 连接
-    return new Promise((resolve, reject) => {
-      const ws = new WebSocket(gatewayUrl, {
-        headers: {
-          'Authorization': `Bearer ${gatewayToken}`
-        }
-      });
-      
-      ws.on('open', () => {
-        ws.send(JSON.stringify(spawnRequest));
-      });
-      
-      ws.on('message', (data) => {
-        try {
-          const response = JSON.parse(data.toString());
-          ws.close();
-          
-          if (response.success && response.sessionKey) {
-            resolve({
-              success: true,
-              subagentId: response.sessionKey,
-              label: subagentLabel
-            });
-          } else {
-            reject(new Error(response.error || 'Spawn failed'));
-          }
-        } catch (e) {
-          reject(e);
-        }
-      });
-      
-      ws.on('error', (e) => {
-        reject(new Error(`WebSocket error: ${e.message}`));
-      });
-      
-      // 超时
-      setTimeout(() => {
-        ws.close();
-        reject(new Error('Spawn timeout'));
-      }, 30000);
+    const patchResult = await callGatewayRPC('sessions.patch', {
+      key: childSessionKey,
+      spawnDepth: 1  // 子 session 深度
     });
-  } catch (e) {
-    // 如果 WebSocket 方式失败，尝试通过 API 创建
-    log(`WebSocket spawn 失败，尝试 API 方式: ${e.message}`, 'WARN');
+    
+    if (!patchResult.ok) {
+      throw new Error(patchResult.error || 'sessions.patch failed');
+    }
+    
+    log(`Session entry 已创建: sessionId=${patchResult.entry?.sessionId}`);
+    
+    // 步骤 2: 设置模型
+    const model = config.globalConstraints.defaultModel;
+    log(`步骤 2: 设置模型 ${model}`);
     
     try {
-      const response = await fetch(`${config.backendUrl}/api/tasks/subagent/create`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId: projectId,
-          taskId: task.id,
-          taskTitle: task.title,
-          taskDescription: task.description || task.title
-        })
+      await callGatewayRPC('sessions.patch', {
+        key: childSessionKey,
+        model: model
       });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        return {
-          success: true,
-          subagentId: result.subagentId,
-          label: subagentLabel
-        };
-      } else {
-        throw new Error(result.error || 'API spawn failed');
-      }
-    } catch (apiError) {
-      log(`API spawn 也失败: ${apiError.message}`, 'ERROR');
-      return { success: false, error: apiError.message };
+    } catch (e) {
+      log(`设置模型失败（继续）: ${e.message}`, 'WARN');
     }
+    
+    // 步骤 3: 构建 subagent task message
+    const childTaskMessage = `[Subagent Context] You are running as a subagent (depth 1/1). Results auto-announce to your requester; do not busy-poll for status.
+
+[Subagent Task]: ${prompt}`;
+    
+    // 步骤 4: 使用 agent 方法启动 subagent
+    log(`步骤 3: 启动 subagent 执行`);
+    
+    const idempotencyKey = randomUUID();
+    const agentResult = await callGatewayRPC('agent', {
+      message: childTaskMessage,
+      sessionKey: childSessionKey,
+      deliver: false,
+      label: subagentLabel,
+      spawnedBy: 'pm-agent-dispatcher',
+      idempotencyKey: idempotencyKey
+    });
+    
+    if (!agentResult.ok && !agentResult.runId) {
+      // 如果 agent 调用失败，清理 session
+      try {
+        await callGatewayRPC('sessions.delete', {
+          key: childSessionKey,
+          emitLifecycleHooks: false
+        });
+      } catch (cleanupErr) {
+        log(`清理失败 session 失败: ${cleanupErr.message}`, 'WARN');
+      }
+      
+      throw new Error(agentResult.error || 'agent RPC failed');
+    }
+    
+    const runId = agentResult.runId || randomUUID();
+    log(`Subagent 已启动: runId=${runId}`);
+    
+    return {
+      success: true,
+      subagentId: childSessionKey,
+      sessionKey: childSessionKey,
+      runId: runId,
+      label: subagentLabel
+    };
+    
+  } catch (e) {
+    log(`创建 subagent 失败: ${e.message}`, 'ERROR');
+    return { 
+      success: false, 
+      error: e.message 
+    };
   }
 }
 
