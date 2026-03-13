@@ -16,7 +16,9 @@
  * - MAX_CONCURRENT: 最大并发 subagent 数量
  * 
  * 用法：
- *   node pm-agent-dispatcher.mjs [--once] [--config config.json]
+ *   node pm-agent-dispatcher.mjs --watch [--interval 10]
+ *   node pm-agent-dispatcher.mjs --once [--config config.json]
+ *   node pm-agent-dispatcher.mjs --pidfile tmp/pm-dispatcher.pid
  */
 
 import fs from 'fs';
@@ -27,6 +29,7 @@ import { randomUUID } from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const PROJECT_ROOT = path.resolve(__dirname, '..');
 
 // ============================================================
 // 配置
@@ -36,8 +39,8 @@ const DEFAULT_CONFIG = {
   // 允许调度的项目 ID 列表（空 = 所有项目）
   projectAllowlist: [],
   
-  // 轮询间隔（毫秒）- 默认 30 秒
-  pollIntervalMs: 30000,
+  // 轮询间隔（毫秒）- 默认 10 秒
+  pollIntervalMs: 10000,
   
   // 最大并发 subagent 数量
   maxConcurrent: 3,
@@ -46,16 +49,19 @@ const DEFAULT_CONFIG = {
   backendUrl: 'http://localhost:3000',
   
   // 任务数据目录
-  tasksDir: path.resolve(__dirname, '../tasks'),
+  tasksDir: path.resolve(PROJECT_ROOT, 'tasks'),
   
   // 日志目录
-  logsDir: path.resolve(__dirname, '../tmp/logs'),
+  logsDir: path.resolve(PROJECT_ROOT, 'tmp/logs'),
   
   // Prompt 日志文件
-  promptLogFile: path.resolve(__dirname, '../tmp/logs/pm-prompts.log'),
+  promptLogFile: path.resolve(PROJECT_ROOT, 'tmp/logs/pm-prompts.log'),
   
   // 分发记录文件
-  dispatchRecordFile: path.resolve(__dirname, '../docs/internal/SUBAGENTS任务分发记录.md'),
+  dispatchRecordFile: path.resolve(PROJECT_ROOT, 'docs/internal/SUBAGENTS任务分发记录.md'),
+  
+  // PID 文件
+  pidFile: path.resolve(PROJECT_ROOT, 'tmp/pm-dispatcher.pid'),
   
   // 全局约束模板
   globalConstraints: {
@@ -85,6 +91,7 @@ let config = { ...DEFAULT_CONFIG };
 // 运行状态
 let isRunning = false;
 let intervalId = null;
+let isShuttingDown = false;
 
 // 已处理的任务（避免重复处理）
 const processedTasks = new Set();
@@ -109,6 +116,36 @@ function log(message, level = 'INFO') {
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * 写入 PID 文件
+ */
+function writePidFile() {
+  try {
+    const pidDir = path.dirname(config.pidFile);
+    if (!fs.existsSync(pidDir)) {
+      fs.mkdirSync(pidDir, { recursive: true });
+    }
+    fs.writeFileSync(config.pidFile, process.pid.toString());
+    log(`PID 文件已写入: ${config.pidFile} (PID: ${process.pid})`);
+  } catch (e) {
+    log(`写入 PID 文件失败: ${e.message}`, 'WARN');
+  }
+}
+
+/**
+ * 删除 PID 文件
+ */
+function removePidFile() {
+  try {
+    if (fs.existsSync(config.pidFile)) {
+      fs.unlinkSync(config.pidFile);
+      log(`PID 文件已删除: ${config.pidFile}`);
+    }
+  } catch (e) {
+    // 忽略删除错误
+  }
 }
 
 // ============================================================
@@ -658,7 +695,7 @@ async function dispatchOnce() {
 }
 
 /**
- * 启动调度循环
+ * 启动调度循环（watch 模式）
  */
 async function startDispatcher() {
   if (isRunning) {
@@ -667,15 +704,21 @@ async function startDispatcher() {
   }
   
   isRunning = true;
-  log('启动 PM-Agent-Dispatcher');
-  log(`配置: 轮询间隔=${config.pollIntervalMs}ms, 最大并发=${config.maxConcurrent}`);
+  
+  // 写入 PID 文件
+  writePidFile();
+  
+  log('启动 PM-Agent-Dispatcher (watch 模式)');
+  log(`配置: 轮询间隔=${config.pollIntervalMs}ms (${config.pollIntervalMs/1000}s), 最大并发=${config.maxConcurrent}`);
+  log(`PID: ${process.pid}`);
+  log(`日志: ${config.logsDir}/pm-dispatcher.log`);
   
   // 立即执行一次
   await dispatchOnce();
   
   // 启动定时器
   intervalId = setInterval(async () => {
-    if (!isRunning) return;
+    if (!isRunning || isShuttingDown) return;
     
     try {
       await dispatchOnce();
@@ -693,11 +736,17 @@ async function startDispatcher() {
 function stopDispatcher() {
   if (!isRunning) return;
   
+  log('正在停止调度器...');
   isRunning = false;
+  isShuttingDown = true;
+  
   if (intervalId) {
     clearInterval(intervalId);
     intervalId = null;
   }
+  
+  // 删除 PID 文件
+  removePidFile();
   
   log('调度器已停止');
 }
@@ -706,15 +755,133 @@ function stopDispatcher() {
 // CLI 入口
 // ============================================================
 
-async function main() {
+/**
+ * 解析命令行参数
+ */
+function parseArgs() {
   const args = process.argv.slice(2);
-  const onceMode = args.includes('--once');
-  const configIndex = args.indexOf('--config');
+  const result = {
+    watchMode: false,
+    onceMode: false,
+    interval: null,
+    configFile: null,
+    pidFile: null
+  };
+  
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    
+    switch (arg) {
+      case '--watch':
+      case '-w':
+        result.watchMode = true;
+        break;
+        
+      case '--once':
+      case '-o':
+        result.onceMode = true;
+        break;
+        
+      case '--interval':
+      case '-i':
+        const intervalValue = args[++i];
+        if (intervalValue) {
+          const seconds = parseInt(intervalValue, 10);
+          if (seconds >= 1 && seconds <= 3600) {
+            result.interval = seconds * 1000; // 转换为毫秒
+          } else {
+            console.error(`错误: --interval 必须在 1-3600 秒之间，当前: ${intervalValue}`);
+            process.exit(1);
+          }
+        } else {
+          console.error('错误: --interval 需要一个数值参数');
+          process.exit(1);
+        }
+        break;
+        
+      case '--config':
+      case '-c':
+        result.configFile = args[++i];
+        if (!result.configFile) {
+          console.error('错误: --config 需要一个文件路径参数');
+          process.exit(1);
+        }
+        break;
+        
+      case '--pidfile':
+      case '-p':
+        result.pidFile = args[++i];
+        if (!result.pidFile) {
+          console.error('错误: --pidfile 需要一个文件路径参数');
+          process.exit(1);
+        }
+        break;
+        
+      case '--help':
+      case '-h':
+        printHelp();
+        process.exit(0);
+        break;
+        
+      default:
+        console.error(`错误: 未知参数 ${arg}`);
+        printHelp();
+        process.exit(1);
+    }
+  }
+  
+  // 如果没有指定任何模式，默认为 watch 模式
+  if (!result.watchMode && !result.onceMode) {
+    result.watchMode = true;
+  }
+  
+  return result;
+}
+
+/**
+ * 打印帮助信息
+ */
+function printHelp() {
+  console.log(`
+PM-Agent-Dispatcher - 任务调度器
+
+用法:
+  node pm-agent-dispatcher.mjs [选项]
+
+选项:
+  --watch, -w          以常驻模式运行（默认）
+  --once, -o           执行一次调度后退出
+  --interval, -i <秒>  轮询间隔，默认 10 秒（范围: 1-3600）
+  --config, -c <文件>  使用指定配置文件
+  --pidfile, -p <文件> 指定 PID 文件路径
+  --help, -h           显示帮助信息
+
+示例:
+  # 常驻模式，每 10 秒轮询一次
+  node pm-agent-dispatcher.mjs --watch
+  
+  # 常驻模式，每 30 秒轮询一次
+  node pm-agent-dispatcher.mjs --watch --interval 30
+  
+  # 单次执行
+  node pm-agent-dispatcher.mjs --once
+  
+  # 使用自定义配置
+  node pm-agent-dispatcher.mjs --config ./my-config.json
+
+日志:
+  调度日志: tmp/logs/pm-dispatcher.log
+  PID 文件: tmp/pm-dispatcher.pid
+`);
+}
+
+async function main() {
+  const cliOptions = parseArgs();
   
   // 加载配置文件
-  if (configIndex >= 0 && args[configIndex + 1]) {
+  if (cliOptions.configFile) {
     try {
-      const configFile = args[configIndex + 1];
+      const configFile = path.resolve(cliOptions.configFile);
       const customConfig = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
       config = { ...DEFAULT_CONFIG, ...customConfig };
       log(`已加载配置: ${configFile}`);
@@ -723,26 +890,39 @@ async function main() {
     }
   }
   
-  // 处理信号
-  process.on('SIGINT', () => {
-    log('收到 SIGINT，停止调度器');
-    stopDispatcher();
-    process.exit(0);
-  });
+  // 应用命令行参数
+  if (cliOptions.interval !== null) {
+    config.pollIntervalMs = cliOptions.interval;
+  }
   
-  process.on('SIGTERM', () => {
-    log('收到 SIGTERM，停止调度器');
-    stopDispatcher();
-    process.exit(0);
-  });
+  if (cliOptions.pidFile) {
+    config.pidFile = path.resolve(cliOptions.pidFile);
+  }
   
-  if (onceMode) {
+  // 注册信号处理（优雅退出）
+  const gracefulShutdown = (signal) => {
+    if (isShuttingDown) return; // 防止重复处理
+    
+    log(`收到 ${signal}，正在优雅退出...`);
+    stopDispatcher();
+    
+    // 给一些时间让资源清理
+    setTimeout(() => {
+      process.exit(0);
+    }, 1000);
+  };
+  
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  
+  if (cliOptions.onceMode) {
     // 单次执行模式
+    log('单次执行模式');
     const result = await dispatchOnce();
     console.log(JSON.stringify(result));
-    process.exit(result.dispatched > 0 ? 0 : 1);
+    process.exit(result.dispatched > 0 ? 0 : 0); // 总是返回 0，避免被误认为失败
   } else {
-    // 持续运行模式
+    // 常驻运行模式 (watch 模式)
     await startDispatcher();
     
     // 保持进程运行

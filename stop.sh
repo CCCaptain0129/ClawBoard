@@ -19,6 +19,7 @@ BACKEND_PID_FILE="$PROJECT_ROOT/tmp/backend.pid"
 FRONTEND_PID_FILE="$PROJECT_ROOT/tmp/frontend.pid"
 FRONTEND_PORT_FILE="$PROJECT_ROOT/tmp/frontend.port"
 WATCH_PID_FILE="$PROJECT_ROOT/tmp/watch.pid"
+DISPATCHER_PID_FILE="$PROJECT_ROOT/tmp/pm-dispatcher.pid"
 
 # 打印带颜色的消息
 function print_info() {
@@ -166,6 +167,49 @@ function stop_watch() {
             print_success "监控进程已停止"
         fi
         rm -f "$WATCH_PID_FILE"
+    fi
+}
+
+# 停止 PM-Agent Dispatcher 进程
+function stop_dispatcher() {
+    if [ -f "$DISPATCHER_PID_FILE" ]; then
+        local pid=$(cat "$DISPATCHER_PID_FILE")
+        if ps -p $pid > /dev/null 2>&1; then
+            print_info "停止 PM-Agent Dispatcher (PID: $pid)..."
+            kill $pid 2>/dev/null
+            sleep 2
+
+            # 如果进程还在运行，强制停止
+            if ps -p $pid > /dev/null 2>&1; then
+                print_warning "强制停止 PM-Agent Dispatcher (PID: $pid)..."
+                kill -9 $pid 2>/dev/null
+                sleep 1
+            fi
+
+            print_success "PM-Agent Dispatcher 已停止"
+        else
+            print_info "PM-Agent Dispatcher 进程不存在，清理 PID 文件"
+        fi
+        rm -f "$DISPATCHER_PID_FILE"
+    else
+        # 兜底：按进程名匹配
+        local pids=$(pgrep -f "pm-agent-dispatcher.mjs --watch" | grep -v grep || true)
+        if [ -n "$pids" ]; then
+            print_info "发现运行中的 PM-Agent Dispatcher 进程，正在停止..."
+            for pid in $pids; do
+                if ps -p $pid > /dev/null 2>&1; then
+                    kill $pid 2>/dev/null
+                fi
+            done
+            sleep 2
+            # 强制 kill 存活进程
+            for pid in $pids; do
+                if ps -p $pid > /dev/null 2>&1; then
+                    kill -9 $pid 2>/dev/null
+                fi
+            done
+            print_success "PM-Agent Dispatcher 已停止"
+        fi
     fi
 }
 

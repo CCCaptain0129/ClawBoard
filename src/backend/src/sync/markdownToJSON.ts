@@ -18,7 +18,8 @@ export class MarkdownToJSON {
       while (i < lines.length) {
         const line = lines[i];
 
-        if (line.match(/^##+ 阶段 \d+.*$/)) {
+        // 匹配阶段标题 (## 阶段 X)
+        if (line.match(/^##\s+阶段\s+\d+.*$/)) {
           currentStage = {
             name: line.trim().replace(/^#+\s*/, '').trim(),
             week: '',
@@ -28,11 +29,33 @@ export class MarkdownToJSON {
           i++;
           continue;
         }
+        
+        // 匹配临时/其他任务区块 (## 临时/其他任务)
+        if (line.match(/^##\s+临时\/其他任务/)) {
+          currentStage = {
+            name: '临时/其他任务',
+            week: '',
+            tasks: []
+          };
+          stages.push(currentStage);
+          i++;
+          continue;
+        }
 
-        if (line.match(/^-\s+(?:\[x?\]|\*\*[A-Z]+-\d+\*\*)/)) {
+        // 匹配任务行 (- **PMW-XXX** 或 ### PMW-XXX)
+        if (line.match(/^###\s+[A-Z]+-\d+/) || line.match(/^-\s+\*\*[A-Z]+-\d+\*\*/)) {
           const task = this.parseTask(line, lines, i + 1, currentStage?.name || '');
           if (currentStage) {
             currentStage.tasks.push(task);
+          } else {
+            // 如果没有当前阶段，创建一个临时阶段
+            const tempStage: Stage = {
+              name: '未分类',
+              week: '',
+              tasks: [task]
+            };
+            stages.push(tempStage);
+            currentStage = tempStage;
           }
           i += 2;
         } else {
@@ -66,14 +89,56 @@ export class MarkdownToJSON {
     let taskId = '';
     let taskTitle = '';
     let taskDescription = '';
-    let priority = 'P2' as 'P1' | 'P2' | 'P3';
+    let priority = 'P2' as 'P0' | 'P1' | 'P2' | 'P3';
     let labels: string[] = [];
     let status: 'todo' | 'in-progress' | 'done' = 'todo';
     let assignee: string | null = null;
 
+    // 格式1: - **PMW-001** `P0` meta
     const format2Match = line.match(/^-\s+\*\*([A-Z]+-\d+)\*\*\s+(.*)$/);
     
-    if (format2Match) {
+    // 格式2: ### PMW-001 `P0` Title
+    const format3Match = line.match(/^###\s+([A-Z]+-\d+)\s+`([P\d]+)`\s+(.*)$/);
+    
+    if (format3Match) {
+      // 解析格式2 (### 标题格式)
+      taskId = format3Match[1];
+      priority = format3Match[2] as 'P0' | 'P1' | 'P2' | 'P3';
+      taskTitle = format3Match[3].trim();
+      taskDescription = taskTitle; // 初始时 title 和 description 相同
+      
+      // 解析后续行
+      let i = startIndex;
+      while (i < lines.length && i < startIndex + 10) {
+        const nextLine = lines[i].trim();
+        if (!nextLine || nextLine.startsWith('##') || nextLine.startsWith('#') || 
+            (nextLine.startsWith('-') && !nextLine.match(/^-\s*(状态|描述|领取者|负责人|预计时间|依赖)/))) {
+          break;
+        }
+        
+        if (nextLine.match(/^-\s*状态:/)) {
+          const statusText = nextLine.replace(/^-\s*状态:\s*/, '').trim();
+          status = this.parseStatusText(statusText);
+        } else if (nextLine.match(/^-\s*描述:/)) {
+          taskDescription = nextLine.replace(/^-\s*描述:\s*/, '').trim();
+        } else if (nextLine.match(/^-\s*(负责人|领取者):/)) {
+          const assigneeText = nextLine.replace(/^-\s*(负责人|领取者):\s*/, '').trim();
+          if (!assigneeText.match(/^[a-f0-9-]{36}$/i)) {
+            assignee = assigneeText.startsWith('@') ? assigneeText : assigneeText || null;
+          }
+        }
+        // 预计时间和依赖字段暂时不需要解析
+        
+        i++;
+      }
+      
+      // 确保有 title
+      if (!taskTitle) {
+        taskTitle = taskDescription || taskId;
+      }
+      
+    } else if (format2Match) {
+      // 解析格式1 (- **PMW-001** 格式)
       taskId = format2Match[1];
       const meta = format2Match[2] || '';
       
@@ -141,7 +206,8 @@ export class MarkdownToJSON {
     return 'todo';
   }
 
-  private extractPriority(meta: string): 'P1' | 'P2' | 'P3' {
+  private extractPriority(meta: string): 'P0' | 'P1' | 'P2' | 'P3' {
+    if (meta.includes('P0')) return 'P0';
     if (meta.includes('P1')) return 'P1';
     if (meta.includes('P3')) return 'P3';
     return 'P2';
