@@ -47,7 +47,6 @@ const subagentMonitorService = new SubagentMonitorService(taskService);
 // PMW-023 Phase 2: 安全同步服务初始化
 // ========================================
 const safeSyncService = new SafeSyncService(taskService);
-const fileWatcherService = new FileWatcherService(safeSyncService, wsServer);
 
 // ========================================
 // PMW-030: 同步锁服务初始化
@@ -59,13 +58,30 @@ console.log('🔒 Sync lock service initialized (timeout: 5000ms)');
 // PMW-029: 进度编排服务初始化
 // ========================================
 const progressToDocService = new ProgressToDocService(taskService);
+// PMW-032: 先创建 progressOrchestrator，再传给 fileWatcherService
 const progressOrchestrator = new ProgressOrchestrator(
   progressToDocService,
   safeSyncService,
   wsServer,
   syncLockService, // PMW-030
-  fileWatcherService // PMW-030
+  undefined // PMW-030: fileWatcherService 先传 undefined，稍后注入
 );
+
+console.log('📊 Progress orchestrator service initialized');
+
+// ========================================
+// PMW-023 Phase 2: 文件监听服务初始化
+// ========================================
+// PMW-032: 将 progressOrchestrator 传入 fileWatcherService，实现 03 变更触发 04 刷新
+const fileWatcherService = new FileWatcherService(
+  safeSyncService,
+  wsServer,
+  progressOrchestrator // PMW-032: 注入 progressOrchestrator
+);
+
+// PMW-030: 将 fileWatcherService 注入到 progressOrchestrator（避免回环）
+// 注意：这是为了避免 04 刷新时再次触发 03 监听
+(progressOrchestrator as any).fileWatcherService = fileWatcherService;
 
 // 注册进度同步回调到 TaskService
 taskService.registerProgressSyncCallback((projectId: string) => {

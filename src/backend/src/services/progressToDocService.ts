@@ -35,6 +35,12 @@ export class ProgressToDocService {
         throw new Error(`Project ${projectId} not found`);
       }
 
+      // PMW-032: 记录任务数量，用于验证新增任务是否被正确处理
+      console.log(`[ProgressToDocService] Processing ${tasks.length} tasks for project ${projectId}`);
+      tasks.forEach(task => {
+        console.log(`  - ${task.id}: ${task.title} (${task.status})`);
+      });
+
       // 2. 计算进度
       const progress = this.calculateProgress(tasks);
       const milestoneProgress = this.calculateMilestoneProgress(tasks);
@@ -62,6 +68,7 @@ export class ProgressToDocService {
 
       console.log(`✅ Progress synced to ${targetDocPath}`);
       console.log(`   Overall progress: ${progress.percentage}%`);
+      console.log(`   Total tasks: ${progress.total} (done: ${progress.completed}, in-progress: ${progress.inProgress}, todo: ${progress.todo})`);
 
       return {
         success: true,

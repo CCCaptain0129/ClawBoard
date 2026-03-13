@@ -10,6 +10,7 @@ import * as chokidar from 'chokidar';
 import * as path from 'path';
 import { SafeSyncService, ProjectDocConfig } from './safeSyncService';
 import { WebSocketHandler } from '../websocket/server';
+import { ProgressOrchestrator } from './progressOrchestrator'; // PMW-032
 
 export interface FileWatcherOptions {
   debounceMs?: number;    // 防抖延迟（毫秒）
@@ -24,19 +25,23 @@ const DEFAULT_OPTIONS: FileWatcherOptions = {
 export class FileWatcherService {
   private safeSyncService: SafeSyncService;
   private wsServer: WebSocketHandler | null;
+  private progressOrchestrator: ProgressOrchestrator | null; // PMW-032
   private options: FileWatcherOptions;
   private watchers: Map<string, chokidar.FSWatcher> = new Map();
   private debounceTimers: Map<string, NodeJS.Timeout> = new Map();
   private isRunning: boolean = false;
   private isPaused: boolean = false; // PMW-030: 暂停状态
+  private pauseDepth: number = 0; // PMW-030: 暂停深度计数器（支持嵌套 pause/resume）
 
   constructor(
     safeSyncService: SafeSyncService,
     wsServer?: WebSocketHandler,
+    progressOrchestrator?: ProgressOrchestrator, // PMW-032
     options?: FileWatcherOptions
   ) {
     this.safeSyncService = safeSyncService;
     this.wsServer = wsServer || null;
+    this.progressOrchestrator = progressOrchestrator || null; // PMW-032
     this.options = { ...DEFAULT_OPTIONS, ...options };
   }
 
@@ -85,26 +90,39 @@ export class FileWatcherService {
   /**
    * PMW-030: 暂停文件监听（临时禁用）
    * 用于防止回环：在写回 04-进度跟踪.md 时暂停 watcher
+   *
+   * 支持嵌套调用：多次 pause() 需要相应次数的 resume() 才能恢复
    */
   pause(): void {
-    if (this.isPaused) {
-      console.log('⚠️ FileWatcherService is already paused');
-      return;
+    this.pauseDepth++;
+    if (this.pauseDepth === 1) {
+      // 第一次暂停
+      this.isPaused = true;
+      console.log('⏸️ FileWatcherService paused');
+    } else {
+      console.log(`⏸️ FileWatcherService pause depth increased to ${this.pauseDepth}`);
     }
-    this.isPaused = true;
-    console.log('⏸️ FileWatcherService paused');
   }
 
   /**
    * PMW-030: 恢复文件监听
+   *
+   * 支持嵌套调用：只有当 pauseDepth 回到 0 时才真正恢复
    */
   resume(): void {
-    if (!this.isPaused) {
-      console.log('⚠️ FileWatcherService is not paused');
+    if (this.pauseDepth <= 0) {
+      console.warn('⚠️ FileWatcherService: resume() called without matching pause()');
       return;
     }
-    this.isPaused = false;
-    console.log('▶️ FileWatcherService resumed');
+
+    this.pauseDepth--;
+    if (this.pauseDepth === 0) {
+      // 最后一次 resume
+      this.isPaused = false;
+      console.log('▶️ FileWatcherService resumed');
+    } else {
+      console.log(`▶️ FileWatcherService pause depth decreased to ${this.pauseDepth}`);
+    }
   }
 
   /**
@@ -204,6 +222,20 @@ export class FileWatcherService {
             updatedCount: result.updatedCount,
             timestamp: new Date().toISOString(),
           });
+        }
+
+        // PMW-032: 03变更触发04刷新
+        // 当 taskDoc（03）变更且同步成功后，触发进度文档（04）的刷新
+        const config = this.safeSyncService.getProjectConfig(projectId);
+        const fileName = path.basename(filePath);
+        const isTaskDocChanged = config?.taskDoc && fileName === path.basename(config.taskDoc);
+
+        if (isTaskDocChanged && this.progressOrchestrator) {
+          console.log(`📊 [PMW-032] Task document changed, triggering progress sync for ${projectId}`);
+          
+          // 触发进度同步（04刷新）
+          // 注意：ProgressOrchestrator 内部已实现防抖、锁机制，且会暂停 watcher 避免回环
+          await this.progressOrchestrator.triggerProgressSync(projectId, false);
         }
       } else {
         console.error(`❌ Sync failed: ${result.error}`);
