@@ -252,6 +252,9 @@ function main() {
     # 停止监控进程
     stop_watch
 
+    # 停止 PM-Agent Dispatcher
+    stop_dispatcher
+
     # 停止后端服务（优先使用 pidfile，兜底使用进程匹配）
     if [ -f "$BACKEND_PID_FILE" ]; then
         local pid=$(cat "$BACKEND_PID_FILE")
