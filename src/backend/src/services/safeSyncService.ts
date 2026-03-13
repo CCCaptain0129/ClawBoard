@@ -306,6 +306,8 @@ export class SafeSyncService {
       assignee,
       claimedBy: null,
       dueDate,
+      startTime: null,
+      completeTime: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       comments: [],

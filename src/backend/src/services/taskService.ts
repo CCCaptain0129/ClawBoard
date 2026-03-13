@@ -3,9 +3,23 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { validateJSONFile } from '../middleware/jsonValidator';
 
+// 进度同步回调函数类型
+export type ProgressSyncCallback = (projectId: string) => Promise<void> | void;
+
 export class TaskService {
   private tasksPath = path.join(process.cwd(), '../../tasks');
   private projectsPath = path.join(this.tasksPath, 'projects.json');
+  private progressSyncCallback?: ProgressSyncCallback;
+
+  /**
+   * 注册进度同步回调
+   *
+   * @param callback - 进度同步回调函数
+   */
+  registerProgressSyncCallback(callback: ProgressSyncCallback): void {
+    this.progressSyncCallback = callback;
+    console.log('[TaskService] Progress sync callback registered');
+  }
 
   async getAllProjects(): Promise<Project[]> {
     try {
@@ -46,6 +60,8 @@ export class TaskService {
       assignee: task.assignee || null,
       claimedBy: null,
       dueDate: null,
+      startTime: null,
+      completeTime: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       comments: [],
@@ -105,10 +121,64 @@ export class TaskService {
     
     if (taskIndex === -1) return null;
     
+    const oldTask = tasks[taskIndex];
     tasks[taskIndex] = { ...tasks[taskIndex], ...updates, updatedAt: new Date().toISOString() };
     
     await this.saveTasks(projectId, tasks);
+
+    // 检查是否需要触发进度同步
+    // 监听字段: status, claimedBy, assignee, startTime, completeTime
+    const shouldTriggerSync = this.shouldTriggerProgressSync(oldTask, updates);
+    
+    if (shouldTriggerSync && this.progressSyncCallback) {
+      console.log(`[TaskService] Progress changes detected for task ${taskId} in project ${projectId}, triggering sync`);
+      // 异步触发，不阻塞任务更新
+      setImmediate(() => {
+        try {
+          const result = this.progressSyncCallback!(projectId);
+          if (result && typeof result.then === 'function') {
+            result.catch((error: Error) => {
+              console.error(`[TaskService] Progress sync callback failed:`, error);
+            });
+          }
+        } catch (error) {
+          console.error(`[TaskService] Progress sync callback error:`, error);
+        }
+      });
+    }
+
     return tasks[taskIndex];
+  }
+
+  /**
+   * 检查是否需要触发进度同步
+   *
+   * 监听字段: status, claimedBy, assignee, startTime, completeTime
+   *
+   * @param oldTask - 旧任务数据
+   * @param updates - 更新字段
+   * @returns 是否需要触发同步
+   */
+  private shouldTriggerProgressSync(oldTask: Task, updates: Partial<Task>): boolean {
+    const monitoredFields: (keyof Task)[] = ['status', 'claimedBy', 'assignee', 'startTime', 'completeTime'];
+
+    for (const field of monitoredFields) {
+      if (field in updates) {
+        const oldValue = oldTask[field];
+        const newValue = updates[field];
+
+        // 检查值是否发生变化
+        if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
+          console.log(`[TaskService] Field ${field} changed:`, {
+            oldValue,
+            newValue,
+          });
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   private async saveTasks(projectId: string, tasks: Task[]): Promise<void> {

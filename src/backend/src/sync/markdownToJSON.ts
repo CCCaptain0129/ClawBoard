@@ -120,6 +120,8 @@ export class MarkdownToJSON {
       assignee,
       claimedBy: null,
       dueDate: null,
+      startTime: null,
+      completeTime: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       comments: [],

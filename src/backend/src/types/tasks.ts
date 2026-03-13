@@ -8,6 +8,8 @@ export interface Task {
   assignee: string | null;
   claimedBy: string | null;
   dueDate: string | null;
+  startTime: string | null;
+  completeTime: string | null;
   createdAt: string;
   updatedAt: string;
   comments: any[];

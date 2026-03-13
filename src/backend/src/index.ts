@@ -9,6 +9,8 @@ import { StatusSyncService } from './services/statusSyncService';
 import { SubagentMonitorService } from './services/subagentMonitor';
 import { SafeSyncService } from './services/safeSyncService';
 import { FileWatcherService } from './services/fileWatcherService';
+import { ProgressToDocService } from './services/progressToDocService';
+import { ProgressOrchestrator } from './services/progressOrchestrator';
 import { agentRoutes } from './routes/agents';
 import { taskRoutes } from './routes/tasks';
 import { syncRoutes } from './routes/sync';
@@ -45,6 +47,23 @@ const subagentMonitorService = new SubagentMonitorService(taskService);
 // ========================================
 const safeSyncService = new SafeSyncService(taskService);
 const fileWatcherService = new FileWatcherService(safeSyncService, wsServer);
+
+// ========================================
+// PMW-029: 进度编排服务初始化
+// ========================================
+const progressToDocService = new ProgressToDocService(taskService);
+const progressOrchestrator = new ProgressOrchestrator(
+  progressToDocService,
+  safeSyncService,
+  wsServer
+);
+
+// 注册进度同步回调到 TaskService
+taskService.registerProgressSyncCallback((projectId: string) => {
+  return progressOrchestrator.triggerProgressSync(projectId);
+});
+
+console.log('📊 Progress orchestrator service initialized');
 
 app.use('/api/agents', agentRoutes(agentService));
 app.use('/api/tasks', taskRoutes(taskService, wsServer));
@@ -112,6 +131,7 @@ process.on('SIGTERM', () => {
   scheduler.stop();
   statusSyncService.stop?.();
   subagentMonitorService.stop();
+  progressOrchestrator.cleanup();
   server.close();
 });
 
@@ -122,6 +142,7 @@ process.on('SIGINT', () => {
   scheduler.stop();
   statusSyncService.stop?.();
   subagentMonitorService.stop();
+  progressOrchestrator.cleanup();
   server.close();
   process.exit(0);
 });
