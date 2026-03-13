@@ -235,11 +235,12 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
         });
       }
 
-      // 查找任务ID
+      // 查找任务ID - 使用更灵活的正则表达式
       const fs = await import('fs');
       const recordingPath = '/Users/ot/.openclaw/workspace/projects/openclaw-visualization/docs/internal/SUBAGENTS任务分发记录.md';
       const content = fs.readFileSync(recordingPath, 'utf-8');
-      const match = content.match(new RegExp(`Subagent ID.*\`${subagentId}\`.*任务:\\s*([A-Z][A-Z0-9-]*\\d{3,4})`, 's'));
+      // 支持多种任务ID格式：VIS-xxx, INT-xxx, EXA-xxx, TASK-xxx, TASK-TEST-xxx, TEST-xxx 等
+      const match = content.match(new RegExp(`Subagent ID.*\`${subagentId}\`.*任务:\\s*([A-Z][A-Z0-9-]+)`, 's'));
       const taskId = match ? match[1] : null;
 
       await subagentManager.markSubagentComplete(subagentId, {

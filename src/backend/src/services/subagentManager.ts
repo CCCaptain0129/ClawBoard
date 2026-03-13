@@ -218,11 +218,11 @@ export class SubagentManager {
     // 转义Subagent ID中的特殊字符
     const escapedId = subagentId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-    // 使用更精确的匹配：从 Subagent ID 到任务标题
-    // 支持多种任务ID格式：VIS-xxx, INT-xxx, EXA-xxx, TASK-xxx, TASK-TEST-xxx 等
-    // 格式：PREFIX(XXX)-NNN 或 PREFIX(XXX)-PREFIX(XXX)-NNN
+    // 使用更灵活的匹配：从 Subagent ID 到任务标题
+    // 支持多种任务ID格式：VIS-xxx, INT-xxx, EXA-xxx, TASK-xxx, TASK-TEST-xxx, TEST-xxx 等
+    // 格式：一个或多个大写字母、数字、短横线组成的任务ID
     const pattern = new RegExp(
-      'Subagent ID.*`' + escapedId + '`[\\s\\S]*?\\*\\*任务\\*\\*:\\s*([A-Z][A-Z0-9-]*\\d{3,4})',
+      'Subagent ID.*`' + escapedId + '`[\\s\\S]*?\\*\\*任务\\*\\*:\\s*([A-Z][A-Z0-9-]+)',
       's'
     );
     const match = content.match(pattern);
