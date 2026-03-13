@@ -95,11 +95,17 @@ export class SubagentManager {
       const status = result.success ? 'done' : 'todo';
       console.log(`[SubagentManager] Updating task ${taskId} to status: ${status}`);
 
-      await this.updateTaskStatus('openclaw-visualization', taskId, {
-        status,
-        claimedBy: null,
-        updatedAt: new Date().toISOString()
-      });
+      // ✅ 不要硬编码项目ID：根据 taskId 反查所在项目
+      const projectId = await this.findProjectIdByTaskId(taskId);
+      if (!projectId) {
+        console.warn(`[SubagentManager] Project ID not found for task ${taskId}; skip task update`);
+      } else {
+        await this.updateTaskStatus(projectId, taskId, {
+          status,
+          claimedBy: null,
+          updatedAt: new Date().toISOString()
+        });
+      }
 
       console.log(`✅ Subagent ${subagentId} marked as ${status}`);
 
@@ -202,6 +208,27 @@ export class SubagentManager {
         // 写回文件
         await fs.writeFile(this.recordingPath, newContent, 'utf-8');
       }
+    }
+  }
+
+  /**
+   * 根据 taskId 反查所在项目 ID
+   *
+   * 说明：subagent 记录文件里默认只包含 taskId，不包含 projectId。
+   * 为避免 markSubagentComplete 时误更新到错误项目，这里通过扫描 projects.json
+   * 找到包含该 taskId 的项目。
+   */
+  private async findProjectIdByTaskId(taskId: string): Promise<string | null> {
+    try {
+      const projects = await this.taskService.getAllProjects();
+      for (const p of projects) {
+        const tasks = await this.taskService.getTasksByProject(p.id);
+        if (tasks.some(t => t.id === taskId)) return p.id;
+      }
+      return null;
+    } catch (err) {
+      console.error('[SubagentManager] findProjectIdByTaskId failed:', err);
+      return null;
     }
   }
 

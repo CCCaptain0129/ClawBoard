@@ -8,40 +8,8 @@
   "icon": "📊",
   "taskPrefix": "VIS",
   "createdAt": "2026-03-10T00:00:00.000Z",
-  "updatedAt": "2026-03-13T00:24:54.031Z",
+  "updatedAt": "2026-03-13T03:58:03.941Z",
   "tasks": [
-    {
-      "id": "FINAL-TEST-001",
-      "title": "最终验证测试",
-      "description": "验证完整的subagent生命周期管理",
-      "status": "done",
-      "priority": "P1",
-      "labels": [
-        "测试"
-      ],
-      "assignee": null,
-      "claimedBy": null,
-      "dueDate": null,
-      "createdAt": "2026-03-13T00:24:00.000Z",
-      "updatedAt": "2026-03-13T00:24:54.030Z",
-      "comments": []
-    },
-    {
-      "id": "TASK-041",
-      "title": "移除硬编码的 Gateway Token，支持多账户配置。当前代码中 OpenClaw Gateway URL 和 Token 硬编码在 agentMonitor.ts（ws://127.0.0.1:18789, token=57d11dfee3fa0b04fae66be5a74559513c1d5f521ba196f2），导致其他用户无法使用本软件。需要：",
-      "description": "移除硬编码的 Gateway Token，支持多账户配置。当前代码中 OpenClaw Gateway URL 和 Token 硬编码在 agentMonitor.ts（ws://127.0.0.1:18789, token=57d11dfee3fa0b04fae66be5a74559513c1d5f521ba196f2），导致其他用户无法使用本软件。需要：",
-      "status": "done",
-      "priority": "P1",
-      "labels": [
-        "阶段 5：任务管理增强（P0 - 紧急修复）"
-      ],
-      "assignee": null,
-      "claimedBy": null,
-      "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
-      "comments": []
-    },
     {
       "id": "VIS-001",
       "title": "检查获取的 Agent 状态是否准确。验证从 OpenClaw Gateway WebSocket 获取的 Agent 状态是否准确反映真实运行状态。对比控制台显示的状态与看板显示的状态，找出差异并修复。",
@@ -54,15 +22,15 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
       "id": "VIS-002",
       "title": "显示群组名称而不是 ID 号。Agent 卡片优先显示飞书群组的友好名称（如 OpenClaw 集成讨论组），而不是显示 ID 字符串（如 oc_0754a493527ed8a4b28bd0dffdf802de）。从 OpenClaw sessions 中获取真实的群组名称并显示。",
       "description": "显示群组名称而不是 ID 号。Agent 卡片优先显示飞书群组的友好名称（如 OpenClaw 集成讨论组），而不是显示 ID 字符串（如 oc_0754a493527ed8a4b28bd0dffdf802de）。从 OpenClaw sessions 中获取真实的群组名称并显示。",
-      "status": "todo",
+      "status": "done",
       "priority": "P1",
       "labels": [
         "阶段 4：Agent 监控优化（P1 - 核心功能）"
@@ -70,8 +38,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.939Z",
       "comments": []
     },
     {
@@ -86,8 +54,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -102,8 +70,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -118,8 +86,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -134,8 +102,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -150,8 +118,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -166,8 +134,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -182,8 +150,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -198,8 +166,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -214,8 +182,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -230,8 +198,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -246,8 +214,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -262,8 +230,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -278,8 +246,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -294,8 +262,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -310,8 +278,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -326,15 +294,15 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
       "id": "VIS-019",
       "title": "修改 KanbanBoard.tsx，添加友好的错误提示，当 API 返回错误或数据为空时，显示清晰的错误信息和可能的解决方案。",
       "description": "修改 KanbanBoard.tsx，添加友好的错误提示，当 API 返回错误或数据为空时，显示清晰的错误信息和可能的解决方案。",
-      "status": "todo",
+      "status": "done",
       "priority": "P1",
       "labels": [
         "阶段 3：测试与部署（P2）"
@@ -342,8 +310,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.940Z",
       "comments": []
     },
     {
@@ -358,8 +326,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -374,8 +342,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -390,8 +358,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -406,8 +374,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -422,8 +390,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -438,8 +406,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -454,15 +422,15 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
       "id": "VIS-027",
       "title": "允许用户在看板中添加任务。在UI中提供任务创建功能，包括标题、描述、优先级、标签等字段，创建后自动更新JSON和Markdown文件。",
       "description": "允许用户在看板中添加任务。在UI中提供任务创建功能，包括标题、描述、优先级、标签等字段，创建后自动更新JSON和Markdown文件。",
-      "status": "todo",
+      "status": "done",
       "priority": "P1",
       "labels": [
         "阶段 5：任务管理增强（P0 - 紧急修复）"
@@ -470,8 +438,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.941Z",
       "comments": []
     },
     {
@@ -486,8 +454,8 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     },
     {
@@ -502,8 +470,24 @@
       "assignee": null,
       "claimedBy": null,
       "dueDate": null,
-      "createdAt": "2026-03-13T00:24:22.903Z",
-      "updatedAt": "2026-03-13T00:24:22.903Z",
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
+      "comments": []
+    },
+    {
+      "id": "TASK-041",
+      "title": "移除硬编码的 Gateway Token，支持多账户配置。当前代码中 OpenClaw Gateway URL 和 Token 硬编码在 agentMonitor.ts（ws://127.0.0.1:18789, token=57d11dfee3fa0b04fae66be5a74559513c1d5f521ba196f2），导致其他用户无法使用本软件。需要：",
+      "description": "移除硬编码的 Gateway Token，支持多账户配置。当前代码中 OpenClaw Gateway URL 和 Token 硬编码在 agentMonitor.ts（ws://127.0.0.1:18789, token=57d11dfee3fa0b04fae66be5a74559513c1d5f521ba196f2），导致其他用户无法使用本软件。需要：",
+      "status": "done",
+      "priority": "P1",
+      "labels": [
+        "阶段 5：任务管理增强（P0 - 紧急修复）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-13T03:58:03.919Z",
+      "updatedAt": "2026-03-13T03:58:03.919Z",
       "comments": []
     }
   ]

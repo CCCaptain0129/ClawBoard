@@ -1,0 +1,543 @@
+{
+  "id": "pm-workflow-automation",
+  "name": "OpenClaw 项目管理自动工作流",
+  "description": "实现 OpenClaw 项目管理自动化工作流",
+  "status": "active",
+  "leadAgent": "project-manager",
+  "color": "#10B981",
+  "icon": "🔄",
+  "taskPrefix": "PMW",
+  "createdAt": "2026-03-12T17:49:00.000Z",
+  "updatedAt": "2026-03-13T03:58:03.943Z",
+  "tasks": [
+    {
+      "id": "PMW-001",
+      "title": "配置 project-manager Agent 的 HEARTBEAT.md",
+      "description": "编写 HEARTBEAT.md 文件，定义心跳触发时的检查任务和执行逻辑",
+      "status": "done",
+      "priority": "P0",
+      "labels": [],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:00.845Z",
+      "updatedAt": "2026-03-13T03:15:34.604Z",
+      "comments": [
+        {
+          "author": "project-manager",
+          "content": "已完成：已在 project-manager 独立 workspace 中配置 HEARTBEAT.md，并将 heartbeat.every 设为 5m。",
+          "createdAt": "2026-03-13T03:15:50.000Z"
+        }
+      ]
+    },
+    {
+      "id": "PMW-002",
+      "title": "实现心跳触发时的任务检查逻辑",
+      "description": "读取所有项目的 03-任务分解.md，筛选待办任务并按优先级排序",
+      "status": "done",
+      "priority": "P0",
+      "labels": [
+        "阶段 1：心跳循环机制",
+        "已归档",
+        "被 PMW-021/022 覆盖"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:00.846Z",
+      "updatedAt": "2026-03-13T03:58:03.935Z",
+      "comments": [
+        {
+          "author": "project-manager",
+          "content": "已归档：该拆分任务已由里程碑 PMW-021（心跳调度）/PMW-022（自动complete）覆盖并收口。",
+          "createdAt": "2026-03-13T03:15:50.000Z"
+        }
+      ]
+    },
+    {
+      "id": "PMW-003",
+      "title": "实现任务分配给 Subagent 的逻辑",
+      "description": "创建 Subagent、更新任务状态、设置 claimedBy 字段",
+      "status": "done",
+      "priority": "P0",
+      "labels": [
+        "阶段 1：心跳循环机制",
+        "已归档",
+        "被 PMW-021/022 覆盖"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:00.847Z",
+      "updatedAt": "2026-03-13T03:58:03.936Z",
+      "comments": [
+        {
+          "author": "project-manager",
+          "content": "已归档：该拆分任务已由里程碑 PMW-021（心跳调度）/PMW-022（自动complete）覆盖并收口。",
+          "createdAt": "2026-03-13T03:15:50.000Z"
+        }
+      ]
+    },
+    {
+      "id": "PMW-004",
+      "title": "实现 Subagent 执行监控",
+      "description": "监控 Subagent 状态、检测超时、记录执行日志",
+      "status": "done",
+      "priority": "P0",
+      "labels": [
+        "阶段 1：心跳循环机制",
+        "已归档",
+        "被 PMW-021/022 覆盖"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:00.848Z",
+      "updatedAt": "2026-03-13T03:58:03.937Z",
+      "comments": [
+        {
+          "author": "project-manager",
+          "content": "已归档：该拆分任务已由里程碑 PMW-021（心跳调度）/PMW-022（自动complete）覆盖并收口。",
+          "createdAt": "2026-03-13T03:15:50.000Z"
+        }
+      ]
+    },
+    {
+      "id": "PMW-005",
+      "title": "实现 Subagent 释放和结果记录",
+      "description": "更新任务状态为 done/todo、清空 claimedBy、记录执行结果",
+      "status": "done",
+      "priority": "P0",
+      "labels": [
+        "阶段 1：心跳循环机制",
+        "已归档",
+        "被 PMW-021/022 覆盖"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:00.848Z",
+      "updatedAt": "2026-03-13T03:58:03.938Z",
+      "comments": [
+        {
+          "author": "project-manager",
+          "content": "已归档：该拆分任务已由里程碑 PMW-021（心跳调度）/PMW-022（自动complete）覆盖并收口。",
+          "createdAt": "2026-03-13T03:15:50.000Z"
+        }
+      ]
+    },
+    {
+      "id": "PMW-006",
+      "title": "增强 Markdown → JSON 同步",
+      "description": "完善 markdownToJSON.ts，支持更多字段和格式",
+      "status": "done",
+      "priority": "P1",
+      "labels": [
+        "阶段 2：文档与看板同步",
+        "已归档",
+        "被 PMW-023 覆盖"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:21.994Z",
+      "updatedAt": "2026-03-13T03:42:17.393Z",
+      "comments": [
+        {
+          "author": "project-manager",
+          "content": "已归档：本任务范围已由 PMW-023（双向同步最小闭环）统一覆盖，后续以 PMW-023 为主线推进。",
+          "createdAt": "2026-03-13T03:20:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "PMW-007",
+      "title": "实现 JSON → Markdown 同步",
+      "description": "实现 jsonToMarkdown.ts，将看板数据同步回文档",
+      "status": "done",
+      "priority": "P1",
+      "labels": [
+        "阶段 2：文档与看板同步",
+        "已归档",
+        "被 PMW-023 覆盖"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:21.995Z",
+      "updatedAt": "2026-03-13T03:42:17.408Z",
+      "comments": [
+        {
+          "author": "project-manager",
+          "content": "已归档：本任务范围已由 PMW-023（双向同步最小闭环）统一覆盖，后续以 PMW-023 为主线推进。",
+          "createdAt": "2026-03-13T03:20:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "PMW-008",
+      "title": "实现双向同步冲突解决",
+      "description": "定义冲突解决规则，确保数据一致性",
+      "status": "done",
+      "priority": "P1",
+      "labels": [
+        "阶段 2：文档与看板同步",
+        "已归档",
+        "被 PMW-023 覆盖"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:21.996Z",
+      "updatedAt": "2026-03-13T03:42:17.419Z",
+      "comments": [
+        {
+          "author": "project-manager",
+          "content": "已归档：本任务范围已由 PMW-023（双向同步最小闭环）统一覆盖，后续以 PMW-023 为主线推进。",
+          "createdAt": "2026-03-13T03:20:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "PMW-009",
+      "title": "实现同步触发机制",
+      "description": "心跳时自动同步、文档变更时触发同步",
+      "status": "done",
+      "priority": "P1",
+      "labels": [
+        "阶段 2：文档与看板同步",
+        "已归档",
+        "被 PMW-023 覆盖"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:21.997Z",
+      "updatedAt": "2026-03-13T03:42:17.428Z",
+      "comments": [
+        {
+          "author": "project-manager",
+          "content": "已归档：本任务范围已由 PMW-023（双向同步最小闭环）统一覆盖，后续以 PMW-023 为主线推进。",
+          "createdAt": "2026-03-13T03:20:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "PMW-010",
+      "title": "增强看板任务展示",
+      "description": "显示任务分配的 Subagent、执行时间、日志等信息",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "阶段 3：看板增强",
+        "可选增强",
+        "依赖 PMW-023"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:21.999Z",
+      "updatedAt": "2026-03-13T03:40:51.878Z",
+      "comments": [
+        {
+          "author": "project-manager",
+          "content": "调整：作为可选增强，建议在 PMW-023 双向同步闭环后再实施。",
+          "createdAt": "2026-03-13T03:20:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "PMW-011",
+      "title": "实现看板 WebSocket 实时更新",
+      "description": "任务状态变更时通过 WebSocket 推送看板更新",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "阶段 3：看板增强",
+        "可选增强",
+        "依赖 PMW-023"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:22.000Z",
+      "updatedAt": "2026-03-13T03:40:51.885Z",
+      "comments": [
+        {
+          "author": "project-manager",
+          "content": "调整：作为可选增强，建议在 PMW-023 双向同步闭环后再实施。",
+          "createdAt": "2026-03-13T03:20:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "PMW-012",
+      "title": "添加看板操作 API",
+      "description": "提供手动同步、强制刷新、重置任务等 API",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "阶段 3：看板增强",
+        "可选增强",
+        "依赖 PMW-023"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:22.001Z",
+      "updatedAt": "2026-03-13T03:40:51.892Z",
+      "comments": [
+        {
+          "author": "project-manager",
+          "content": "调整：作为可选增强，建议在 PMW-023 双向同步闭环后再实施。",
+          "createdAt": "2026-03-13T03:20:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "PMW-013",
+      "title": "创建安装脚本",
+      "description": "编写 install.sh，自动安装依赖、克隆模板、配置 Agent",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:22.001Z",
+      "updatedAt": "2026-03-12T17:52:22.001Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-014",
+      "title": "创建配置向导",
+      "description": "提供交互式配置向导，引导用户配置飞书、Agent、群组绑定",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:22.002Z",
+      "updatedAt": "2026-03-12T17:52:22.002Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-015",
+      "title": "创建验证检查脚本",
+      "description": "检查配置是否正确、服务是否正常、连接是否成功",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:22.002Z",
+      "updatedAt": "2026-03-12T17:52:22.002Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-016",
+      "title": "创建项目模板",
+      "description": "提供标准项目结构模板，包含文档模板和配置示例",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:22.003Z",
+      "updatedAt": "2026-03-12T17:52:22.003Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-017",
+      "title": "编写用户指南",
+      "description": "详细的使用说明、配置说明、故障排查指南",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:22.003Z",
+      "updatedAt": "2026-03-12T17:52:22.003Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-018",
+      "title": "编写 API 文档",
+      "description": "看板 API、同步 API、配置 API 的详细文档",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:22.004Z",
+      "updatedAt": "2026-03-12T17:52:22.004Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-019",
+      "title": "编写测试用例",
+      "description": "心跳触发、任务分配、同步机制、冲突解决的测试用例",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:22.005Z",
+      "updatedAt": "2026-03-12T17:52:22.005Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-020",
+      "title": "端到端测试和修复",
+      "description": "完整的端到端测试，发现并修复 Bug",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-12T17:52:22.005Z",
+      "updatedAt": "2026-03-12T17:52:22.005Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-021",
+      "title": "实现 PM Agent 心跳循环（自动检查待办并分配）",
+      "description": "在 project-manager Agent 中落地心跳执行逻辑：每 5 分钟拉取看板 todo 任务（P0→P1→P2→P3），按并发上限调用 /api/tasks/subagent/create 分配 Subagent，并更新任务状态/claimedBy。",
+      "status": "done",
+      "priority": "P0",
+      "labels": [
+        "阶段 6：闭环补齐（P0 - 核心）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-13T02:49:50.955Z",
+      "updatedAt": "2026-03-13T03:58:03.942Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-022",
+      "title": "补齐 Subagent 完成回调/自动 complete 机制（监控断层修复）",
+      "description": "补齐“Subagent 已结束但任务仍 in-progress”的断层：新增监控服务（轮询 sessions/store 或引入结果回传），自动调用 /api/tasks/subagent/complete 或直接调用 SubagentManager.markSubagentComplete()，确保任务状态从 in-progress 正确回到 done/todo。",
+      "status": "done",
+      "priority": "P0",
+      "labels": [
+        "阶段 6：闭环补齐（P0 - 核心）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-13T02:49:50.956Z",
+      "updatedAt": "2026-03-13T03:58:03.943Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-023",
+      "title": "实现文档 ↔ 看板双向同步（最小闭环）",
+      "description": "在不破坏运行态信息（status/claimedBy）的前提下，实现文档→看板与看板→文档双向同步：看板更新后回写 03-任务分解.md/04-进度跟踪.md；文档更新后可安全同步到看板（不覆盖 in-progress/done）。",
+      "status": "done",
+      "priority": "P0",
+      "labels": [
+        "阶段 6：闭环补齐（P0 - 核心）"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-13T02:49:50.958Z",
+      "updatedAt": "2026-03-13T03:58:03.943Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-024",
+      "title": "移除 StatusSyncService（统一使用 SubagentManager）【待定】",
+      "description": "【待定】评估并逐步移除 StatusSyncService 的状态同步职责，统一由 SubagentManager 维护任务状态同步，避免重复/冲突；保留必要兜底机制。",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "阶段 7：后续优化（待定）",
+        "待定"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-13T02:49:50.959Z",
+      "updatedAt": "2026-03-13T02:49:50.959Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-025",
+      "title": "实现任务依赖检查（前置任务未完成不分配）【待定】",
+      "description": "【待定】在 PM Agent 分配任务前解析任务依赖（如依赖 PMW-003），依赖未 done 则跳过并提示阻塞原因。",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "阶段 7：后续优化（待定）",
+        "待定"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-13T02:49:50.960Z",
+      "updatedAt": "2026-03-13T02:49:50.960Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-026",
+      "title": "实现 Subagent 超时监控（卡住自动回收/重试）【待定】",
+      "description": "【待定】为 in-progress 任务引入超时策略：超时无进展则回收到 todo/blocked，清空 claimedBy 并记录原因；必要时自动重试并限制次数。",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "阶段 7：后续优化（待定）",
+        "待定"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-13T02:49:50.961Z",
+      "updatedAt": "2026-03-13T02:49:50.961Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-027",
+      "title": "实现优先级动态调整（紧急任务插队）【待定】",
+      "description": "【待定】心跳每轮重新计算队列：支持紧急任务提升优先级、限制低优先级抢占；并在看板展示调度原因。",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "阶段 7：后续优化（待定）",
+        "待定"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-13T02:49:50.963Z",
+      "updatedAt": "2026-03-13T02:49:50.963Z",
+      "comments": []
+    },
+    {
+      "id": "PMW-028",
+      "title": "实现进度自动报告（定期推送项目进展）【待定】",
+      "description": "【待定】定期向群内推送完成/进行中/阻塞任务、下一步计划和风险提示，并支持静默模式。",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "阶段 7：后续优化（待定）",
+        "待定"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dueDate": null,
+      "createdAt": "2026-03-13T02:49:50.964Z",
+      "updatedAt": "2026-03-13T02:49:50.964Z",
+      "comments": []
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import { SyncManager } from '../sync/syncManager';
 import { MarkdownToJSON } from '../sync/markdownToJSON';
 import { JSONToMarkdown } from '../sync/jsonToMarkdown';
 import { WebSocketHandler } from '../websocket/server';
+import { ProgressToDocService } from '../services/progressToDocService';
 
 export function syncRoutes(
   taskService: TaskService,
@@ -14,6 +15,7 @@ export function syncRoutes(
   const markdownToJSON = new MarkdownToJSON();
   const jsonToMarkdown = new JSONToMarkdown();
   const syncManager = new SyncManager(markdownToJSON, jsonToMarkdown, taskService);
+  const progressToDocService = new ProgressToDocService(taskService);
 
   // 从 Markdown 同步到 JSON
   router.post('/from-markdown/:projectId', async (req, res) => {
@@ -92,6 +94,40 @@ export function syncRoutes(
       res.status(500).json({ 
         success: false,
         error: 'Failed to sync' 
+      });
+    }
+  });
+
+  // PMW-023 Phase 1: 将看板(JSON)进度回写到 04-进度跟踪.md
+  // 仅回写进度统计，不修改任务的 status/claimedBy 运行态信息
+  router.post('/progress-to-doc/:projectId', async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      const { docPath } = req.body;
+      
+      const result = await progressToDocService.syncProgressToDoc(projectId, docPath);
+      
+      // 广播进度更新事件
+      wsServer.broadcast({
+        type: 'PROGRESS_SYNCED',
+        projectId,
+        progress: result.progress,
+        updatedSections: result.updatedSections,
+      });
+      
+      res.json({
+        success: true,
+        projectId,
+        progress: result.progress,
+        updatedSections: result.updatedSections,
+        message: result.message,
+      });
+    } catch (error) {
+      console.error('Progress to doc sync error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to sync progress to doc',
+        details: error instanceof Error ? error.message : String(error)
       });
     }
   });

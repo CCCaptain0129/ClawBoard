@@ -6,6 +6,7 @@ import { WebSocketServer } from 'ws';
 import { AgentService } from './services/agentService';
 import { TaskService } from './services/taskService';
 import { StatusSyncService } from './services/statusSyncService';
+import { SubagentMonitorService } from './services/subagentMonitor';
 import { agentRoutes } from './routes/agents';
 import { taskRoutes } from './routes/tasks';
 import { syncRoutes } from './routes/sync';
@@ -35,6 +36,7 @@ const wsHandler = new WebSocketServer({ port: WS_PORT });
 const wsServer = new WebSocketHandler(wsHandler);
 const scheduler = new AgentTaskScheduler(taskService, wsServer);
 const statusSyncService = new StatusSyncService(taskService, wsServer);
+const subagentMonitorService = new SubagentMonitorService(taskService);
 
 app.use('/api/agents', agentRoutes(agentService));
 app.use('/api/tasks', taskRoutes(taskService, wsServer));
@@ -64,6 +66,10 @@ syncManager.syncFromMarkdown('openclaw-visualization')
 statusSyncService.start();
 console.log('📋 Status sync service started');
 
+// 启动 Subagent 监控服务（自动补齐完成的 subagent）
+subagentMonitorService.start();
+console.log('🔍 Subagent monitor service started');
+
 // Start polling
 setInterval(async () => {
   const agents = await agentService.getAllAgents();
@@ -77,5 +83,7 @@ console.log(`⏱️  Task scheduler running every 60000ms`);
 process.on('SIGTERM', () => {
   wsServer.stop();
   scheduler.stop();
+  statusSyncService.stop?.();
+  subagentMonitorService.stop();
   server.close();
 });
