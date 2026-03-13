@@ -18,13 +18,33 @@ export interface SubagentStatus {
 }
 
 /**
+ * OpenClaw Session 接口
+ */
+interface OpenClawSession {
+  sessionId: string;
+  updatedAt: number;
+  label?: string;
+  spawnDepth?: number;
+  spawnedBy?: string;
+  channel?: string;
+}
+
+/**
+ * OpenClaw Sessions Store 接口
+ */
+interface OpenClawSessionsStore {
+  [key: string]: OpenClawSession;
+}
+
+/**
  * SubagentMonitorService - 监控 Subagent 完成状态并自动补齐任务状态
  *
  * 核心功能：
- * - 每 30 秒检查 SUBAGENTS任务分发记录.md 中仍为进行中的 subagentId
- * - 结合 OpenClaw sessions store 判断是否已结束
- * - 若结束则调用 SubagentManager.markSubagentComplete 并更新任务状态
- * - 实现幂等、避免误判（>=2分钟无更新）
+ * - 自动检测 OpenClaw sessions.json 中的新 subagent 会话
+ * - 从 label 中解析任务 ID（如 "PMW-029-xxx" → "PMW-029"）
+ * - 自动注册 subagent 并更新任务状态为 in-progress
+ * - 监控 subagent 完成状态，自动将任务状态更新为 done
+ * - 实现幂等、避免误判
  */
 export class SubagentMonitorService {
   private sessionsJsonPath: string;
@@ -36,9 +56,13 @@ export class SubagentMonitorService {
   private intervalId: NodeJS.Timeout | null = null;
 
   private subagentManager: SubagentManager;
+  private taskService: TaskService;
 
   // 幂等性控制：记录已处理的 subagent，避免重复标记
   private processedSubagents: Set<string> = new Set();
+  
+  // 已注册的 subagent（从 sessions.json 自动注册的）
+  private registeredSubagents: Map<string, { taskId: string; projectId: string }> = new Map();
 
   constructor(taskService: TaskService, options?: {
     sessionsJsonPath?: string;
@@ -46,6 +70,7 @@ export class SubagentMonitorService {
     intervalMs?: number;
     completionThresholdMs?: number;
   }) {
+    this.taskService = taskService;
     this.subagentManager = new SubagentManager(taskService);
     // OpenClaw sessions store 路径
     this.sessionsJsonPath = options?.sessionsJsonPath ||
@@ -113,6 +138,9 @@ export class SubagentMonitorService {
     try {
       console.log('[SubagentMonitorService] Checking for completed subagents...');
 
+      // 0. 首先检测并注册新的 subagent 会话
+      await this.detectAndRegisterNewSubagents();
+
       // 1. 从记录文件中提取所有进行中的 subagentId
       const inProgressSubagents = await this.getInProgressSubagents();
 
@@ -161,6 +189,209 @@ export class SubagentMonitorService {
     } catch (error) {
       console.error('[SubagentMonitorService] Error during check:', error);
     }
+  }
+
+  /**
+   * 检测并注册新的 subagent 会话
+   * 
+   * 核心功能：
+   * - 读取 sessions.json 中的 subagent 会话
+   * - 从 label 中解析任务 ID
+   * - 自动注册到 SUBAGENTS任务分发记录.md
+   * - 更新任务状态为 in-progress
+   */
+  private async detectAndRegisterNewSubagents(): Promise<void> {
+    try {
+      console.log('[SubagentMonitorService] Detecting new subagent sessions...');
+
+      // 1. 读取 sessions.json
+      const sessionsJson = await fs.readFile(this.sessionsJsonPath, 'utf-8');
+      const sessions: OpenClawSessionsStore = JSON.parse(sessionsJson);
+
+      // 2. 遍历所有 subagent 会话
+      for (const [sessionKey, session] of Object.entries(sessions)) {
+        // 只处理 subagent 会话
+        if (!sessionKey.startsWith('agent:main:subagent:')) {
+          continue;
+        }
+
+        const subagentId = sessionKey;
+
+        // 跳过已注册的 subagent
+        if (this.registeredSubagents.has(subagentId)) {
+          continue;
+        }
+
+        // 从 label 中解析任务 ID
+        const label = session.label || '';
+        const taskId = this.parseTaskIdFromLabel(label);
+
+        if (!taskId) {
+          // 没有 task ID，跳过
+          continue;
+        }
+
+        console.log(`[SubagentMonitorService] Detected new subagent: ${subagentId}, label: ${label}, taskId: ${taskId}`);
+
+        // 查找任务所在的项目
+        const projectId = await this.findProjectIdByTaskId(taskId);
+        if (!projectId) {
+          console.warn(`[SubagentMonitorService] Project not found for task ${taskId}`);
+          continue;
+        }
+
+        // 获取任务详情
+        const task = await this.getTaskById(projectId, taskId);
+        if (!task) {
+          console.warn(`[SubagentMonitorService] Task ${taskId} not found in project ${projectId}`);
+          continue;
+        }
+
+        // 注册 subagent
+        await this.registerSubagent(subagentId, projectId, taskId, task.title, label);
+      }
+
+      console.log(`[SubagentMonitorService] Registered subagents count: ${this.registeredSubagents.size}`);
+    } catch (error) {
+      console.error('[SubagentMonitorService] Error detecting new subagents:', error);
+    }
+  }
+
+  /**
+   * 从 label 中解析任务 ID
+   * 
+   * 支持格式：
+   * - "PMW-029-xxx" → "PMW-029"
+   * - "VIS-012-xxx" → "VIS-012"
+   * - "fix-VIS-012-xxx" → "VIS-012"
+   * - "TASK-TEST-001-xxx" → "TASK-TEST-001"
+   */
+  private parseTaskIdFromLabel(label: string): string | null {
+    // 支持多种任务 ID 格式
+    // 格式：一个或多个大写字母、数字、短横线组成的任务ID
+    // 匹配模式：任务ID + 可选的后缀（如 -glm5, -test 等）
+    
+    // 先尝试匹配标准格式（如 PMW-029, VIS-012）
+    const standardPattern = /^([A-Z]{2,}-\d{3})(?:-|$)/;
+    const standardMatch = label.match(standardPattern);
+    if (standardMatch) {
+      return standardMatch[1];
+    }
+
+    // 尝试匹配带前缀的格式（如 fix-VIS-012-xxx）
+    const prefixedPattern = /(?:^|-)([A-Z]{2,}-\d{3})(?:-|$)/;
+    const prefixedMatch = label.match(prefixedPattern);
+    if (prefixedMatch) {
+      return prefixedMatch[1];
+    }
+
+    // 尝试匹配复合格式（如 TASK-TEST-001）
+    const compoundPattern = /^([A-Z]+-[A-Z]+-\d+)(?:-|$)/;
+    const compoundMatch = label.match(compoundPattern);
+    if (compoundMatch) {
+      return compoundMatch[1];
+    }
+
+    return null;
+  }
+
+  /**
+   * 根据 taskId 查找所在项目
+   */
+  private async findProjectIdByTaskId(taskId: string): Promise<string | null> {
+    try {
+      const projects = await this.taskService.getAllProjects();
+      for (const p of projects) {
+        const tasks = await this.taskService.getTasksByProject(p.id);
+        if (tasks.some(t => t.id === taskId)) {
+          return p.id;
+        }
+      }
+      return null;
+    } catch (err) {
+      console.error('[SubagentMonitorService] findProjectIdByTaskId failed:', err);
+      return null;
+    }
+  }
+
+  /**
+   * 获取任务详情
+   */
+  private async getTaskById(projectId: string, taskId: string): Promise<{ id: string; title: string } | null> {
+    try {
+      const tasks = await this.taskService.getTasksByProject(projectId);
+      return tasks.find(t => t.id === taskId) || null;
+    } catch (err) {
+      console.error('[SubagentMonitorService] getTaskById failed:', err);
+      return null;
+    }
+  }
+
+  /**
+   * 注册 subagent：更新任务状态 + 写入记录文件
+   */
+  private async registerSubagent(
+    subagentId: string,
+    projectId: string,
+    taskId: string,
+    taskTitle: string,
+    label: string
+  ): Promise<void> {
+    try {
+      console.log(`[SubagentMonitorService] Registering subagent ${subagentId} for task ${taskId}...`);
+
+      const now = new Date().toISOString();
+
+      // 1. 更新任务状态为 in-progress
+      await this.taskService.updateTask(projectId, taskId, {
+        status: 'in-progress',
+        claimedBy: subagentId,
+        updatedAt: now
+      });
+
+      // 2. 写入记录文件
+      const entry = this.formatSubagentEntry(subagentId, taskId, taskTitle, label, now);
+      await fs.appendFile(this.recordingPath, entry, 'utf-8');
+
+      // 3. 记录到内存
+      this.registeredSubagents.set(subagentId, { taskId, projectId });
+
+      console.log(`[SubagentMonitorService] ✓ Registered subagent ${subagentId} for task ${taskId}`);
+    } catch (error) {
+      console.error(`[SubagentMonitorService] Error registering subagent ${subagentId}:`, error);
+    }
+  }
+
+  /**
+   * 格式化 subagent 记录条目
+   */
+  private formatSubagentEntry(
+    subagentId: string,
+    taskId: string,
+    taskTitle: string,
+    label: string,
+    createdAt: string
+  ): string {
+    const timestamp = createdAt.slice(0, 16).replace('T', ' ');
+    return `
+### ${timestamp} 创建 Subagent (自动检测)
+
+**Subagent ID**: \`${subagentId}\`
+**类型**: Dev Agent
+**任务**: ${taskId} - ${taskTitle}
+**分配时间**: ${createdAt}
+**Label**: ${label}
+
+**任务描述**:
+- 由 SubagentMonitorService 自动检测并注册
+
+**返回结果**:
+- 等待 Subagent 完成中...
+
+**释放时间**: -
+**状态**: 🔄 进行中
+
+`;
   }
 
   /**
@@ -287,6 +518,14 @@ export class SubagentMonitorService {
    */
   clearProcessedCache(): void {
     this.processedSubagents.clear();
-    console.log('[SubagentMonitorService] Processed cache cleared');
+    this.registeredSubagents.clear();
+    console.log('[SubagentMonitorService] Processed and registered cache cleared');
+  }
+
+  /**
+   * 获取已注册的 subagent 列表（用于调试）
+   */
+  getRegisteredSubagents(): Map<string, { taskId: string; projectId: string }> {
+    return new Map(this.registeredSubagents);
   }
 }
