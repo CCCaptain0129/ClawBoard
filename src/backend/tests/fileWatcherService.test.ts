@@ -62,7 +62,7 @@ describe('FileWatcherService', () => {
       safeSyncService,
       mockWsServer as any,
       null, // progressOrchestrator
-      { debounceMs: 100, ignoreInitial: true }
+      { debounceMs: 100, ignoreInitial: true, watchTaskDoc: true }
     );
   });
 

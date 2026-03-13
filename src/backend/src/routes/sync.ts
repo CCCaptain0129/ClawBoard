@@ -49,32 +49,6 @@ export function syncRoutes(
     }
   });
 
-  // 从 JSON 同步到 Markdown
-  router.post('/to-markdown/:projectId', async (req, res) => {
-    try {
-      const { projectId } = req.params;
-      await syncManager.syncToMarkdown(projectId);
-      
-      const tasks = await taskService.getTasksByProject(projectId);
-      
-      wsServer.broadcast({
-        type: 'SYNC_COMPLETED',
-        projectId,
-        taskCount: tasks.length,
-      });
-      
-      res.json({
-        success: true,
-        taskCount: tasks.length,
-      });
-    } catch (error) {
-      console.error('Sync to markdown error:', error);
-      res.status(500).json({ 
-        success: false,
-        error: 'Failed to sync to markdown' 
-      });
-    }
-  });
 
   // 双向同步
   router.post('/:projectId', async (req, res) => {
