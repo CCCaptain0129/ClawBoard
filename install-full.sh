@@ -417,6 +417,100 @@ install_skills() {
     fi
 }
 
+# ===== 复制新文档到 Agent workspace =====
+copy_project_docs() {
+    print_step "复制项目文档"
+    
+    local pm_workspace="$HOME/.openclaw/project-manager-workspace"
+    local project_management_docs="/Users/ot/.openclaw/workspace/project-management"
+    local project_docs="$PROJECT_ROOT/docs"
+    
+    # 创建文档目录
+    print_substep "创建文档目录结构..."
+    mkdir -p "$pm_workspace/docs/project-management"
+    mkdir -p "$pm_workspace/docs/pm-agent"
+    
+    # 1. 复制项目管理文档
+    print_substep "复制项目管理文档..."
+    local pm_files=(
+        "PROJECT-MANAGEMENT-GUIDE.md"
+        "README.md"
+        "task-breakdown-guide.md"
+    )
+    
+    local copied_count=0
+    local skipped_count=0
+    
+    for file in "${pm_files[@]}"; do
+        if [ -f "$project_management_docs/$file" ]; then
+            cp "$project_management_docs/$file" "$pm_workspace/docs/project-management/"
+            print_info "  ✓ $file"
+            ((copied_count++))
+        else
+            print_warning "  ✗ $file (不存在)"
+            ((skipped_count++))
+        fi
+    done
+    
+    print_success "项目管理文档: 复制 $copied_count 个, 跳过 $skipped_count 个"
+    
+    # 2. 复制 PM-Agent 文档
+    print_substep "复制 PM-Agent 文档..."
+    local pm_agent_files=(
+        "pm-agent-dispatcher-optimization.md"
+        "project-manager-prompt-visibility.md"
+        "MULTI-GROUP-DEPLOYMENT.md"
+    )
+    
+    copied_count=0
+    skipped_count=0
+    
+    for file in "${pm_agent_files[@]}"; do
+        if [ -f "$project_docs/$file" ]; then
+            cp "$project_docs/$file" "$pm_workspace/docs/pm-agent/"
+            print_info "  ✓ $file"
+            ((copied_count++))
+        else
+            print_warning "  ✗ $file (不存在)"
+            ((skipped_count++))
+        fi
+    done
+    
+    print_success "PM-Agent 文档: 复制 $copied_count 个, 跳过 $skipped_count 个"
+    
+    # 3. 创建文档索引
+    print_substep "创建文档索引..."
+    cat > "$pm_workspace/docs/README.md" << 'EOF'
+# 文档索引
+
+本文档索引列出了 Project-Manager workspace 中的所有文档。
+
+## 📁 project-management/
+
+项目管理相关文档。
+
+- `PROJECT-MANAGEMENT-GUIDE.md` - 项目管理规范指南
+- `README.md` - 项目管理文档概览
+- `task-breakdown-guide.md` - 任务分解指引
+
+## 📁 pm-agent/
+
+PM-Agent 和 Dispatcher 相关文档。
+
+- `pm-agent-dispatcher-optimization.md` - Dispatcher 优化思路
+- `project-manager-prompt-visibility.md` - Prompt 可见性方案
+- `MULTI-GROUP-DEPLOYMENT.md` - 多群组部署指南
+
+## 相关资源
+
+- 主项目文档: `docs/` 目录
+- PM-Agent 配置: `config/pm-agent-dispatcher.json`
+EOF
+    
+    print_success "文档索引已创建"
+    print_info "文档位置: $pm_workspace/docs/"
+}
+
 # ===== Phase 6: 生成目录结构 =====
 generate_structure() {
     print_step "Phase 6: 生成目录结构"
@@ -905,6 +999,10 @@ main() {
     
     # Phase 6: Generate Structure
     generate_structure
+    echo ""
+    
+    # Phase 6.5: Copy Project Docs
+    copy_project_docs
     echo ""
     
     # Phase 7: Configure Agent Binding
