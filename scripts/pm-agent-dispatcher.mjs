@@ -1,24 +1,176 @@
 #!/usr/bin/env node
 /**
  * pm-agent-dispatcher.mjs - Project Manager Agent 任务调度脚本
- * 
- * 功能：
- * 1. 监控 tasks JSON（通过 API 或直接读文件）
- * 2. 发现 status=in-progress 且 claimedBy 为空的任务
- * 3. 生成高质量 prompt（全局约束 + 任务信息）
- * 4. 调用 OpenClaw Gateway RPC 创建 subagent
- * 5. 通过后端 API 更新任务状态
- * 6. 记录生成的 prompt 到日志文件
- * 
- * 配置：
- * - PROJECT_ALLOWLIST: 允许调度的项目 ID 列表
- * - POLL_INTERVAL_MS: 轮询间隔（毫秒）
- * - MAX_CONCURRENT: 最大并发 subagent 数量
- * 
- * 用法：
- *   node pm-agent-dispatcher.mjs --watch [--interval 10]
- *   node pm-agent-dispatcher.mjs --once [--config config.json]
- *   node pm-agent-dispatcher.mjs --pidfile tmp/pm-dispatcher.pid
+ *
+ * === 模块概述 ===
+ *
+ * 本脚本是 OpenClaw 的任务调度器,负责自动发现和分配项目任务给 subagent 执行。
+ * 它是项目管理自动化工作流的核心组件,将任务定义转换为可执行的工作单元。
+ *
+ * === 核心功能 ===
+ *
+ * 1. 任务发现: 监控 tasks JSON (通过 API 或直接读文件)
+ * 2. 任务筛选: 发现 status=in-progress 且 claimedBy 为空的任务
+ * 3. Prompt 生成: 使用 8 段式模板生成高质量 prompt (全局约束 + 任务信息)
+ * 4. Agent 创建: 调用 OpenClaw Gateway RPC 创建 subagent
+ * 5. 状态同步: 通过后端 API 更新任务状态 (claimedBy, updatedAt)
+ * 6. 日志记录: 记录生成的 prompt 到日志文件,便于调试和审计
+ *
+ * === 使用场景 ===
+ *
+ * - 看板系统自动分配任务给 AI 助手
+ * - 多项目并行开发,需要统一调度
+ * - 任务执行过程可追溯,需要完整的日志记录
+ * - 限制并发数量,避免资源耗尽
+ *
+ * === 核心概念 ===
+ *
+ * - **任务 (Task)**: 看板中的待办事项,包含 id, title, description, priority, labels
+ * - **项目 (Project)**: 任务所属的项目,包含 id, name, description
+ * - **Subagent**: 由本调度器创建的子 Agent,负责执行具体任务
+ * - **Prompt**: 传递给 subagent 的任务说明,采用 8 段式结构化格式
+ * - **Gateway RPC**: OpenClaw 的远程调用接口,用于创建和管理 sessions
+ *
+ * === 工作流程 ===
+ *
+ * 1. 启动调度器 (watch 模式)
+ * 2. 定期轮询任务 (默认 10 秒)
+ * 3. 查找符合条件的任务 (status=in-progress, claimedBy=null)
+ * 4. 检查并发限制 (maxConcurrent)
+ * 5. 生成 8 段式 prompt
+ * 6. 调用 Gateway 创建 subagent
+ * 7. 更新任务状态 (claimedBy=subagentId)
+ * 8. 记录分发信息到日志
+ * 9. 等待 subagent 完成并自动检测
+ *
+ * === 配置说明 ===
+ *
+ * - PROJECT_ALLOWLIST: 允许调度的项目 ID 列表 (空 = 所有项目)
+ * - POLL_INTERVAL_MS: 轮询间隔,默认 10000ms (10 秒)
+ * - MAX_CONCURRENT: 最大并发 subagent 数量,默认 3
+ * - BACKEND_URL: 后端 API 地址,默认 http://localhost:3000
+ * - TASKS_DIR: 任务数据目录,默认 tasks/
+ * - LOGS_DIR: 日志目录,默认 tmp/logs/
+ * - PROMPT_LOG_FILE: Prompt 日志文件,默认 tmp/logs/pm-prompts.log
+ * - DISPATCH_RECORD_FILE: 分发记录文件,默认 docs/internal/SUBAGENTS任务分发记录.md
+ * - PID_FILE: PID 文件,默认 tmp/pm-dispatcher.pid
+ *
+ * === 全局约束 ===
+ *
+ * - CODE_STYLE: 代码风格 (TypeScript/Node.js,遵循项目现有代码风格)
+ * - COMMIT_STYLE: 提交规范 (conventional commits: feat/fix/docs/...)
+ * - TEST_REQUIRED: 是否强制要求测试 (默认 false)
+ * - DOC_REQUIRED: 是否强制要求文档 (默认 true)
+ * - TIMEOUT_MINUTES: 超时设置,默认 30 分钟
+ * - DEFAULT_MODEL: 默认模型,默认 bailian/glm-4.7
+ *
+ * === 命令行用法 ===
+ *
+ *   # 常驻模式,每 10 秒轮询一次
+ *   node pm-agent-dispatcher.mjs --watch
+ *
+ *   # 常驻模式,每 30 秒轮询一次
+ *   node pm-agent-dispatcher.mjs --watch --interval 30
+ *
+ *   # 单次执行
+ *   node pm-agent-dispatcher.mjs --once
+ *
+ *   # 使用自定义配置
+ *   node pm-agent-dispatcher.mjs --config ./my-config.json
+ *
+ *   # 指定 PID 文件
+ *   node pm-agent-dispatcher.mjs --pidfile /var/run/pm-dispatcher.pid
+ *
+ * === 主要函数列表 ===
+ *
+ * 【配置与 CLI】
+ * - parseArgs() - 解析命令行参数
+ * - printHelp() - 打印帮助信息
+ *
+ * 【工具函数】
+ * - log(message, level) - 日志记录,同时输出到控制台和文件
+ * - sleep(ms) - 异步延迟
+ * - writePidFile() - 写入 PID 文件
+ * - removePidFile() - 删除 PID 文件
+ *
+ * 【Prompt 生成】
+ * - parseStructuredFields(description) - 解析任务描述中的结构化字段 (Pointers, Acceptance, Out-of-scope)
+ * - generatePrompt(task, project, constraints) - 生成 8 段式高质量任务 prompt
+ * - logPrompt(taskId, prompt, subagentId) - 记录生成的 prompt 到日志文件
+ *
+ * 【任务管理】
+ * - getProjects() - 获取所有项目 (API 优先,回退到文件)
+ * - getProjectTasks(projectId) - 获取项目的任务列表 (API 优先,回退到文件)
+ * - findTasksToDispatch() - 查找需要分配的任务 (status=in-progress 且 claimedBy 为空)
+ * - getRunningSubagentCount() - 获取运行中的 subagent 数量 (通过 sessions.json)
+ *
+ * 【Gateway RPC】
+ * - callGatewayRPC(method, params) - 调用 OpenClaw Gateway RPC 方法 (使用 openclaw CLI)
+ * - spawnSubagent(task, project, prompt) - 通过 Gateway 创建并启动 subagent
+ * - updateTaskStatus(projectId, taskId, updates) - 通过后端 API 更新任务状态
+ * - recordDispatch(task, project, subagentId, prompt) - 记录分发到 SUBAGENTS任务分发记录.md
+ *
+ * 【主调度循环】
+ * - dispatchOnce() - 执行一次完整的调度流程 (发现 -> 筛选 -> 生成 prompt -> 创建 agent -> 更新状态)
+ * - startDispatcher() - 启动调度循环 (watch 模式)
+ * - stopDispatcher() - 停止调度循环 (优雅退出)
+ *
+ * 【主入口】
+ * - main() - 主函数,初始化配置并启动调度器
+ *
+ * === 8 段式 Prompt 模板 ===
+ *
+ * 1. Goal (目标) - 核心功能目标
+ * 2. Context (上下文) - 任务 ID、项目、优先级、标签、执行时间限制
+ * 3. Pointers (入口指针) - 相关文件/模块列表
+ * 4. Deliverables (交付物) - 具体要交付的东西 (功能、测试、文档)
+ * 5. Acceptance (验收标准) - 如何判断任务完成
+ * 6. Out-of-scope (范围外) - 明确不做什么
+ * 7. Steps (执行步骤) - 6 步工作流 (理解 -> 定位 -> 方案 -> 编码 -> 验证 -> 提交)
+ * 8. Commit (提交规范) - conventional commits 格式要求
+ *
+ * === 日志文件 ===
+ *
+ * - 调度日志: tmp/logs/pm-dispatcher.log (调度器运行日志)
+ * - Prompt 日志: tmp/logs/pm-prompts.log (每个任务的完整 prompt)
+ * - 分发记录: docs/internal/SUBAGENTS任务分发记录.md (任务分发历史)
+ * - PID 文件: tmp/pm-dispatcher.pid (进程 ID,用于监控和停止)
+ *
+ * === 并发控制 ===
+ *
+ * - 最多同时运行 MAX_CONCURRENT 个 subagent (默认 3)
+ * - 通过读取 sessions.json 获取运行中的 subagent 数量
+ * - 超过上限时跳过分配,等待下次轮询
+ * - 任务按优先级排序 (P0 > P1 > P2 > P3)
+ *
+ * === 优雅退出 ===
+ *
+ * - 支持 SIGINT (Ctrl+C) 和 SIGTERM 信号
+ * - 停止调度循环
+ * - 删除 PID 文件
+ * - 等待 1 秒后退出
+ *
+ * === 优化方向 ===
+ *
+ * 详见 docs/pm-agent-dispatcher-optimization.md
+ * - 8 段式 Prompt 模板的设计思路
+ * - 如何让 subagent 专注小任务
+ * - 减少 tokens 消耗的策略
+ * - 避免任务跑偏的方法
+ * - 未来改进计划
+ *
+ * === 相关文档 ===
+ *
+ * - docs/pm-agent-dispatcher-optimization.md - 优化思路和设计决策
+ * - docs/internal/SUBAGENTS任务分发记录.md - 任务分发历史记录
+ *
+ * === 维护者 ===
+ *
+ * 本脚本是 OpenClaw 可视化项目的核心组件,维护者需要理解:
+ * - OpenClaw Gateway RPC 的工作原理
+ * - Prompt 工程和 8 段式模板的设计理念
+ * - 任务调度和并发控制的最佳实践
+ * - 日志记录和调试技巧
  */
 
 import fs from 'fs';
@@ -153,70 +305,122 @@ function removePidFile() {
 // ============================================================
 
 /**
- * 生成高质量的任务 prompt
+ * 解析任务描述中的结构化字段
+ * 支持的字段：Pointers、Acceptance、Out-of-scope
+ */
+function parseStructuredFields(description) {
+  const fields = {
+    pointers: [],
+    acceptance: [],
+    outOfScope: [],
+    rawDescription: description
+  };
+
+  if (!description) return fields;
+
+  // 匹配 Pointers: xxx 格式
+  const pointersMatch = description.match(/Pointers:\s*([^\n]+)/i);
+  if (pointersMatch) {
+    fields.pointers = pointersMatch[1]
+      .split(/[,;，；]/)
+      .map(p => p.trim())
+      .filter(p => p);
+    fields.rawDescription = fields.rawDescription.replace(pointersMatch[0], '').trim();
+  }
+
+  // 匹配 Acceptance: xxx 格式（支持多行）
+  const acceptanceMatch = description.match(/Acceptance:\s*([\s\S]*?)(?=\n(?:Out-of-scope|Pointers|$))/i);
+  if (acceptanceMatch) {
+    fields.acceptance = acceptanceMatch[1]
+      .split(/[\n-]/)
+      .map(a => a.trim())
+      .filter(a => a && !a.startsWith('Acceptance'));
+    fields.rawDescription = fields.rawDescription.replace(acceptanceMatch[0], '').trim();
+  }
+
+  // 匹配 Out-of-scope: xxx 格式
+  const outOfScopeMatch = description.match(/Out-of-scope:\s*([^\n]+)/i);
+  if (outOfScopeMatch) {
+    fields.outOfScope = outOfScopeMatch[1]
+      .split(/[,;，；]/)
+      .map(o => o.trim())
+      .filter(o => o);
+    fields.rawDescription = fields.rawDescription.replace(outOfScopeMatch[0], '').trim();
+  }
+
+  return fields;
+}
+
+/**
+ * 生成高质量的任务 prompt（8 段式最佳实践模板）
+ * 模板：Goal / Context / Pointers / Deliverables / Acceptance / Out-of-scope / Steps / Commit
  */
 function generatePrompt(task, project, constraints) {
   const { id, title, description, priority, labels } = task;
-  const { name: projectName, id: projectId } = project;
+  const { name: projectName, id: projectId, description: projectDesc } = project;
+  
+  // 解析结构化字段
+  const fields = parseStructuredFields(description);
   
   // 构建标签信息
   const labelInfo = labels?.length ? labels.join(', ') : '无';
-  
-  // 构建完整 prompt
-  const prompt = `
-# 任务: ${title}
 
-## 基本信息
+  // 构建完整 prompt
+  const prompt = `# ${title}
+
+## Goal（目标）
+${fields.rawDescription || '实现本任务的核心功能目标。'}
+
+## Context（上下文）
 - **任务 ID**: ${id}
 - **所属项目**: ${projectName} (${projectId})
+- **项目简介**: ${projectDesc || '无'}
 - **优先级**: ${priority || 'P2'}
 - **标签**: ${labelInfo}
+- **执行时间限制**: ${constraints.timeoutMinutes} 分钟
 
-## 任务描述
-${description || title}
+## Pointers（入口指针）
+以下文件/模块是本次任务的主要入口：
+${fields.pointers.length > 0 
+  ? fields.pointers.map(p => `- ${p}`).join('\n')
+  : `- 未提供具体入口，请根据任务目标自主查找相关代码`
+}
 
-## 全局约束
+## Deliverables（交付物）
+- [ ] 功能实现完整
+- [ ] 代码符合项目规范
+- [ ] ${constraints.testRequired ? '包含相关测试用例' : '本次任务不强制要求测试'}
+- [ ] ${constraints.docRequired ? '更新相关文档' : '本次任务不强制要求文档更新'}
 
-### 代码规范
-- ${constraints.codeStyle}
-- 使用现有项目结构和模式
-- 保持代码简洁、可读性强
+## Acceptance（验收标准）
+${fields.acceptance.length > 0
+  ? fields.acceptance.map(a => `- ${a}`).join('\n')
+  : `- 功能按预期工作
+- 无明显 bug
+- 代码可以正常运行
+- 提交信息符合规范`
+}
 
-### 提交规范
-- ${constraints.commitStyle}
-- 提交信息简洁明了，说明做了什么
+## Out-of-scope（范围外）
+${fields.outOfScope.length > 0
+  ? fields.outOfScope.map(o => `- ${o}`).join('\n')
+  : `- 不要修改无关的代码
+- 不要进行不必要的重构
+- 不要引入新的依赖（除非任务明确要求）`
+}
 
-### 测试要求
-${constraints.testRequired ? '- 编写或更新相关测试用例' : '- 本次任务不强制要求测试'}
-
-### 文档要求
-${constraints.docRequired ? '- 更新相关文档（如 README、API 文档等）' : '- 本次任务不强制要求文档更新'}
-
-### 超时设置
-- 任务执行时间不超过 ${constraints.timeoutMinutes} 分钟
-- 如果预计超时，请在任务开始时说明
-
-## 执行指南
-
-1. **理解任务**: 仔细阅读任务描述，明确目标
-2. **分析代码**: 理解现有代码结构和依赖关系
-3. **实施方案**: 制定清晰的实施步骤
+## Steps（执行步骤）
+1. **理解任务**: 仔细阅读任务目标，明确要做什么
+2. **定位代码**: 使用 Pointers 提供的入口，理解现有代码结构
+3. **制定方案**: 思考实现方案，考虑边界情况
 4. **编写代码**: 按照方案实现功能
-5. **自我验证**: 测试实现是否正确
+5. **自我验证**: 运行代码，验证是否满足验收标准
 6. **提交变更**: 完成后提交代码并推送
 
-## 注意事项
-
-- 不要修改无关的代码
-- 保持向后兼容性
-- 如果发现问题或需要澄清，请及时反馈
-
-## 完成标准
-
-- [ ] 功能实现完整
-- [ ] 代码符合规范
-- [ ] 无明显 bug
-- [ ] 提交信息规范
+## Commit（提交规范）
+- 使用 conventional commits 格式：\`feat/fix/docs/style/refactor/test/chore: 简短描述\`
+- 提交信息简洁明了，说明做了什么
+- 示例：\`feat: 实现 XX 功能\` 或 \`fix: 修复 XX bug\`
 
 ---
 *此 prompt 由 PM-Agent-Dispatcher 自动生成*

@@ -75,4 +75,44 @@ curl -X PATCH http://localhost:3000/api/tasks/<task_id>
 
 ---
 
+## 文档索引
+
+### 项目管理文档
+
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| 项目管理规范 | `project-management/PROJECT-MANAGEMENT-GUIDE.md` | 项目工作流程、记忆管理、进度监控机制 |
+| 任务分解指引 | `project-management/task-breakdown-guide.md` | 如何编写高质量的任务描述，减少 subagent tokens 消耗 |
+
+### 技术文档
+
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| Dispatcher 优化思路 | `docs/pm-agent-dispatcher-optimization.md` | 调度器设计思路、优化历程和未来计划 |
+| Prompt 可见性方案 | `docs/project-manager-prompt-visibility.md` | 如何让用户看到 subagent 收到的完整 prompt |
+
+### 部署指南
+
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| 多群组部署指南 | `docs/MULTI-GROUP-DEPLOYMENT.md` | 如何在多个飞书群组中使用项目管理自动化流程 |
+
+### 快速访问
+
+```bash
+# 查看项目管理规范
+cat project-management/PROJECT-MANAGEMENT-GUIDE.md
+
+# 查看任务分解指引
+cat project-management/task-breakdown-guide.md
+
+# 查看多群组部署指南
+cat docs/MULTI-GROUP-DEPLOYMENT.md
+
+# 查看优化思路
+cat docs/pm-agent-dispatcher-optimization.md
+```
+
+---
+
 *此文件记录工具使用方式*

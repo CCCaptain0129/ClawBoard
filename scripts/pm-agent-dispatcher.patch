@@ -1,0 +1,298 @@
+#!/usr/bin/env node
+/**
+ * pm-agent-dispatcher.patch - Prompt 可见性增强补丁
+ * 
+ * 此补丁提供了修改 pm-agent-dispatcher.mjs 的具体代码片段
+ * 用于实现完整的 prompt 可见性功能
+ */
+
+// ============================================================
+// 补丁 1：修改 recordDispatch() 函数
+// 位置：pm-agent-dispatcher.mjs 第 448-485 行
+// ============================================================
+
+/**
+ * 修改前（原代码）：
+ */
+const entry = `
+### ${timestamp} 创建 Subagent (PM-Agent-Dispatcher)
+
+**Subagent ID**: \`${subagentId}\`
+**类型**: Dev Agent
+**任务**: ${task.id} - ${task.title}
+**项目**: ${project.name} (${project.id})
+**分配时间**: ${new Date().toISOString()}
+**优先级**: ${task.priority || 'P2'}
+
+**任务描述**:
+${task.description ? '- ' + task.description.split('\n').join('\n- ') : '- 无详细描述'}
+
+**生成的 Prompt**:
+\`\`\`
+${prompt.slice(0, 500)}...
+\`\`\`
+
+**返回结果**:
+- 等待 Subagent 完成中...
+
+**释放时间**: -
+**状态**: 🔄 进行中
+
+`;
+
+/**
+ * 修改后（完整 prompt，使用折叠）：
+ */
+const entry = `
+### ${timestamp} 创建 Subagent (PM-Agent-Dispatcher)
+
+**Subagent ID**: \`${subagentId}\`
+**类型**: Dev Agent
+**任务**: ${task.id} - ${task.title}
+**项目**: ${project.name} (${project.id})
+**分配时间**: ${new Date().toISOString()}
+**优先级**: ${task.priority || 'P2'}
+
+**任务描述**:
+${task.description ? '- ' + task.description.split('\n').join('\n- ') : '- 无详细描述'}
+
+<details>
+<summary>📋 查看完整 Prompt（${prompt.length} 字符，点击展开）</summary>
+
+\`\`\`
+${prompt}
+\`\`\`
+
+</details>
+
+**返回结果**:
+- 等待 Subagent 完成中...
+
+**释放时间**: -
+**状态**: 🔄 进行中
+
+`;
+
+// ============================================================
+// 补丁 2：添加 Prompt 提取工具函数
+ * 新增函数，用于从 pm-prompts.log 中提取指定任务的完整 prompt
+ * 放在 pm-agent-dispatcher.mjs 中的工具函数区域
+ */
+/**
+ * 从 pm-prompts.log 中提取指定任务的完整 prompt
+ * 
+ * @param {string} taskId - 任务 ID（如 "VIS-002"）
+ * @param {string} subagentId - Subagent ID（可选，用于精确匹配）
+ * @returns {string|null} - 完整的 prompt，未找到返回 null
+ */
+function extractPromptFromLog(taskId, subagentId = null) {
+  try {
+    const logFile = config.promptLogFile;
+    
+    // 检查日志文件是否存在
+    if (!fs.existsSync(logFile)) {
+      log(`Prompt 日志文件不存在: ${logFile}`, 'WARN');
+      return null;
+    }
+    
+    const content = fs.readFileSync(logFile, 'utf-8');
+    
+    // 构建正则表达式
+    // 匹配格式：
+    // 任务 ID: VIS-002
+    // Subagent ID: agent:main:subagent:xxx
+    // ================================================================================
+    // [prompt 内容]
+    
+    let regexPattern;
+    if (subagentId) {
+      // 使用 subagentId 精确匹配
+      const escapedSubagentId = subagentId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      regexPattern = new RegExp(
+        `任务 ID: ${taskId}[^=]*Subagent ID: ${escapedSubagentId}[^=]*=+([^=]*=+)+([^=]*=+)?`,
+        's'
+      );
+    } else {
+      // 只使用 taskId 匹配（可能匹配到第一个）
+      regexPattern = new RegExp(
+        `任务 ID: ${taskId}[^=]*=+([^=]*=+)+([^=]*=+)?`,
+        's'
+      );
+    }
+    
+    const match = content.match(regexPattern);
+    
+    if (match) {
+      // 提取 prompt 部分（去除分隔线）
+      const fullMatch = match[0];
+      // 移除第一行和分隔线
+      const lines = fullMatch.split('\n');
+      let promptLines = [];
+      let inPrompt = false;
+      
+      for (const line of lines) {
+        if (line.includes('='.repeat(80))) {
+          if (inPrompt) break; // 第二个分隔线，结束
+          inPrompt = true;     // 第一个分隔线，开始
+          continue;
+        }
+        if (inPrompt) {
+          promptLines.push(line);
+        }
+      }
+      
+      return promptLines.join('\n').trim();
+    }
+    
+    log(`未找到任务 ${taskId} 的 prompt`, 'WARN');
+    return null;
+  } catch (e) {
+    log(`提取 prompt 失败: ${e.message}`, 'ERROR');
+    return null;
+  }
+}
+
+// ============================================================
+// 补丁 3：添加 Prompt 完成通知函数
+ * 新增函数，用于在 subagent 完成后通知用户
+ * 放在 pm-agent-dispatcher.mjs 中的工具函数区域
+ */
+/**
+ * 生成 prompt 完成通知消息
+ * 
+ * @param {Object} task - 任务对象
+ * @param {Object} project - 项目对象
+ * @param {string} subagentId - Subagent ID
+ * @param {string} prompt - 完整的 prompt
+ * @param {Object} result - Subagent 执行结果
+ * @returns {Object} - { success: boolean, message: string }
+ */
+function generatePromptCompletionNotification(task, project, subagentId, prompt, result) {
+  try {
+    const timestamp = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+    
+    // 计算 prompt 长度
+    const promptLength = prompt.length;
+    const isLongPrompt = promptLength > 2000;
+    
+    // 构建消息
+    let message = `## ✅ Subagent 完成任务：${task.id}
+
+**任务标题**：${task.title}
+**Subagent ID**：\`${subagentId}\`
+**项目**：${project.name}
+**完成时间**：${timestamp}
+**Prompt 长度**：${promptLength} 字符
+
+`;
+
+    // 添加完整的 prompt
+    if (isLongPrompt) {
+      message += `<details>
+<summary>📋 查看完整 Prompt（点击展开）</summary>
+
+\`\`\`
+${prompt}
+\`\`\`
+
+</details>
+`;
+    } else {
+      message += `**完整 Prompt**：
+\`\`\`
+${prompt}
+\`\`\`
+`;
+    }
+
+    // 添加执行结果
+    message += `
+**执行结果**：
+${result.output || '任务已完成'}
+
+---
+*此通知由 PM-Agent-Dispatcher 自动生成*
+*如需查看详细日志，请查看：\`tmp/logs/pm-prompts.log\`*
+`;
+
+    return { success: true, message };
+  } catch (e) {
+    log(`生成 prompt 完成通知失败: ${e.message}`, 'ERROR');
+    return { success: false, error: e.message };
+  }
+}
+
+// ============================================================
+// 使用示例
+// ============================================================
+
+/**
+ * 示例 1：在 recordDispatch() 中保存完整 prompt
+ */
+function recordDispatchExample(task, project, subagentId, prompt) {
+  // 使用新的格式（包含完整 prompt）
+  const entry = `
+### ${new Date().toLocaleString('zh-CN')} 创建 Subagent (PM-Agent-Dispatcher)
+
+**Subagent ID**: \`${subagentId}\`
+**任务**: ${task.id} - ${task.title}
+**项目**: ${project.name}
+
+<details>
+<summary>📋 查看完整 Prompt（${prompt.length} 字符）</summary>
+
+\`\`\`
+${prompt}
+\`\`\`
+
+</details>
+
+**状态**: 🔄 进行中
+
+`;
+  
+  fs.appendFileSync(config.dispatchRecordFile, entry);
+}
+
+/**
+ * 示例 2：在 SubagentManager 中提取并发送 prompt
+ */
+async function onSubagentCompleteExample(taskId, subagentId, result) {
+  // 1. 从日志中提取 prompt
+  const prompt = extractPromptFromLog(taskId, subagentId);
+  
+  if (!prompt) {
+    log(`未找到任务 ${taskId} 的 prompt，跳过通知`, 'WARN');
+    return;
+  }
+  
+  // 2. 查找任务和项目信息
+  const task = await getTaskById(taskId);
+  const project = await getProjectById(task.projectId);
+  
+  // 3. 生成通知消息
+  const notification = generatePromptCompletionNotification(
+    task,
+    project,
+    subagentId,
+    prompt,
+    result
+  );
+  
+  if (notification.success) {
+    // 4. 发送消息到飞书（待实现）
+    log(`Prompt 完成通知已生成：${notification.message.length} 字符`);
+    
+    // TODO: 调用飞书 API 发送消息
+    // await sendFeishuMessage(notification.message);
+  }
+}
+
+// ============================================================
+// 导出函数（供 SubagentManager 调用）
+// ============================================================
+
+export {
+  extractPromptFromLog,
+  generatePromptCompletionNotification
+};

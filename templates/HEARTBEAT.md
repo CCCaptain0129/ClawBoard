@@ -43,6 +43,31 @@ node scripts/pm-agent-dispatcher.mjs --once
 - 配置文件: `__PROJECT_ROOT__/config/pm-agent-dispatcher.json`
 - 文档: `__PROJECT_ROOT__/docs/PROJECT-MANAGER-AGENT.md`
 
+### 6. 可选任务：文档更新检查
+
+每次心跳时可以检查以下文档是否有更新：
+
+```bash
+# 检查项目管理文档是否有更新
+git -C __PROJECT_ROOT__ pull --quiet
+
+# 检查相关文档路径
+ls -la project-management/task-breakdown-guide.md
+ls -la project-management/PROJECT-MANAGEMENT-GUIDE.md
+ls -la docs/pm-agent-dispatcher-optimization.md
+ls -la docs/project-manager-prompt-visibility.md
+ls -la docs/MULTI-GROUP-DEPLOYMENT.md
+```
+
+**何时启用**：
+- 当需要确保使用最新的任务分解指引时
+- 当优化调度器逻辑时
+- 当配置多群组部署时
+
+**通知规则**：
+- 发现文档更新时，在群组中提示用户查看
+- 静默检查，不频繁打扰用户（每天最多提示一次）
+
 ---
 
 ## 心跳间隔

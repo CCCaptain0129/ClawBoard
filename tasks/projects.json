@@ -11,30 +11,7 @@
     "createdAt": "2026-03-10T00:00:00.000Z",
     "updatedAt": "2026-03-12T00:00:00.000Z"
   },
-  {
-    "id": "example-project-1",
-    "name": "示例项目 A",
-    "description": "这是一个示例项目",
-    "status": "active",
-    "leadAgent": null,
-    "color": "#10B981",
-    "icon": "🚀",
-    "taskPrefix": "EXA",
-    "createdAt": "2026-03-11T00:00:00.000Z",
-    "updatedAt": "2026-03-11T00:00:00.000Z"
-  },
-  {
-    "id": "example-project-2",
-    "name": "示例项目 B",
-    "description": "这是另一个示例项目",
-    "status": "active",
-    "leadAgent": null,
-    "color": "#F59E0B",
-    "icon": "⚡",
-    "taskPrefix": "EXB",
-    "createdAt": "2026-03-11T00:00:00.000Z",
-    "updatedAt": "2026-03-11T00:00:00.000Z"
-  },
+  
   {
     "id": "openclaw-integration",
     "name": "OpenClaw 集成",

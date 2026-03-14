@@ -51,5 +51,23 @@
 - 心跳脚本在项目根目录下运行
 - 敏感配置存储在 `openclaw.json`，权限 600
 
+## 相关文档
+
+### 核心文档
+- **[项目管理规范](../../project-management/PROJECT-MANAGEMENT-GUIDE.md)** - 项目工作流程、记忆管理、进度监控机制
+- **[任务分解指引](../../project-management/task-breakdown-guide.md)** - 如何编写高质量的任务描述，减少 subagent tokens 消耗
+
+### 优化与设计文档
+- **[PM-Agent-Dispatcher 优化思路](../docs/pm-agent-dispatcher-optimization.md)** - 调度器设计思路、优化历程和未来计划
+- **[Prompt 可见性方案](../docs/project-manager-prompt-visibility.md)** - 如何让用户看到 subagent 收到的完整 prompt
+
+### 部署指南
+- **[多群组部署指南](../docs/MULTI-GROUP-DEPLOYMENT.md)** - 如何在多个飞书群组中使用项目管理自动化流程
+
+### 使用建议
+- 在创建新任务前，参考 [任务分解指引](../../project-management/task-breakdown-guide.md) 以提高任务质量
+- 在配置多群组时，参考 [多群组部署指南](../docs/MULTI-GROUP-DEPLOYMENT.md)
+- 在优化调度逻辑时，参考 [PM-Agent-Dispatcher 优化思路](../docs/pm-agent-dispatcher-optimization.md)
+
 ---
 *此文件由安装脚本生成，可手动编辑*

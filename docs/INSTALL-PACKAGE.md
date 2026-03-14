@@ -399,6 +399,63 @@ open http://localhost:5173
 
 ---
 
+## 安装后文档
+
+完成安装后，您可以使用以下文档来深入了解系统的各个功能和使用方法：
+
+### 📋 项目管理文档
+
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| **任务分解指引** | `project-management/task-breakdown-guide.md` | 如何使用 8 段式模板创建高质量任务 |
+| **Dispatcher 优化思路** | `docs/pm-agent-dispatcher-optimization.md` | 任务调度器的设计原理和优化历程 |
+| **Prompt 可见性方案** | `docs/project-manager-prompt-visibility.md` | 如何查看 subagent 收到的完整任务指令 |
+
+### 🏗️ 技术架构文档
+
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| **架构设计** | `docs/ARCHITECTURE.md` | 系统架构、组件关系和数据流 |
+| **内部文档** | `docs/internal/` | Subagent 分发记录、调试日志等 |
+
+### 🚀 部署指南
+
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| **多群组部署指南** | `docs/MULTI-GROUP-DEPLOYMENT.md` | 如何在多个飞书群组中使用项目管理自动化 |
+
+### 快速开始指南
+
+**对于新用户**，建议按以下顺序阅读：
+
+1. 📖 首先阅读 [用户指南](./USER_GUIDE.md) - 学习基本的看板操作
+2. 📋 阅读 [任务分解指引](../project-management/task-breakdown-guide.md) - 了解如何编写高质量任务
+3. 🚀 根据需要阅读 [多群组部署指南](./MULTI-GROUP-DEPLOYMENT.md) - 如果需要在多个群组中使用
+
+**对于开发者**，建议阅读：
+
+1. 🏗️ [架构设计](./ARCHITECTURE.md) - 了解系统整体架构
+2. 📋 [Dispatcher 优化思路](./pm-agent-dispatcher-optimization.md) - 理解任务调度器的设计
+3. 📋 [Prompt 可见性方案](./project-manager-prompt-visibility.md) - 了解任务分配机制
+
+### 文档索引
+
+按用途分类的完整文档列表：
+
+**项目管理**
+- 任务分解指引：了解如何创建和分配任务
+- Dispatcher 优化思路：理解任务调度和分配机制
+
+**技术实现**
+- 架构设计：了解系统架构和组件关系
+- Prompt 可见性方案：了解 subagent 任务可见性
+
+**部署运维**
+- 多群组部署指南：在多个群组中部署和使用
+- 内部文档：查看任务分发记录和调试日志
+
+---
+
 ## 下一步
 
 - 📖 [用户指南](./USER_GUIDE.md) - 使用任务看板

@@ -459,9 +459,38 @@ npm config set registry https://registry.npmmirror.com
 
 ## 下一步
 
+### 📖 学习使用
+
 - 📖 [用户指南](./USER_GUIDE.md) - 学习如何使用任务看板
-- 🏗️ [架构设计](./docs/ARCHITECTURE.md) - 了解系统架构
-- 🚀 [部署指南](./docs/DEPLOY.md) - 生产环境部署
+- 📋 [任务分解指引](../project-management/task-breakdown-guide.md) - 了解如何编写高质量任务
+- 🚀 [多群组部署指南](./MULTI-GROUP-DEPLOYMENT.md) - 在多个飞书群组中使用
+
+### 🏗️ 深入了解
+
+- 🏗️ [架构设计](./ARCHITECTURE.md) - 了解系统架构
+- 📋 [Dispatcher 优化思路](./pm-agent-dispatcher-optimization.md) - 理解任务调度器设计
+- 📋 [Prompt 可见性方案](./project-manager-prompt-visibility.md) - 了解任务分配机制
+
+### 🔧 配置与部署
+
+- 🚀 [部署指南](./DEPLOY.md) - 生产环境部署
+- 🔧 [配置说明](#配置说明) - 自定义配置
+
+## 完整文档索引
+
+安装后可使用的文档按用途分类：
+
+**项目管理**
+- [任务分解指引](../project-management/task-breakdown-guide.md) - 如何使用 8 段式模板创建高质量任务
+- [Dispatcher 优化思路](./pm-agent-dispatcher-optimization.md) - 任务调度器的设计原理和优化历程
+- [Prompt 可见性方案](./project-manager-prompt-visibility.md) - 如何查看 subagent 收到的完整任务指令
+
+**技术架构**
+- [架构设计](./ARCHITECTURE.md) - 系统架构、组件关系和数据流
+- [内部文档](./internal/) - Subagent 分发记录、调试日志等
+
+**部署指南**
+- [多群组部署指南](./MULTI-GROUP-DEPLOYMENT.md) - 如何在多个飞书群组中使用项目管理自动化
 
 ## 获取帮助
 
