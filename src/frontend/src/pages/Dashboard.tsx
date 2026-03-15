@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import AgentCard from '../components/AgentCard'
 import { useWebSocket } from '../hooks/useWebSocket'
+import { buildApiUrl } from '../config'
 
 interface Agent {
   id: string
@@ -34,7 +35,7 @@ export default function Dashboard() {
   })
 
   useEffect(() => {
-    fetch('/api/agents')
+    fetch(buildApiUrl('/api/agents'))
       .then(res => res.json())
       .then(data => {
         setAgents(data)

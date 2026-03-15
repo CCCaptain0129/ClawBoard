@@ -1,4 +1,5 @@
 import { TaskService } from './taskService';
+import { getSubagentRecordingPath } from '../config/paths';
 
 /**
  * Subagent配置接口
@@ -35,7 +36,7 @@ export class SubagentManager {
 
   constructor(taskService: TaskService) {
     this.taskService = taskService;
-    this.recordingPath = '/Users/ot/.openclaw/workspace/projects/openclaw-visualization/docs/internal/SUBAGENTS任务分发记录.md';
+    this.recordingPath = getSubagentRecordingPath();
   }
 
   /**

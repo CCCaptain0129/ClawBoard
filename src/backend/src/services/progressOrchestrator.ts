@@ -56,9 +56,9 @@ export class ProgressOrchestrator {
    * @param immediate - 是否立即执行（跳过去抖）
    */
   async triggerProgressSync(projectId: string, immediate: boolean = false): Promise<void> {
-    // 如果是 pm-workflow-automation 项目，则触发同步
-    if (projectId !== 'pm-workflow-automation') {
-      console.log(`[ProgressOrchestrator] Skipping non-pm-workflow-automation project: ${projectId}`);
+    const config = this.safeSyncService.getProjectConfig(projectId);
+    if (!config?.progressDoc) {
+      console.log(`[ProgressOrchestrator] Skipping project without progressDoc: ${projectId}`);
       return;
     }
 
@@ -119,9 +119,8 @@ export class ProgressOrchestrator {
     }
 
     try {
-      // 获取项目配置
       const config = this.safeSyncService.getProjectConfig(projectId);
-      if (!config || !config.progressDoc) {
+      if (!config?.progressDoc) {
         console.warn(`[ProgressOrchestrator] No progressDoc config found for project: ${projectId}`);
         return;
       }

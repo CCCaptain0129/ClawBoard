@@ -2,9 +2,10 @@ import express from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
 import { validateJSONFile } from '../middleware/jsonValidator';
+import { getTasksRoot } from '../config/paths';
 
 const router = express.Router();
-const tasksPath = path.join(process.cwd(), '../../tasks');
+const tasksPath = getTasksRoot();
 
 /**
  * GET /api/tasks/health

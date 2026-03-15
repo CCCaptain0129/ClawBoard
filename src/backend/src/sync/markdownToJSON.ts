@@ -1,10 +1,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Task, Project, Stage } from '../types/tasks';
+import { getTasksRoot } from '../config/paths';
 
 export class MarkdownToJSON {
   async parse(projectId: string): Promise<{ project: Project; tasks: Task[] }> {
-    const tasksMdPath = path.join(process.cwd(), '../../tasks', `${projectId}-TASKS.md`);
+    const tasksMdPath = path.join(getTasksRoot(), `${projectId}-TASKS.md`);
 
     try {
       const markdown = fs.readFileSync(tasksMdPath, 'utf-8');

@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { TaskService } from './taskService';
 import { Task } from '../types/tasks';
+import { getProjectRoot } from '../config/paths';
 
 /**
  * 进度回写服务 - 将看板(JSON)进度同步到 04-进度跟踪.md
@@ -209,19 +210,7 @@ export class ProgressToDocService {
    * 获取默认文档路径
    */
   private getDefaultDocPath(projectId: string): string {
-    // 项目文档通常在项目目录的 docs 文件夹下
-    // 格式: /path/to/project/docs/04-进度跟踪.md
-    const possiblePaths = [
-      `/Users/ot/.openclaw/workspace/projects/2026-03-13-${projectId}/docs/04-进度跟踪.md`,
-      `/Users/ot/.openclaw/workspace/projects/${projectId}/docs/04-进度跟踪.md`,
-    ];
-
-    for (const p of possiblePaths) {
-      if (fs.existsSync(p)) return p;
-    }
-
-    // 默认返回第一个路径
-    return possiblePaths[0];
+    return path.join(getProjectRoot(projectId), 'docs/04-进度跟踪.md');
   }
 
   /**

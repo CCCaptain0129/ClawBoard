@@ -2,6 +2,7 @@ import * as chokidar from 'chokidar';
 import * as fs from 'fs';
 import { TaskService } from './taskService';
 import { WebSocketHandler } from '../websocket/server';
+import { getSubagentRecordingPath } from '../config/paths';
 
 /**
  * Subagent 记录接口
@@ -31,7 +32,7 @@ export class StatusSyncService {
   constructor(taskService: TaskService, wsServer: WebSocketHandler) {
     this.taskService = taskService;
     this.wsServer = wsServer;
-    this.recordingPath = '/Users/ot/.openclaw/workspace/projects/openclaw-visualization/docs/internal/SUBAGENTS任务分发记录.md';
+    this.recordingPath = getSubagentRecordingPath();
   }
 
   /**

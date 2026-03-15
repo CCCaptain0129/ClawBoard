@@ -4,6 +4,7 @@ import { TaskService } from '../services/taskService';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Task, Project } from '../types/tasks';
+import { getTasksRoot } from '../config/paths';
 
 export class SyncManager {
   private taskService: TaskService;
@@ -15,7 +16,7 @@ export class SyncManager {
     taskService: TaskService
   ) {
     this.taskService = taskService;
-    this.tasksPath = path.join(process.cwd(), '../../tasks');
+    this.tasksPath = getTasksRoot();
     
     // 确保 tasks 目录存在
     if (!fs.existsSync(this.tasksPath)) {

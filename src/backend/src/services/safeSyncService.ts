@@ -13,6 +13,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Task, Project } from '../types/tasks';
 import { TaskService } from '../services/taskService';
+import { getProjectRoot, getTasksRoot } from '../config/paths';
 
 // 项目文档路径配置
 export interface ProjectDocConfig {
@@ -26,13 +27,13 @@ export interface ProjectDocConfig {
 const DEFAULT_PROJECT_DOCS: Record<string, ProjectDocConfig> = {
   'pm-workflow-automation': {
     projectId: 'pm-workflow-automation',
-    projectPath: '/Users/ot/.openclaw/workspace/projects/2026-03-13-pm-workflow-automation',
+    projectPath: getProjectRoot('pm-workflow-automation'),
     taskDoc: 'docs/03-任务分解.md',
     progressDoc: 'docs/04-进度跟踪.md',
   },
   'openclaw-visualization': {
     projectId: 'openclaw-visualization',
-    projectPath: '/Users/ot/.openclaw/workspace/projects/openclaw-visualization',
+    projectPath: getProjectRoot('openclaw-visualization'),
     taskDoc: 'tasks/openclaw-visualization-TASKS.md',
   },
 };
@@ -47,7 +48,7 @@ export class SafeSyncService {
 
   constructor(taskService: TaskService, customConfigs?: Record<string, ProjectDocConfig>) {
     this.taskService = taskService;
-    this.tasksPath = path.join(process.cwd(), '../../tasks');
+    this.tasksPath = getTasksRoot();
     this.projectConfigs = { ...DEFAULT_PROJECT_DOCS, ...customConfigs };
     
     // 确保 tasks 目录存在

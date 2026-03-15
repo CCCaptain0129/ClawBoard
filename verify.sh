@@ -153,7 +153,7 @@ verify_file_watcher() {
     local response
     response=$(curl -s --max-time 5 "http://localhost:$BACKEND_PORT/api/file-watcher/status" 2>/dev/null || echo '{"error":"failed"}')
     
-    if echo "$response" | grep -q '"isWatching"'; then
+    if echo "$response" | grep -q '"isRunning"'; then
         print_success "文件监听服务正常"
         print_info "响应: $response"
         return 0

@@ -8,6 +8,7 @@
  */
 
 import React, { useState } from 'react'
+import { buildApiUrl } from '../config'
 
 interface CreateTaskModalProps {
   projectId: string
@@ -45,7 +46,7 @@ export default function CreateTaskModal({
     setError(null)
 
     try {
-      const response = await fetch('http://localhost:3000/api/task-doc/' + projectId + '/tasks', {
+      const response = await fetch(buildApiUrl(`/api/task-doc/${projectId}/tasks`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

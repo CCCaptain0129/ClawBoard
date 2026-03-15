@@ -4,7 +4,7 @@
 
 ## 简介
 
-一个实时监控和管理 OpenClaw Agent 的可视化平台，包含 Agent 状态监控和 Trello 风格的任务看板系统。
+一个用于监控 OpenClaw Agent、管理项目任务、同步 Markdown/JSON 任务数据的可视化平台。
 
 ## 功能特性
 
@@ -17,10 +17,16 @@
 ### 任务看板
 - Trello 风格三列布局（待处理、进行中、已完成）
 - 任务状态实时切换
-- Markdown ↔ JSON 双向同步（这个还需讨论一下）
+- Markdown / JSON 同步与任务文档写入
 - 任务统计和进度追踪
 - 优先级和标签分类
 - 响应式设计，极简风格
+
+### 编排与同步
+- 任务文档安全同步到看板 JSON
+- 进度文档自动回写
+- Subagent 状态联动任务状态
+- 文件监听、同步锁和防回环处理
 
 ## 开发指南
 
@@ -39,6 +45,7 @@
 
 - **前端**: React 18 + TypeScript + Vite + Tailwind CSS
 - **后端**: Node.js + Express + WebSocket
+- **同步链路**: 文件监听 + JSON / Markdown 双格式任务数据
 
 ## 配置
 
@@ -222,6 +229,32 @@ npm run dev
 - 后端 API：http://localhost:3000
 - WebSocket：ws://localhost:3001
 
+## 当前结构
+
+当前代码以 `src/backend` 和 `src/frontend` 为准，历史 `src/src_backup` 目录已移除。后端启动装配已拆分为入口、服务装配和路由注册三层。
+
+```text
+openclaw-visualization/
+├── src/
+│   ├── backend/
+│   │   ├── src/
+│   │   │   ├── app/          # 启动装配、路由注册
+│   │   │   ├── config/       # 路径与配置解析
+│   │   │   ├── routes/       # HTTP API
+│   │   │   ├── services/     # 任务、同步、subagent 服务
+│   │   │   ├── sync/         # Markdown / JSON 转换
+│   │   │   └── websocket/    # WebSocket 广播
+│   └── frontend/
+│       ├── src/
+│       │   ├── components/   # 看板与任务组件
+│       │   ├── hooks/        # WebSocket 等 Hook
+│       │   ├── pages/        # Agent 监控页面
+│       │   └── services/     # 前端 API 访问层
+├── tasks/                    # 项目与任务 JSON / Markdown
+├── docs/                     # 安装、部署、设计文档
+└── templates/                # 模板与提示词资产
+```
+
 ### 命令行工具
 
 项目提供了命令行工具 `task-cli`，可以快速创建项目、任务和查看进度：
@@ -293,39 +326,19 @@ POST /api/sync/to-markdown/:projectId
 POST /api/sync/:projectId
 ```
 
-## 项目结构
-
-```
-openclaw-visualization/
-├── src/
-│   ├── backend/          # 后端服务
-│   │   ├── src/
-│   │   │   ├── routes/   # API 路由
-│   │   │   ├── services/ # 业务逻辑
-│   │   │   ├── websocket/# WebSocket 服务
-│   │   │   ├── sync/     # 同步逻辑
-│   │   │   └── schedulers/# 定时任务
-│   │   └── package.json
-│   └── frontend/         # 前端应用
-│       ├── src/
-│       │   ├── components/# React 组件
-│       │   ├── pages/    # 页面组件
-│       │   ├── services/ # API 调用
-│       │   └── hooks/    # 自定义 Hook
-│       └── package.json
-├── tasks/                # 任务数据
-│   ├── projects.json
-│   └── openclaw-visualization-tasks.json
-└── TASKS.md             # 任务清单（Markdown 格式）
-```
-
 ## 任务管理
 
-任务以 Markdown 格式存储在 `TASKS.md`，通过同步 API 自动转换为 JSON 格式供前端使用。
+任务数据保存在 `tasks/` 目录下：
+
+- `projects.json` 保存项目列表
+- `<projectId>-tasks.json` 保存看板任务
+- `<projectId>-TASKS.md` 或项目内任务文档作为 Markdown 来源
+
+前端看板以 JSON 为直接数据源，文档同步由后端服务执行。
 
 ### 添加新任务
 
-在 `TASKS.md` 中按照以下格式添加：
+在项目任务文档中按照以下格式添加：
 
 ```markdown
 ## 阶段 X
@@ -338,19 +351,11 @@ openclaw-visualization/
   - 负责人: @username
 ```
 
-然后点击"同步到 Markdown"按钮，或调用同步 API。
+然后调用同步 API，或使用任务文档写入接口。
 
 ### 任务模板与使用说明
 
 详细的任务创建规范、最佳实践和示例，请参考：📖 [用户指南](./USER_GUIDE.md)
-
-## 开发进度
-
-- ✅ Agent 监控：100%
-- ✅ 任务看板后端：100%
-- ✅ 任务看板前端：100%
-- 🚧 功能增强：开发中
-- ⏳ 部署到生产：待开始
 
 ## 部署
 
@@ -400,25 +405,18 @@ pm2 serve dist 5173 --name openclaw-frontend
 检查 `tasks/` 目录是否有写入权限。
 
 ### 前端无法连接后端
-检查 CORS 配置和后端服务状态。
+检查 `VITE_API_URL` / `VITE_WS_URL` 配置、反向代理和后端服务状态。
 
 ## 相关文档
 
-### 核心文档
 - 📥 [安装指南](./docs/INSTALL.md) - 15分钟快速启动（新用户必读）
 - 📖 [用户指南](./USER_GUIDE.md) - 任务管理、命令行工具使用说明
-- 🏗️ [架构设计](./docs/ARCHITECTURE.md) - 系统架构和设计决策
+- 🏗️ [架构设计](./docs/ARCHITECTURE.md) - 历史架构设计与设计决策参考
 - 🚀 [部署指南](./docs/DEPLOY.md) - 生产环境部署说明
 - 🔄 [开发流程](./docs/DEVELOPMENT_WORKFLOW.md) - 开发工作流和规范
-
-### 运维文档
-- ⚡ [快速参考](./QUICK_REFERENCE.md) - 常用命令和快速查询
-- 🚀 [部署指南](./docs/DEPLOY.md) - 生产环境部署说明（包含 PM2 守护进程配置）
-
-### 内部文档
 - 📋 [产品需求文档](./docs/PRD.md) - 产品功能和需求定义
 - 🔌 [OpenClaw 集成](./docs/OPENCLAW_INTEGRATION.md) - OpenClaw 集成实现
-- 🧠 [内存使用分析](./docs/MEMORY_USAGE.md) - 内存使用和优化建议
+- 🧭 [使用说明](./docs/USAGE.md) - 运行、排错和使用说明
 - 🛠️ [集成设计](./docs/INTEGRATION_DESIGN.md) - 各模块集成设计
 
 ### 归档文档

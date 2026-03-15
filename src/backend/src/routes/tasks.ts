@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { TaskService } from '../services/taskService';
 import { WebSocketHandler } from '../websocket/server';
 import { SubagentManager } from '../services/subagentManager';
+import { getSubagentRecordingPath } from '../config/paths';
 
 export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler) {
   const router = Router();
@@ -287,7 +288,7 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
 
       // 查找任务ID - 使用更灵活的正则表达式
       const fs = await import('fs');
-      const recordingPath = '/Users/ot/.openclaw/workspace/projects/openclaw-visualization/docs/internal/SUBAGENTS任务分发记录.md';
+      const recordingPath = getSubagentRecordingPath();
       const content = fs.readFileSync(recordingPath, 'utf-8');
       // 支持多种任务ID格式：VIS-xxx, INT-xxx, EXA-xxx, TASK-xxx, TASK-TEST-xxx, TEST-xxx 等
       const match = content.match(new RegExp(`Subagent ID.*\`${subagentId}\`.*任务:\\s*([A-Z][A-Z0-9-]+)`, 's'));
@@ -303,12 +304,14 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
       // 获取更新后的任务
       let task = null;
       if (taskId) {
-        task = await taskService.getTasksByProject('openclaw-visualization')
-          .then(tasks => tasks.find(t => t.id === taskId));
-
-        // 广播任务更新
-        if (task) {
-          wsServer.broadcastTaskUpdate('openclaw-visualization', task);
+        const projects = await taskService.getAllProjects();
+        for (const project of projects) {
+          task = await taskService.getTasksByProject(project.id)
+            .then(tasks => tasks.find(t => t.id === taskId));
+          if (task) {
+            wsServer.broadcastTaskUpdate(project.id, task);
+            break;
+          }
         }
       }
 

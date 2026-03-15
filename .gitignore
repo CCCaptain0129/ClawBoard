@@ -41,6 +41,7 @@ coverage/
 .cache/
 .temp/
 *.tmp
+.vite/
 
 # OS
 Thumbs.db
@@ -50,5 +51,8 @@ MEMORY.md
 CHANGELOG.md
 PROGRESS.md
 tmp/
+docs/
 docs/internal/
 docs/archive/
+output/
+src/src_backup/

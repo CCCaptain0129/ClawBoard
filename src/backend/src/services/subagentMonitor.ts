@@ -2,6 +2,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { SubagentManager } from './subagentManager';
 import type { TaskService } from './taskService';
+import { getOpenClawSessionsPath, getSubagentRecordingPath } from '../config/paths';
 
 /**
  * Subagent 状态接口
@@ -74,12 +75,12 @@ export class SubagentMonitorService {
     this.subagentManager = new SubagentManager(taskService);
     // OpenClaw sessions store 路径
     this.sessionsJsonPath = options?.sessionsJsonPath ||
-      '/Users/ot/.openclaw/agents/main/sessions/sessions.json';
+      getOpenClawSessionsPath();
     this.sessionsDir = path.dirname(this.sessionsJsonPath);
 
     // SUBAGENTS任务分发记录.md 路径
     this.recordingPath = options?.recordingPath ||
-      '/Users/ot/.openclaw/workspace/projects/openclaw-visualization/docs/internal/SUBAGENTS任务分发记录.md';
+      getSubagentRecordingPath();
 
     // 轮询间隔：默认 30 秒
     this.intervalMs = options?.intervalMs || 30000;

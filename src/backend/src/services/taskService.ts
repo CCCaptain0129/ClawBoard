@@ -2,12 +2,13 @@ import { Task, Project } from '../types/tasks';
 import * as fs from 'fs';
 import * as path from 'path';
 import { validateJSONFile } from '../middleware/jsonValidator';
+import { getTasksRoot } from '../config/paths';
 
 // 进度同步回调函数类型
 export type ProgressSyncCallback = (projectId: string) => Promise<void> | void;
 
 export class TaskService {
-  private tasksPath = path.join(process.cwd(), '../../tasks');
+  private tasksPath = getTasksRoot();
   private projectsPath = path.join(this.tasksPath, 'projects.json');
   private progressSyncCallback?: ProgressSyncCallback;
 

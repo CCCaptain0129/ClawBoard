@@ -1,32 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import TaskCard from './TaskCard'
 import CreateTaskModal from './CreateTaskModal'
-import { deleteTask, generateProgressDoc } from '../services/taskService'
-
-interface Task {
-  id: string
-  title: string
-  description: string
-  status: 'todo' | 'in-progress' | 'done'
-  priority: 'P1' | 'P2' | 'P3'
-  labels: string[]
-  assignee: string | null
-  claimedBy: string | null
-  startTime?: string | null
-  completeTime?: string | null
-  dueDate?: string | null
-  estimatedTime?: string | null
-  comments?: any[]  // PMW-010: 执行日志
-}
-
-interface Project {
-  id: string
-  name: string
-  description: string
-  color: string
-  icon: string
-  taskPrefix: string
-}
+import { deleteTask, generateProgressDoc, getProjects, getTasks, getTasksForProjects, updateTask, type Project, type Task } from '../services/taskService'
+import { useWebSocket } from '../hooks/useWebSocket'
 
 const columns = [
   { 
@@ -69,6 +45,38 @@ export default function KanbanBoard() {
   // JSON-first: 生成04进度跟踪状态
   const [generatingProgress, setGeneratingProgress] = useState(false)
 
+  useWebSocket({
+    onMessage: (message) => {
+      if (message.type === 'TASK_UPDATE') {
+        const task = message.task as Task & { deleted?: boolean }
+        const nextTask = { ...task, projectId: message.projectId }
+
+        setTasks((currentTasks) => {
+          if (task.deleted) {
+            return currentTasks.filter((item) => item.id !== task.id)
+          }
+
+          const existingIndex = currentTasks.findIndex((item) => item.id === task.id)
+          if (existingIndex === -1) {
+            if (currentProject !== 'all' && currentProject !== message.projectId) {
+              return currentTasks
+            }
+            return [nextTask, ...currentTasks]
+          }
+
+          return currentTasks.map((item) => item.id === task.id ? nextTask : item)
+        })
+        return
+      }
+
+      if (message.type === 'TASK_CREATED_VIA_DOC' || message.type === 'SAFE_SYNC_COMPLETED') {
+        if (currentProject === 'all' || currentProject === message.projectId) {
+          void fetchTasks()
+        }
+      }
+    },
+  })
+
   // 加载项目列表
   useEffect(() => {
     fetchProjects()
@@ -76,16 +84,14 @@ export default function KanbanBoard() {
 
   // 当切换项目时，加载对应任务
   useEffect(() => {
-    if (currentProject) {
-      fetchTasks()
+    if (currentProject && (currentProject !== 'all' || projects.length > 0)) {
+      void fetchTasks()
     }
-  }, [currentProject])
+  }, [currentProject, projects.length])
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/tasks/projects')
-      if (!response.ok) throw new Error('Failed to fetch projects')
-      const data = await response.json()
+      const data = await getProjects()
       setProjects(data)
     } catch (err) {
       console.error('Error fetching projects:', err)
@@ -96,35 +102,12 @@ export default function KanbanBoard() {
     setError(null)
     try {
       setLoading(true)
-      let url = 'http://localhost:3000/api/tasks/projects/openclaw-visualization/tasks'
-      
-      if (currentProject !== 'all' && currentProject !== 'openclaw-visualization') {
-        url = `http://localhost:3000/api/tasks/projects/${currentProject}/tasks`
-      }
-      
-      const response = await fetch(url)
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
-      
-      const data = await response.json()
-      
-      // 检查 API 返回的错误信息
-      if (data.error) {
-        setError(data.error)
-        setTasks([])
+      if (currentProject === 'all') {
+        setTasks(await getTasksForProjects(projects))
         return
       }
-      
-      // 检查数据格式
-      if (!Array.isArray(data)) {
-        setError('API 返回的数据格式不正确，期望的是数组')
-        setTasks([])
-        return
-      }
-      
-      setTasks(data)
+
+      setTasks(await getTasks(currentProject))
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       setError(`加载任务失败：${errorMessage}`)
@@ -136,20 +119,13 @@ export default function KanbanBoard() {
 
   const handleStatusChange = async (taskId: string, newStatus: 'todo' | 'in-progress' | 'done') => {
     try {
-      const projectId = currentProject === 'all' ? 'openclaw-visualization' : currentProject
-      const response = await fetch(
-        `http://localhost:3000/api/tasks/projects/${projectId}/tasks/${taskId}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: newStatus }),
-        }
-      )
-      
-      if (!response.ok) throw new Error('Failed to update task')
-      
-      const updatedTask = await response.json()
-      setTasks(tasks.map(t => t.id === taskId ? updatedTask : t))
+      const taskProjectId = getTaskProjectId(taskId)
+      if (!taskProjectId) {
+        throw new Error(`无法确定任务 ${taskId} 所属项目`)
+      }
+
+      const updatedTask = await updateTask(taskProjectId, taskId, { status: newStatus })
+      setTasks((currentTasks) => currentTasks.map((t) => t.id === taskId ? updatedTask : t))
     } catch (err) {
       console.error('Error updating task:', err)
       alert('更新失败，请重试')
@@ -165,13 +141,13 @@ export default function KanbanBoard() {
     setHighlightedTaskId(taskId)
     
     // 3秒后取消高亮
-    setTimeout(() => {
+    window.setTimeout(() => {
       setHighlightedTaskId(null)
     }, 3000)
     
     // 刷新任务列表（延迟1秒，等待 watcher 触发同步）
-    setTimeout(() => {
-      fetchTasks()
+    window.setTimeout(() => {
+      void fetchTasks()
     }, 1000)
   }
 
@@ -180,12 +156,16 @@ export default function KanbanBoard() {
   // ========================================
   const handleDeleteTask = async (taskId: string) => {
     try {
-      const projectId = currentProject === 'all' ? 'openclaw-visualization' : currentProject
-      const result = await deleteTask(projectId, taskId)
+      const taskProjectId = getTaskProjectId(taskId)
+      if (!taskProjectId) {
+        throw new Error(`无法确定任务 ${taskId} 所属项目`)
+      }
+
+      const result = await deleteTask(taskProjectId, taskId)
       
       if (result.success) {
         // 从本地状态移除任务
-        setTasks(tasks.filter(t => t.id !== taskId))
+        setTasks((currentTasks) => currentTasks.filter(t => t.id !== taskId))
         alert(`✅ 任务 ${taskId} 已删除`)
       }
     } catch (err) {
@@ -200,7 +180,11 @@ export default function KanbanBoard() {
   const handleGenerateProgress = async () => {
     setGeneratingProgress(true)
     try {
-      const projectId = currentProject === 'all' ? 'openclaw-visualization' : currentProject
+      if (currentProject === 'all') {
+        throw new Error('请先选择具体项目，再生成进度文档')
+      }
+
+      const projectId = currentProject
       const result = await generateProgressDoc(projectId)
       
       if (result.success) {
@@ -218,6 +202,12 @@ export default function KanbanBoard() {
   const getCurrentProjectData = () => {
     if (currentProject === 'all') return null
     return projects.find(p => p.id === currentProject)
+  }
+
+  const getTaskProjectId = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId)
+    if (task?.projectId) return task.projectId
+    return findProjectByTaskPrefix(taskId)?.id
   }
 
   const getCurrentProjectInfo = () => {
@@ -317,7 +307,7 @@ export default function KanbanBoard() {
                 className="px-1.5 py-0.5 text-xs rounded-full"
                 style={{ backgroundColor: `${project.color}20`, color: project.color }}
               >
-                {project.id === 'openclaw-visualization' ? 13 : 3}
+                {tasks.filter(task => task.projectId === project.id).length}
               </span>
             </button>
           ))}

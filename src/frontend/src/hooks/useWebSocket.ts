@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { wsUrl } from '../config'
 
 interface WebSocketHookOptions {
   onMessage?: (message: any) => void
@@ -8,14 +9,22 @@ interface WebSocketHookOptions {
 
 export function useWebSocket({ onMessage, onConnect, onDisconnect }: WebSocketHookOptions = {}) {
   const ws = useRef<WebSocket | null>(null)
+  const onMessageRef = useRef(onMessage)
+  const onConnectRef = useRef(onConnect)
+  const onDisconnectRef = useRef(onDisconnect)
 
   useEffect(() => {
-    const wsUrl = 'ws://localhost:3001'
+    onMessageRef.current = onMessage
+    onConnectRef.current = onConnect
+    onDisconnectRef.current = onDisconnect
+  }, [onMessage, onConnect, onDisconnect])
+
+  useEffect(() => {
     ws.current = new WebSocket(wsUrl)
 
     ws.current.onopen = () => {
       console.log('Connected to WebSocket')
-      onConnect?.()
+      onConnectRef.current?.()
     }
 
     ws.current.onmessage = (event) => {
@@ -23,12 +32,12 @@ export function useWebSocket({ onMessage, onConnect, onDisconnect }: WebSocketHo
       if (message.type === 'PING') {
         ws.current?.send(JSON.stringify({ type: 'PONG' }))
       }
-      onMessage?.(message)
+      onMessageRef.current?.(message)
     }
 
     ws.current.onclose = () => {
       console.log('WebSocket disconnected')
-      onDisconnect?.()
+      onDisconnectRef.current?.()
     }
 
     ws.current.onerror = (error) => {
@@ -40,5 +49,5 @@ export function useWebSocket({ onMessage, onConnect, onDisconnect }: WebSocketHo
         ws.current.close()
       }
     }
-  }, [onMessage, onConnect, onDisconnect])
+  }, [])
 }

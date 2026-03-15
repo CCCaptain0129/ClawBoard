@@ -139,7 +139,7 @@ describe('ProgressOrchestrator', () => {
       expect(mockWsServer.broadcasts[0].type).toBe('PROGRESS_SYNCED');
     });
 
-    it('非 pm-workflow-automation 项目应跳过同步', async () => {
+    it('没有 progressDoc 配置的项目应跳过同步', async () => {
       await orchestrator.triggerProgressSync('other-project', true);
       
       expect(mockProgressService.syncCount).toBe(0);
