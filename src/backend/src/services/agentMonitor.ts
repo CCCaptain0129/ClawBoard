@@ -6,6 +6,7 @@ import { getConfig } from '../config/config';
 export interface AgentStatus {
   id: string;
   name: string;
+  label?: string;
   status: 'running' | 'idle' | 'stopped';
   model: string;
   tokenUsage: {
@@ -19,6 +20,12 @@ export interface AgentStatus {
   updatedAtRaw?: number;
   lastRun?: string;
   lastRunRaw?: string;
+  contextUsage?: {
+    used: number;
+    max: number;
+    percentage: number;
+    risk: 'safe' | 'warning' | 'high' | 'overflow';
+  };
   type: string;
   channel: string;
   groupName?: string;
@@ -40,7 +47,7 @@ export class OpenClawAgentMonitor {
   /**
    * 从 sessionFile 读取最后一条消息的时间戳
    */
-  private async getLastMessageTimestamp(sessionFilePath: string): Promise<number> {
+  private async getLastMessageTimestamp(sessionFilePath: string): Promise<number | null> {
     // 检查缓存
     if (this.messageTimestampCache.has(sessionFilePath)) {
       const cached = this.messageTimestampCache.get(sessionFilePath)!;
@@ -53,7 +60,7 @@ export class OpenClawAgentMonitor {
     try {
       const fs = await import('fs');
       if (!fs.existsSync(sessionFilePath)) {
-        return Date.now();
+        return null;
       }
 
       // 读取最后几行（最多 5 行）来找到最后的消息时间戳
@@ -61,7 +68,7 @@ export class OpenClawAgentMonitor {
       const lines = fileContent.split('\n').filter(line => line.trim());
 
       if (lines.length === 0) {
-        return Date.now();
+        return null;
       }
 
       // 从后往前找，找到第一条有效消息的时间戳
@@ -82,17 +89,104 @@ export class OpenClawAgentMonitor {
         }
       }
 
-      return Date.now();
+      return null;
     } catch (error) {
       console.error(`Error reading session file ${sessionFilePath}:`, error);
-      return Date.now();
+      return null;
     }
+  }
+
+  private resolveLastActivityTimestamp(session: any, messageTimestamp: number | null): number {
+    if (typeof session.updatedAt === 'number' && session.updatedAt > 0) {
+      return session.updatedAt;
+    }
+
+    if (typeof session.lastRun === 'string') {
+      const lastRun = new Date(session.lastRun).getTime();
+      if (!Number.isNaN(lastRun) && lastRun > 0) {
+        return lastRun;
+      }
+    }
+
+    if (messageTimestamp && messageTimestamp > 0) {
+      return messageTimestamp;
+    }
+
+    return 0;
+  }
+
+  private determineAgentStatus(session: any, key: string, lastActivityTimestamp: number): 'running' | 'idle' | 'stopped' {
+    const now = Date.now();
+    const inactiveTime = lastActivityTimestamp > 0 ? now - lastActivityTimestamp : Number.POSITIVE_INFINITY;
+    const hasRealtimeConnection = session.connectionState === 'connected' || session.isAlive;
+    const hasActivePolling = Boolean(session.polling);
+    const isSubagent = key.includes('subagent:');
+    const runningThreshold = isSubagent ? 3 * 60 * 1000 : 15 * 60 * 1000;
+    const idleThreshold = 24 * 60 * 60 * 1000;
+
+    if (isSubagent) {
+      if (hasRealtimeConnection || hasActivePolling) {
+        return 'running';
+      }
+
+      if (inactiveTime <= runningThreshold) {
+        return 'running';
+      }
+
+      return 'stopped';
+    }
+
+    if (hasRealtimeConnection || hasActivePolling || session.status === 'active') {
+      return 'running';
+    }
+
+    if (inactiveTime <= runningThreshold) {
+      return 'running';
+    }
+
+    if (inactiveTime <= idleThreshold) {
+      return 'idle';
+    }
+
+    return 'stopped';
+  }
+
+  private buildContextUsage(session: any, totalTokens: number): AgentStatus['contextUsage'] | undefined {
+    const max = typeof session.contextTokens === 'number' && session.contextTokens > 0
+      ? session.contextTokens
+      : undefined;
+
+    if (!max) {
+      return undefined;
+    }
+
+    const used = Math.max(0, totalTokens || 0);
+    const percentage = Math.round((used / max) * 100);
+    let risk: NonNullable<AgentStatus['contextUsage']>['risk'] = 'safe';
+
+    if (percentage >= 100) {
+      risk = 'overflow';
+    } else if (percentage >= 90) {
+      risk = 'high';
+    } else if (percentage >= 75) {
+      risk = 'warning';
+    }
+
+    return {
+      used,
+      max,
+      percentage,
+      risk,
+    };
   }
 
   // 时间格式化
   private formatTimeAgo(timestamp: string): string {
     const now = Date.now();
     const time = new Date(timestamp).getTime();
+    if (!Number.isFinite(time) || time <= 0) {
+      return '未知';
+    }
     const diff = now - time;
     
     const seconds = Math.floor(diff / 1000);
@@ -221,33 +315,16 @@ export class OpenClawAgentMonitor {
     }
 
     // 优先从 sessionFile 读取真实的最后消息时间
-    let lastMessageTimestamp = session.updatedAt || Date.now();
+    let lastMessageTimestamp: number | null = null;
     if (session.sessionFile) {
       lastMessageTimestamp = await this.getLastMessageTimestamp(session.sessionFile);
     }
 
-    const lastActive = new Date(lastMessageTimestamp).toISOString();
-    const now = Date.now();
-    const inactiveTime = now - lastMessageTimestamp;
-
-    // 智能状态判断 - 基于连接状态和真实的消息活动时间
-    let status: 'running' | 'idle' | 'stopped' = 'idle';
-
-    // 检查是否有活跃连接
-    const hasActiveConnection = session.lastChannel !== undefined ||
-                             session.connectionState === 'connected' ||
-                             session.status === 'active' ||
-                             session.isAlive;
-
-    // 检查是否有定时任务正在运行
-    const hasActivePolling = session.polling;
-
-    // 如果有活跃连接或正在轮询，或者1小时内有消息活动，则标记为 running
-    if (hasActiveConnection || hasActivePolling || inactiveTime < 60 * 60 * 1000) {
-      status = 'running';
-    } else if (inactiveTime > 7 * 24 * 60 * 60 * 1000) {
-      status = 'stopped';
-    }
+    const resolvedActivityTimestamp = this.resolveLastActivityTimestamp(session, lastMessageTimestamp);
+    const lastActive = resolvedActivityTimestamp > 0
+      ? new Date(resolvedActivityTimestamp).toISOString()
+      : new Date(0).toISOString();
+    const status = this.determineAgentStatus(session, key, resolvedActivityTimestamp);
     
     // Token 使用统计
     const totalTokens = session.totalTokens || 0;
@@ -329,9 +406,13 @@ export class OpenClawAgentMonitor {
       }
     }
 
+    const normalizedGroupName = this.normalizeFriendlyName(groupName);
+    const displayName = this.buildDisplayName(session, key, normalizedGroupName);
+
     return {
       id: key,
-      name: this.formatDisplayName(session),
+      name: displayName,
+      label: this.normalizeFriendlyName(session.label),
       status: status,
       model: session.model || 'glm-4.7',
       tokenUsage: {
@@ -345,24 +426,64 @@ export class OpenClawAgentMonitor {
       updatedAtRaw: session.updatedAt,
       lastRun: session.lastRun ? this.formatTimeAgo(session.lastRun) : undefined,
       lastRunRaw: session.lastRun,
-      type: session.chatType === 'direct' ? '直接对话' : '群组对话',
+      contextUsage: this.buildContextUsage(session, totalTokens),
+      type: this.formatType(session, key),
       channel: this.formatChannelName(session),
-      groupName: groupName || undefined,
+      groupName: normalizedGroupName || undefined,
     };
   }
 
-  private formatDisplayName(session: any): string {
-    const displayName = session.displayName || session.name || session.origin?.label || '';
-    
-    // 如果 displayName 是自动生成的（如 feishu:g-xxx），使用更友好的名称
-    if (displayName.startsWith('feishu:g-oc_')) {
-      return displayName.replace('feishu:g-', '飞书群组 ');
+  private normalizeFriendlyName(value: string | undefined | null): string {
+    if (!value) return '';
+
+    const normalized = value.trim();
+    if (!normalized) return '';
+    if (normalized.startsWith('chat:oc_')) return '';
+    if (normalized === 'webchat:direct') return '网页对话';
+    if (normalized.startsWith('feishu:g-oc_')) return '';
+    if (/^oc_[a-f0-9]+$/i.test(normalized)) return '';
+
+    return normalized;
+  }
+
+  private buildDisplayName(session: any, key: string, groupName?: string): string {
+    const candidates = [
+      groupName,
+      this.normalizeFriendlyName(session.displayName),
+      this.normalizeFriendlyName(session.name),
+      this.normalizeFriendlyName(session.origin?.label),
+      this.normalizeFriendlyName(session.label),
+    ];
+
+    const preferred = candidates.find(Boolean);
+    if (preferred) {
+      return preferred;
     }
-    if (displayName.startsWith('webchat:direct')) {
-      return '网页对话';
+
+    if (key === 'agent:main:main') {
+      return '主 Agent';
     }
-    
-    return displayName;
+
+    if (key.includes('feishu:group:')) {
+      return `飞书群组 ${key.split(':').pop()}`;
+    }
+
+    if (key.includes('subagent:')) {
+      const shortId = key.split(':').pop()?.slice(-8) || 'unknown';
+      return `Subagent ${shortId}`;
+    }
+
+    return key.split(':').pop() || '未知 Agent';
+  }
+
+  private formatType(session: any, key: string): string {
+    if (key.includes('subagent:')) {
+      return '子代理';
+    }
+    if (session.chatType === 'direct') {
+      return '直接对话';
+    }
+    return '群组对话';
   }
 
   private formatChannelName(session: any): string {
@@ -400,24 +521,16 @@ export class OpenClawAgentMonitor {
 
   private async parseFileSession(session: any, key: string): Promise<AgentStatus> {
     // 优先从 sessionFile 读取真实的最后消息时间
-    let lastMessageTimestamp = session.updatedAt || Date.now();
+    let lastMessageTimestamp: number | null = null;
     if (session.sessionFile) {
       lastMessageTimestamp = await this.getLastMessageTimestamp(session.sessionFile);
     }
 
-    const lastActive = new Date(lastMessageTimestamp).toISOString();
-    const now = Date.now();
-    const inactiveTime = now - lastMessageTimestamp;
-
-    // 基于真实的消息活动时间判断状态
-    let status: 'running' | 'idle' | 'stopped' = 'idle';
-
-    // 1小时内有消息活动，标记为 running
-    if (inactiveTime < 60 * 60 * 1000) {
-      status = 'running';
-    } else if (inactiveTime > 7 * 24 * 60 * 60 * 1000) {
-      status = 'stopped';
-    }
+    const resolvedActivityTimestamp = this.resolveLastActivityTimestamp(session, lastMessageTimestamp);
+    const lastActive = resolvedActivityTimestamp > 0
+      ? new Date(resolvedActivityTimestamp).toISOString()
+      : new Date(0).toISOString();
+    const status = this.determineAgentStatus(session, key, resolvedActivityTimestamp);
 
     const totalTokens = session.totalTokens || 0;
     const inputTokens = session.inputTokens || session.contextTokens || 0;
@@ -470,9 +583,13 @@ export class OpenClawAgentMonitor {
       console.log(`No chatId available, skipping group name fetch`);
     }
 
+    const normalizedGroupName = this.normalizeFriendlyName(groupName);
+    const displayName = this.buildDisplayName(session, key, normalizedGroupName);
+
     return {
       id: key,
-      name: this.formatDisplayName(session),
+      name: displayName,
+      label: this.normalizeFriendlyName(session.label),
       status: status,
       model: session.model || 'glm-4.7',
       tokenUsage: {
@@ -486,9 +603,10 @@ export class OpenClawAgentMonitor {
       updatedAtRaw: session.updatedAt,
       lastRun: session.lastRun ? this.formatTimeAgo(session.lastRun) : undefined,
       lastRunRaw: session.lastRun,
-      type: session.chatType === 'direct' ? '直接对话' : '群组对话',
+      contextUsage: this.buildContextUsage(session, totalTokens),
+      type: this.formatType(session, key),
       channel: this.formatChannelName(session),
-      groupName: groupName || undefined,
+      groupName: normalizedGroupName || undefined,
     };
   }
 }

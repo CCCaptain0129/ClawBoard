@@ -35,6 +35,7 @@ export default function KanbanBoard() {
   const [projects, setProjects] = useState<Project[]>([])
   const [currentProject, setCurrentProject] = useState<string>('all')
   const [tasks, setTasks] = useState<Task[]>([])
+  const [taskCounts, setTaskCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   
@@ -66,6 +67,8 @@ export default function KanbanBoard() {
 
           return currentTasks.map((item) => item.id === task.id ? nextTask : item)
         })
+
+        void refreshProjectCounts(projects)
         return
       }
 
@@ -73,6 +76,7 @@ export default function KanbanBoard() {
         if (currentProject === 'all' || currentProject === message.projectId) {
           void fetchTasks()
         }
+        void refreshProjectCounts(projects)
       }
     },
   })
@@ -93,8 +97,30 @@ export default function KanbanBoard() {
     try {
       const data = await getProjects()
       setProjects(data)
+      await refreshProjectCounts(data)
     } catch (err) {
       console.error('Error fetching projects:', err)
+    }
+  }
+
+  const refreshProjectCounts = async (projectList: Project[]) => {
+    if (projectList.length === 0) {
+      setTaskCounts({})
+      return
+    }
+
+    try {
+      const allTasks = await getTasksForProjects(projectList)
+      const counts = allTasks.reduce<Record<string, number>>((accumulator, task) => {
+        if (task.projectId) {
+          accumulator[task.projectId] = (accumulator[task.projectId] || 0) + 1
+        }
+        return accumulator
+      }, {})
+
+      setTaskCounts(counts)
+    } catch (err) {
+      console.error('Error refreshing project counts:', err)
     }
   }
 
@@ -167,6 +193,10 @@ export default function KanbanBoard() {
         // 从本地状态移除任务
         setTasks((currentTasks) => currentTasks.filter(t => t.id !== taskId))
         alert(`✅ 任务 ${taskId} 已删除`)
+        setTaskCounts((currentCounts) => ({
+          ...currentCounts,
+          [taskProjectId]: Math.max(0, (currentCounts[taskProjectId] || 0) - 1),
+        }))
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
@@ -307,7 +337,7 @@ export default function KanbanBoard() {
                 className="px-1.5 py-0.5 text-xs rounded-full"
                 style={{ backgroundColor: `${project.color}20`, color: project.color }}
               >
-                {tasks.filter(task => task.projectId === project.id).length}
+                {taskCounts[project.id] || 0}
               </span>
             </button>
           ))}

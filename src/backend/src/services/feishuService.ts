@@ -38,6 +38,11 @@ export class FeishuService {
     }
   }
 
+  private isMeaningfulGroupName(value: string | undefined | null): value is string {
+    if (!value) return false;
+    return !(value.startsWith('chat:oc_') || /^oc_[a-f0-9]+$/i.test(value));
+  }
+
   /**
    * 加载群组名称映射表
    * 可以从配置文件读取
@@ -161,7 +166,7 @@ export class FeishuService {
     if (!this.enabled || !this.appId || !this.appSecret) {
       console.log(`⚠️  Feishu service not configured. Returning chatId as fallback.`);
       return {
-        name: chatId,
+        name: '',
         chat_id: normalizedChatId,
         avatar: '',
         tenant_key: '',
@@ -195,7 +200,7 @@ export class FeishuService {
         console.warn(`⚠️  Feishu API warning: ${data.code} - ${data.msg}`);
         // 如果 API 调用失败，也尝试使用本地映射或返回 chatId
         return {
-          name: chatId,
+          name: '',
           chat_id: normalizedChatId,
           avatar: '',
           tenant_key: '',
@@ -218,7 +223,7 @@ export class FeishuService {
       console.error('❌ Failed to get Feishu group info:', error);
       // 如果出错，返回 chatId
       return {
-        name: chatId,
+        name: '',
         chat_id: normalizedChatId,
         avatar: '',
         tenant_key: '',
@@ -246,14 +251,23 @@ export class FeishuService {
 
     if (this.groupInfoCache.has(chatId)) {
       const cached = this.groupInfoCache.get(chatId)!;
-      console.log(`✅ Cache HIT: "${cached.name}"`);
-      return cached;
+      if (!this.isMeaningfulGroupName(cached.name)) {
+        console.log(`⚠️  Cache contains non-friendly group name, refetching...`);
+      } else {
+        console.log(`✅ Cache HIT: "${cached.name}"`);
+        return cached;
+      }
     }
 
     console.log(`🔄 Cache MISS, calling API...`);
     const groupInfo = await this.getGroupInfo(chatId);
-    this.groupInfoCache.set(chatId, groupInfo);
-    console.log(`📦 Cached result: "${groupInfo.name}"`);
+    if (this.isMeaningfulGroupName(groupInfo.name)) {
+      this.groupInfoCache.set(chatId, groupInfo);
+      console.log(`📦 Cached result: "${groupInfo.name}"`);
+    } else {
+      this.groupInfoCache.delete(chatId);
+      console.log(`⚠️  Skipping cache for non-friendly group name`);
+    }
     return groupInfo;
   }
 }

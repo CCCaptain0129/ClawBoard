@@ -1,10 +1,39 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Dashboard from './pages/Dashboard'
 import KanbanBoard from './components/KanbanBoard'
+import { buildApiUrl } from './config'
 import './index.css'
 
 function App() {
   const [currentPage, setCurrentPage] = useState<'agents' | 'tasks'>('agents')
+  const [isBackendConnected, setIsBackendConnected] = useState(false)
+
+  useEffect(() => {
+    let isDisposed = false
+
+    const checkHealth = async () => {
+      try {
+        const response = await fetch(buildApiUrl('/health'))
+        if (!isDisposed) {
+          setIsBackendConnected(response.ok)
+        }
+      } catch {
+        if (!isDisposed) {
+          setIsBackendConnected(false)
+        }
+      }
+    }
+
+    void checkHealth()
+    const timer = window.setInterval(() => {
+      void checkHealth()
+    }, 10000)
+
+    return () => {
+      isDisposed = true
+      window.clearInterval(timer)
+    }
+  }, [])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -16,9 +45,13 @@ function App() {
               <p className="text-sm text-gray-500 mt-1">实时监控和管理 OpenClaw Agent</p>
             </div>
             <div className="flex items-center gap-4">
-              <span className="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                已连接
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                isBackendConnected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+              }`}>
+                <span className={`w-2 h-2 rounded-full mr-2 ${
+                  isBackendConnected ? 'bg-green-500' : 'bg-red-500'
+                }`}></span>
+                {isBackendConnected ? '服务在线' : '服务离线'}
               </span>
               <div className="flex gap-2">
                 <button

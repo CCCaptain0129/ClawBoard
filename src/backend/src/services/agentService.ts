@@ -7,10 +7,10 @@ export class AgentService {
       const agentStatuses = await agentMonitor.getAgentStatus();
       
       const agents = agentStatuses.map(status => {
-        console.log(`DEBUG: Mapping agent ${status.id}: groupName = "${status.groupName}"`);
         return {
           id: status.id,
           name: status.name,
+          label: status.label,
           type: status.type as 'direct' | 'group',
           channel: status.channel,
           status: status.status,
@@ -20,11 +20,10 @@ export class AgentService {
           lastActiveRaw: status.lastActiveRaw,
           lastRun: status.lastRun,
           lastRunRaw: status.lastRunRaw,
-          groupName: status.groupName || undefined,  // 将 null 转换为 undefined
+          contextUsage: status.contextUsage,
+          groupName: status.groupName || undefined,
         };
       });
-
-      console.log(`DEBUG: Final agents array:`, JSON.stringify(agents.filter(a => a.id.includes('feishu:group')), null, 2));
 
       return agents;
     } catch (error) {

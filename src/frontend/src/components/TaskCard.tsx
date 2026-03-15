@@ -5,7 +5,7 @@ interface Task {
   title: string
   description: string
   status: 'todo' | 'in-progress' | 'done'
-  priority: 'P1' | 'P2' | 'P3'
+  priority: 'P0' | 'P1' | 'P2' | 'P3'
   labels: string[]
   assignee: string | null
   claimedBy: string | null
@@ -27,6 +27,7 @@ interface TaskCardProps {
 }
 
 const priorityColors = {
+  P0: 'bg-purple-100 text-purple-700 border-purple-200',
   P1: 'bg-red-100 text-red-700 border-red-200',
   P2: 'bg-yellow-100 text-yellow-700 border-yellow-200',
   P3: 'bg-gray-100 text-gray-700 border-gray-200',
@@ -337,7 +338,7 @@ export default function TaskCard({
         {task.labels.length > 0 && !isExpanded && (
           <div className="flex flex-wrap gap-1.5 mb-3">
             {task.labels.slice(0, 2).map((label) => {
-              if (['todo', 'in-progress', 'done', 'P1', 'P2', 'P3'].includes(label)) return null
+              if (['todo', 'in-progress', 'done', 'P0', 'P1', 'P2', 'P3'].includes(label)) return null
               return (
                 <span key={label} className="px-2 py-0.5 text-xs bg-slate-100 text-slate-600 rounded-full font-medium">
                   {label}
@@ -345,11 +346,11 @@ export default function TaskCard({
               )
             }).filter(Boolean)}
             {task.labels.filter((l) =>
-              !['todo', 'in-progress', 'done', 'P1', 'P2', 'P3'].includes(l)
+              !['todo', 'in-progress', 'done', 'P0', 'P1', 'P2', 'P3'].includes(l)
             ).length > 2 && (
               <span className="px-2 py-0.5 text-xs bg-slate-50 text-slate-400 rounded-full">
                 +{task.labels.filter((l) =>
-                  !['todo', 'in-progress', 'done', 'P1', 'P2', 'P3'].includes(l)
+                  !['todo', 'in-progress', 'done', 'P0', 'P1', 'P2', 'P3'].includes(l)
                 ).length - 2}
               </span>
             )}

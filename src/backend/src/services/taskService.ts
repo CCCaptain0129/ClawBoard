@@ -37,6 +37,14 @@ export class TaskService {
     return projects.find(p => p.id === id) || null;
   }
 
+  getProjectTasksFilePath(projectId: string): string {
+    return path.join(this.tasksPath, `${projectId}-tasks.json`);
+  }
+
+  validateProjectTasksFile(projectId: string) {
+    return validateJSONFile(this.getProjectTasksFilePath(projectId));
+  }
+
   async createTask(projectId: string, task: Partial<Task>): Promise<Task> {
     const project = await this.getProjectById(projectId);
     if (!project) {
@@ -86,7 +94,7 @@ export class TaskService {
   }
 
   async getTasksByProject(projectId: string): Promise<Task[]> {
-    const filePath = path.join(this.tasksPath, `${projectId}-tasks.json`);
+    const filePath = this.getProjectTasksFilePath(projectId);
 
     // 提前验证 JSON 文件
     const validation = validateJSONFile(filePath);

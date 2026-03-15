@@ -10,6 +10,33 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
   // 初始化SubagentManager
   const subagentManager = new SubagentManager(taskService);
 
+  const validateProjectAccess = async (projectId: string) => {
+    const project = await taskService.getProjectById(projectId);
+    if (!project) {
+      return {
+        ok: false as const,
+        status: 404,
+        body: { error: `Project "${projectId}" not found` },
+      };
+    }
+
+    const validation = taskService.validateProjectTasksFile(projectId);
+    if (!validation.valid) {
+      return {
+        ok: false as const,
+        status: 500,
+        body: {
+          error: `Task data for project "${projectId}" is unavailable`,
+          details: validation.error,
+          line: validation.line,
+          column: validation.column,
+        },
+      };
+    }
+
+    return { ok: true as const };
+  };
+
   // 获取所有项目
   router.get('/projects', async (req, res) => {
     try {
@@ -25,6 +52,10 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
     try {
       const { id } = req.params;
       const { status, priority, assignee } = req.query;
+      const validation = await validateProjectAccess(id);
+      if (!validation.ok) {
+        return res.status(validation.status).json(validation.body);
+      }
       let tasks = await taskService.getTasksByProject(id);
       
       // 按状态过滤
@@ -97,6 +128,10 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
   router.get('/projects/:id/tasks/:taskId', async (req, res) => {
     try {
       const { id, taskId } = req.params;
+      const validation = await validateProjectAccess(id);
+      if (!validation.ok) {
+        return res.status(validation.status).json(validation.body);
+      }
       const tasks = await taskService.getTasksByProject(id);
       const task = tasks.find(t => t.id === taskId);
       
@@ -115,6 +150,10 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
     try {
       const { id, taskId } = req.params;
       const updates = req.body;
+      const validation = await validateProjectAccess(id);
+      if (!validation.ok) {
+        return res.status(validation.status).json(validation.body);
+      }
       const task = await taskService.updateTask(id, taskId, updates);
       
       if (!task) {
@@ -163,6 +202,10 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
   router.delete('/projects/:id/tasks/:taskId', async (req, res) => {
     try {
       const { id, taskId } = req.params;
+      const validation = await validateProjectAccess(id);
+      if (!validation.ok) {
+        return res.status(validation.status).json(validation.body);
+      }
       
       const result = await taskService.deleteTask(id, taskId);
       
@@ -204,6 +247,10 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
   router.get('/projects/:id/progress', async (req, res) => {
     try {
       const { id } = req.params;
+      const validation = await validateProjectAccess(id);
+      if (!validation.ok) {
+        return res.status(validation.status).json(validation.body);
+      }
       const tasks = await taskService.getTasksByProject(id);
       const project = await taskService.getProjectById(id);
 
