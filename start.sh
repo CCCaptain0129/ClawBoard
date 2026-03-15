@@ -17,6 +17,11 @@ NC='\033[0m' # No Color
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="$PROJECT_ROOT/src/backend"
 FRONTEND_DIR="$PROJECT_ROOT/src/frontend"
+BACKEND_BIN="$BACKEND_DIR/node_modules/.bin/ts-node"
+FRONTEND_BIN="$FRONTEND_DIR/node_modules/.bin/vite"
+BACKEND_HOST="127.0.0.1"
+FRONTEND_HOST="127.0.0.1"
+FRONTEND_DEFAULT_PORT=5173
 
 # 日志文件
 BACKEND_LOG="$PROJECT_ROOT/tmp/backend.log"
@@ -57,6 +62,53 @@ function print_error() {
 
 function print_step() {
     echo -e "${CYAN}[STEP]${NC} $1"
+}
+
+function ensure_service_binary() {
+    local bin_path=$1
+    local name=$2
+
+    if [ ! -x "$bin_path" ]; then
+        print_error "$name 启动文件不存在: $bin_path"
+        print_error "请先安装依赖后再重试"
+        exit 1
+    fi
+}
+
+function ensure_python3() {
+    if ! command -v python3 &> /dev/null; then
+        print_error "未找到 python3，无法稳定启动后台进程"
+        exit 1
+    fi
+}
+
+function start_detached_process() {
+    local workdir=$1
+    local logfile=$2
+    local pidfile=$3
+    shift 3
+
+    python3 - "$workdir" "$logfile" "$pidfile" "$@" <<'PY'
+import subprocess
+import sys
+
+workdir, logfile, pidfile, *cmd = sys.argv[1:]
+
+with open(logfile, "ab", buffering=0) as log_file:
+    proc = subprocess.Popen(
+        cmd,
+        cwd=workdir,
+        stdin=subprocess.DEVNULL,
+        stdout=log_file,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
+    )
+
+with open(pidfile, "w", encoding="utf-8") as pid_output:
+    pid_output.write(str(proc.pid))
+
+print(proc.pid)
+PY
 }
 
 # 检查 Node.js
@@ -194,7 +246,7 @@ function stop_backend_processes() {
     local killed_count=0
 
     # 查找所有匹配的进程
-    local pids=$(pgrep -f "ts-node.*src/index.ts" | grep -v grep || true)
+    local pids=$(pgrep -f "$BACKEND_DIR/.*/ts-node.*src/index.ts|$BACKEND_BIN src/index.ts" || true)
 
     if [ -z "$pids" ]; then
         print_info "未发现运行中的后端进程"
@@ -233,8 +285,8 @@ function stop_frontend_processes() {
     local stopped_count=0
     local killed_count=0
 
-    # 查找所有匹配的 Vite 进程
-    local pids=$(pgrep -f "vite.*--port" | grep -v grep || true)
+    # 查找当前项目下所有匹配的 Vite 进程
+    local pids=$(pgrep -f "$FRONTEND_DIR/node_modules/.bin/vite" || true)
 
     if [ -z "$pids" ]; then
         return 0
@@ -404,6 +456,7 @@ function health_check() {
 # 启动后端服务
 function start_backend() {
     print_step "启动后端服务..."
+    ensure_service_binary "$BACKEND_BIN" "后端"
 
     # 停止所有旧的后端实例（优先使用 pidfile，兜底使用进程匹配）
     stop_backend
@@ -422,16 +475,20 @@ function start_backend() {
     # 等待端口释放
     sleep 2
 
-    cd "$BACKEND_DIR"
-    nohup npm run dev > "$BACKEND_LOG" 2>&1 &
-    local backend_pid=$!
-    echo $backend_pid > "$BACKEND_PID_FILE"
+    local backend_pid=$(start_detached_process "$BACKEND_DIR" "$BACKEND_LOG" "$BACKEND_PID_FILE" "$BACKEND_BIN" "src/index.ts")
 
     print_success "后端服务已启动 (PID: $backend_pid)"
     print_info "后端日志: $BACKEND_LOG"
 
     # 健康检查
-    if ! health_check "http://localhost:3000/health" "后端服务" "$BACKEND_LOG"; then
+    if ! ps -p $backend_pid > /dev/null 2>&1; then
+        print_error "后端服务进程已退出"
+        print_error "请查看日志: $BACKEND_LOG"
+        rm -f "$BACKEND_PID_FILE"
+        exit 1
+    fi
+
+    if ! health_check "http://$BACKEND_HOST:3000/health" "后端服务" "$BACKEND_LOG"; then
         print_error "后端服务启动失败"
         print_error "请查看日志: $BACKEND_LOG"
         # 清理 PID 文件
@@ -443,6 +500,7 @@ function start_backend() {
 # 启动前端服务
 function start_frontend() {
     print_step "启动前端服务..."
+    ensure_service_binary "$FRONTEND_BIN" "前端"
 
     # 停止所有旧的前端实例（优先使用 pidfile，兜底使用进程匹配）
     stop_frontend
@@ -450,10 +508,7 @@ function start_frontend() {
     # 等待端口释放
     sleep 2
 
-    cd "$FRONTEND_DIR"
-    nohup npm run dev > "$FRONTEND_LOG" 2>&1 &
-    local frontend_pid=$!
-    echo $frontend_pid > "$FRONTEND_PID_FILE"
+    local frontend_pid=$(start_detached_process "$FRONTEND_DIR" "$FRONTEND_LOG" "$FRONTEND_PID_FILE" "$FRONTEND_BIN" "--host" "$FRONTEND_HOST" "--port" "$FRONTEND_DEFAULT_PORT" "--strictPort")
 
     print_success "前端服务已启动 (PID: $frontend_pid)"
     print_info "前端日志: $FRONTEND_LOG"
@@ -463,20 +518,28 @@ function start_frontend() {
     sleep 5
 
     # 从日志中提取实际使用的端口
-    local detected_port=$(grep -oE "Local:.*http://localhost:([0-9]+)" "$FRONTEND_LOG" | tail -1 | grep -oE "[0-9]+$" || echo "")
+    local detected_port=$(grep -oE "Local:.*http://(localhost|127\\.0\\.0\\.1):([0-9]+)" "$FRONTEND_LOG" | tail -1 | grep -oE "[0-9]+$" || echo "")
 
     if [ -n "$detected_port" ]; then
         actual_port=$detected_port
         echo $actual_port > "$FRONTEND_PORT_FILE"
         print_success "前端服务运行在端口 $actual_port"
     else
-        actual_port=5173
+        actual_port=$FRONTEND_DEFAULT_PORT
         echo $actual_port > "$FRONTEND_PORT_FILE"
-        print_warning "无法自动检测前端端口，使用默认端口 5173"
+        print_warning "无法自动检测前端端口，使用默认端口 $FRONTEND_DEFAULT_PORT"
     fi
 
     # 健康检查
-    if ! health_check "http://localhost:$actual_port" "前端服务" "$FRONTEND_LOG"; then
+    if ! ps -p $frontend_pid > /dev/null 2>&1; then
+        print_error "前端服务进程已退出"
+        print_error "请查看日志: $FRONTEND_LOG"
+        rm -f "$FRONTEND_PID_FILE"
+        rm -f "$FRONTEND_PORT_FILE"
+        exit 1
+    fi
+
+    if ! health_check "http://$FRONTEND_HOST:$actual_port" "前端服务" "$FRONTEND_LOG"; then
         print_error "前端服务启动失败"
         print_error "请查看日志: $FRONTEND_LOG"
         # 清理 PID 文件
@@ -520,10 +583,7 @@ function start_dispatcher() {
     # 获取轮询间隔（默认 10 秒）
     local interval=${DISPATCHER_INTERVAL:-10}
 
-    cd "$PROJECT_ROOT"
-    nohup node scripts/pm-agent-dispatcher.mjs --watch --interval $interval --pidfile "$DISPATCHER_PID_FILE" > "$PROJECT_ROOT/tmp/logs/pm-dispatcher.out" 2>&1 &
-    local dispatcher_pid=$!
-    echo $dispatcher_pid > "$DISPATCHER_PID_FILE"
+    local dispatcher_pid=$(start_detached_process "$PROJECT_ROOT" "$PROJECT_ROOT/tmp/logs/pm-dispatcher.out" "$DISPATCHER_PID_FILE" "node" "scripts/pm-agent-dispatcher.mjs" "--watch" "--interval" "$interval" "--pidfile" "$DISPATCHER_PID_FILE")
 
     # 等待一下确认进程启动
     sleep 2
@@ -552,9 +612,10 @@ function show_access_info() {
     fi
 
     echo "📱 访问地址:"
-    echo "   前端: http://localhost:$frontend_port"
-    echo "   后端: http://localhost:3000"
-    echo "   WebSocket: ws://localhost:3001"
+    echo "   前端: http://$FRONTEND_HOST:$frontend_port"
+    echo "   后端: http://$BACKEND_HOST:3000"
+    echo "   WebSocket: ws://$BACKEND_HOST:3001"
+    echo "   提示: 如果浏览器里 localhost 打不开，请优先使用 127.0.0.1"
     echo ""
     echo "📝 查看日志:"
     echo "   后端: tail -f $BACKEND_LOG"
@@ -580,15 +641,12 @@ function show_help() {
     echo "OpenClaw Visualization 启动脚本"
     echo ""
     echo "用法:"
-    echo "  $0 [选项]"
+    echo "  $0"
+    echo "  $0 --help"
     echo ""
-    echo "选项:"
-    echo "  --daemon, -d    以守护进程模式启动（后台运行，启动监控）"
-    echo "  --help, -h      显示此帮助信息"
-    echo ""
-    echo "示例:"
-    echo "  $0              普通模式启动"
-    echo "  $0 --daemon     守护进程模式启动"
+    echo "说明:"
+    echo "  默认以后台常驻方式启动后端、前端和 PM-Agent Dispatcher"
+    echo "  如需进程托管，推荐使用 PM2: pm2 start ecosystem.config.cjs"
     exit 0
 }
 
@@ -606,91 +664,11 @@ function pre_parse_args() {
     done
 }
 
-# 启动监控脚本（内嵌监控逻辑）
-function start_watch() {
-    print_info "启动监控进程..."
-
-    # 创建临时目录
-    mkdir -p "$PROJECT_ROOT/tmp"
-
-    # 监控配置
-    local watch_log="$PROJECT_ROOT/tmp/daemon.log"
-    local watch_pid_file="$PROJECT_ROOT/tmp/watch.pid"
-    local restart_history="$PROJECT_ROOT/tmp/restart-history.log"
-    local check_interval=30
-
-    # 在后台启动监控进程
-    (
-        while true; do
-            # 检查后端服务
-            if [ -f "$BACKEND_PID_FILE" ]; then
-                local backend_pid=$(cat "$BACKEND_PID_FILE")
-                if ! ps -p $backend_pid > /dev/null 2>&1 || ! curl -s --max-time 5 "http://localhost:3000/health" > /dev/null 2>&1; then
-                    echo "[$(date '+%Y-%m-%d %H:%M:%S')] 后端服务异常，尝试重启..." >> "$watch_log"
-                    cd "$BACKEND_DIR"
-                    nohup npm run dev > "$BACKEND_LOG" 2>&1 &
-                    echo $! > "$BACKEND_PID_FILE"
-                    sleep 5
-                    if curl -s --max-time 5 "http://localhost:3000/health" > /dev/null 2>&1; then
-                        echo "[$(date '+%Y-%m-%d %H:%M:%S')] 后端服务重启成功" >> "$watch_log"
-                        echo "[$(date '+%Y-%m-%d %H:%M:%S')] 后端服务 - 自动重启" >> "$restart_history"
-                    fi
-                fi
-            fi
-
-            # 检查前端服务
-            if [ -f "$FRONTEND_PID_FILE" ]; then
-                local frontend_pid=$(cat "$FRONTEND_PID_FILE")
-                local frontend_port=5173
-                [ -f "$FRONTEND_PORT_FILE" ] && frontend_port=$(cat "$FRONTEND_PORT_FILE")
-
-                if ! ps -p $frontend_pid > /dev/null 2>&1 || ! curl -s --max-time 5 "http://localhost:$frontend_port" > /dev/null 2>&1; then
-                    echo "[$(date '+%Y-%m-%d %H:%M:%S')] 前端服务异常，尝试重启..." >> "$watch_log"
-                    cd "$FRONTEND_DIR"
-                    nohup npm run dev > "$FRONTEND_LOG" 2>&1 &
-                    echo $! > "$FRONTEND_PID_FILE"
-                    sleep 5
-                    # 检测实际端口
-                    local detected_port=$(grep -oE "Local:.*http://localhost:([0-9]+)" "$FRONTEND_LOG" | tail -1 | grep -oE "[0-9]+$" || echo "5173")
-                    echo $detected_port > "$FRONTEND_PORT_FILE"
-                    if curl -s --max-time 5 "http://localhost:$detected_port" > /dev/null 2>&1; then
-                        echo "[$(date '+%Y-%m-%d %H:%M:%S')] 前端服务重启成功 (端口: $detected_port)" >> "$watch_log"
-                        echo "[$(date '+%Y-%m-%d %H:%M:%S')] 前端服务 - 自动重启" >> "$restart_history"
-                    fi
-                fi
-            fi
-
-            sleep $check_interval
-        done
-    ) > "$watch_log" 2>&1 &
-
-    local watch_pid=$!
-    echo $watch_pid > "$watch_pid_file"
-
-    # 等待一下让进程启动
-    sleep 2
-
-    # 检查监控进程是否成功启动
-    if ps -p $watch_pid > /dev/null 2>&1; then
-        print_success "监控进程已启动 (PID: $watch_pid)"
-        return 0
-    fi
-
-    print_warning "监控进程启动失败"
-    return 1
-}
-
 # 主函数
 function main() {
-    local daemon_mode=false
-
     # 解析命令行参数
     while [[ $# -gt 0 ]]; do
         case $1 in
-            --daemon|-d)
-                daemon_mode=true
-                shift
-                ;;
             --help|-h)
                 show_help
                 exit 0
@@ -706,17 +684,14 @@ function main() {
 
     echo ""
     echo "=========================================="
-    if [ "$daemon_mode" = true ]; then
-        echo "OpenClaw Visualization 守护进程启动"
-    else
-        echo "OpenClaw Visualization 一键启动脚本 (优化版)"
-    fi
+    echo "OpenClaw Visualization 一键启动脚本"
     echo "=========================================="
     echo ""
 
     # 检查环境
     check_nodejs
     check_npm
+    ensure_python3
     echo ""
 
     # 安装依赖
@@ -733,25 +708,8 @@ function main() {
     start_dispatcher
     echo ""
 
-    # 如果是守护模式，启动监控脚本
-    if [ "$daemon_mode" = true ]; then
-        start_watch
-        echo ""
-
-        echo "=========================================="
-        echo -e "${GREEN}✅ 守护进程已启动${NC}"
-        echo "=========================================="
-        echo ""
-        echo "📝 监控日志: tail -f $PROJECT_ROOT/tmp/daemon.log"
-        echo "📝 重启历史: tail -f $PROJECT_ROOT/tmp/restart-history.log"
-        echo ""
-        echo "🛑 停止守护进程: ./stop.sh"
-        echo "=========================================="
-        echo ""
-    else
-        # 显示访问信息
-        show_access_info
-    fi
+    # 显示访问信息
+    show_access_info
 }
 
 # 预处理命令行参数（提前处理 --help）

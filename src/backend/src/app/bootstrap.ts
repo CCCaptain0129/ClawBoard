@@ -155,14 +155,14 @@ export function startBackgroundServices(services: AppServices): NodeJS.Timeout {
   return pollingInterval;
 }
 
-export function stopBackgroundServices(services: AppServices, pollingInterval?: NodeJS.Timeout | null): void {
+export async function stopBackgroundServices(services: AppServices, pollingInterval?: NodeJS.Timeout | null): Promise<void> {
   if (pollingInterval) {
     clearInterval(pollingInterval);
   }
   services.fileWatcherService.stop();
-  services.wsServer.stop();
   services.scheduler.stop();
   services.statusSyncService.stop?.();
   services.subagentMonitorService.stop();
   services.progressOrchestrator.cleanup();
+  await services.wsServer.stop();
 }

@@ -13,12 +13,13 @@ NC='\033[0m' # No Color
 
 # 项目根目录
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BACKEND_DIR="$PROJECT_ROOT/src/backend"
+FRONTEND_DIR="$PROJECT_ROOT/src/frontend"
 
 # PID 文件
 BACKEND_PID_FILE="$PROJECT_ROOT/tmp/backend.pid"
 FRONTEND_PID_FILE="$PROJECT_ROOT/tmp/frontend.pid"
 FRONTEND_PORT_FILE="$PROJECT_ROOT/tmp/frontend.port"
-WATCH_PID_FILE="$PROJECT_ROOT/tmp/watch.pid"
 DISPATCHER_PID_FILE="$PROJECT_ROOT/tmp/pm-dispatcher.pid"
 
 # 打印带颜色的消息
@@ -80,7 +81,7 @@ function stop_backend_processes() {
     local killed_count=0
 
     # 查找所有匹配的进程
-    local pids=$(pgrep -f "ts-node.*src/index.ts" | grep -v grep || true)
+    local pids=$(pgrep -f "$BACKEND_DIR/.*/ts-node.*src/index.ts|$BACKEND_DIR/node_modules/.bin/ts-node src/index.ts" || true)
 
     if [ -z "$pids" ]; then
         return 0
@@ -118,8 +119,8 @@ function stop_frontend_processes() {
     local stopped_count=0
     local killed_count=0
 
-    # 查找所有匹配的 Vite 进程
-    local pids=$(pgrep -f "vite.*--port" | grep -v grep || true)
+    # 查找当前项目下所有匹配的 Vite 进程
+    local pids=$(pgrep -f "$FRONTEND_DIR/node_modules/.bin/vite" || true)
 
     if [ -z "$pids" ]; then
         return 0
@@ -148,25 +149,6 @@ function stop_frontend_processes() {
 
     if [ $stopped_count -gt 0 ] || [ $killed_count -gt 0 ]; then
         print_success "已停止 $stopped_count 个前端进程，强制停止 $killed_count 个"
-    fi
-}
-
-# 停止监控进程
-function stop_watch() {
-    if [ -f "$WATCH_PID_FILE" ]; then
-        local pid=$(cat "$WATCH_PID_FILE")
-        if ps -p $pid > /dev/null 2>&1; then
-            print_info "停止监控进程 (PID: $pid)..."
-            kill $pid 2>/dev/null
-            sleep 1
-
-            if ps -p $pid > /dev/null 2>&1; then
-                kill -9 $pid 2>/dev/null
-            fi
-
-            print_success "监控进程已停止"
-        fi
-        rm -f "$WATCH_PID_FILE"
     fi
 }
 
@@ -249,16 +231,13 @@ function main() {
     echo "=========================================="
     echo ""
 
-    # 停止监控进程
-    stop_watch
-
     # 停止 PM-Agent Dispatcher
     stop_dispatcher
 
     # 停止后端服务（优先使用 pidfile，兜底使用进程匹配）
     if [ -f "$BACKEND_PID_FILE" ]; then
         local pid=$(cat "$BACKEND_PID_FILE")
-        stop_process_by_pid $pid "后端服务"
+        stop_process_by_pid $pid "后端服务" || true
         rm -f "$BACKEND_PID_FILE"
     else
         stop_backend_processes
@@ -267,7 +246,7 @@ function main() {
     # 停止前端服务（优先使用 pidfile，兜底使用进程匹配）
     if [ -f "$FRONTEND_PID_FILE" ]; then
         local pid=$(cat "$FRONTEND_PID_FILE")
-        stop_process_by_pid $pid "前端服务"
+        stop_process_by_pid $pid "前端服务" || true
         rm -f "$FRONTEND_PID_FILE"
     else
         stop_frontend_processes

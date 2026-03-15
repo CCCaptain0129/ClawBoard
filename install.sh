@@ -249,7 +249,7 @@ show_next_steps() {
     fi
     echo ""
     echo -e "  3. ${CYAN}访问应用${NC}"
-    echo "     http://localhost:5173"
+    echo "     http://127.0.0.1:5173"
     echo ""
     echo -e "  4. ${CYAN}验证服务状态${NC}"
     if [[ "$os" == "Windows" ]]; then
@@ -268,7 +268,7 @@ show_next_steps() {
         echo "  ./start.sh         启动服务"
         echo "  ./stop.sh          停止服务"
         echo "  ./verify.sh        验证服务状态"
-        echo "  ./start.sh --daemon  守护进程模式（自动重启）"
+        echo "  pm2 start ecosystem.config.cjs   使用 PM2 托管"
     fi
     echo ""
     echo -e "${BOLD}获取帮助：${NC}"

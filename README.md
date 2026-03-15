@@ -138,20 +138,29 @@ install.bat
 
 ### 启动服务
 
-**普通模式（推荐用于开发）：**
+**本地启动：**
 
 ```bash
 ./start.sh      # macOS/Linux
 start.bat       # Windows
 ```
 
-**守护进程模式（推荐用于生产环境）：**
-
-以守护进程模式启动，服务会在后台运行，并自动监控服务状态，崩溃时自动重启。
+**PM2 托管启动：**
 
 ```bash
-./start.sh --daemon      # macOS/Linux
-start.bat --daemon       # Windows
+npm install -g pm2
+pm2 start ecosystem.config.cjs
+```
+
+常用 PM2 命令：
+
+```bash
+pm2 status
+pm2 logs openclaw-backend
+pm2 restart ecosystem.config.cjs
+pm2 stop ecosystem.config.cjs
+pm2 delete ecosystem.config.cjs
+pm2 save
 ```
 
 一键启动脚本会自动：
@@ -159,7 +168,7 @@ start.bat --daemon       # Windows
 - ✅ 自动安装依赖（首次运行）
 - ✅ 启动后端服务（端口 3000 / 3001）
 - ✅ 启动前端服务（端口 5173）
-- ✅ 守护模式：自动监控服务状态
+- ✅ 启动 PM-Agent Dispatcher
 
 **停止服务：**
 
@@ -386,14 +395,20 @@ npm run build
 # 安装 PM2
 npm install -g pm2
 
-# 启动后端
-pm2 start src/backend/src/index.ts --name openclaw-backend
+# 使用仓库内配置启动全部进程
+pm2 start ecosystem.config.cjs
 
-# 启动前端（使用 nginx 提供静态文件）
-# 或使用 PM2 + serve
-cd src/frontend
-npm run build
-pm2 serve dist 5173 --name openclaw-frontend
+# 查看状态
+pm2 status
+
+# 重启
+pm2 restart ecosystem.config.cjs
+
+# 停止
+pm2 stop ecosystem.config.cjs
+
+# 停止并删除
+pm2 delete ecosystem.config.cjs
 ```
 
 ## 常见问题

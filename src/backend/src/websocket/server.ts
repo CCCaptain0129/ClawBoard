@@ -12,8 +12,20 @@ export class WebSocketHandler {
     console.log(`WebSocket server listening on port ${this.server.options.port}`);
   }
 
-  stop() {
-    this.server.close();
+  stop(): Promise<void> {
+    return new Promise((resolve) => {
+      this.server.clients.forEach((client) => {
+        try {
+          client.close();
+        } catch (error) {
+          console.warn('Failed to close WebSocket client cleanly:', error);
+        }
+      });
+
+      this.server.close(() => {
+        resolve();
+      });
+    });
   }
 
   private setupHandlers() {
