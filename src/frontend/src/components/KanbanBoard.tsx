@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import TaskCard from './TaskCard'
 import CreateTaskModal from './CreateTaskModal'
-import { deleteTask, generateProgressDoc, getProjects, getTasks, getTasksForProjects, updateTask, type Project, type Task } from '../services/taskService'
+import CreateProjectModal from './CreateProjectModal'
+import { deleteTask, generateProgressDoc, getProjects, getTasks, getTasksForProjects, updateProject, updateTask, type Project, type Task } from '../services/taskService'
 import { useWebSocket } from '../hooks/useWebSocket'
 
 const columns = [
@@ -21,6 +22,14 @@ const columns = [
     borderColor: 'border-blue-200',
     iconColor: 'text-blue-500'
   },
+  {
+    id: 'review',
+    title: '待审核',
+    icon: '🟣',
+    color: 'bg-gradient-to-br from-violet-50 to-fuchsia-100',
+    borderColor: 'border-violet-200',
+    iconColor: 'text-violet-500'
+  },
   { 
     id: 'done', 
     title: '已完成', 
@@ -38,13 +47,16 @@ export default function KanbanBoard() {
   const [taskCounts, setTaskCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   
   // PMW-036: 新增任务弹窗状态
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showCreateProjectModal, setShowCreateProjectModal] = useState(false)
   const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null)
   
   // JSON-first: 生成04进度跟踪状态
   const [generatingProgress, setGeneratingProgress] = useState(false)
+  const visibleProjects = projects.filter((project) => project.status !== 'archived')
 
   useWebSocket({
     onMessage: (message) => {
@@ -68,7 +80,7 @@ export default function KanbanBoard() {
           return currentTasks.map((item) => item.id === task.id ? nextTask : item)
         })
 
-        void refreshProjectCounts(projects)
+        void refreshProjectCounts(visibleProjects)
         return
       }
 
@@ -76,7 +88,7 @@ export default function KanbanBoard() {
         if (currentProject === 'all' || currentProject === message.projectId) {
           void fetchTasks()
         }
-        void refreshProjectCounts(projects)
+        void refreshProjectCounts(visibleProjects)
       }
     },
   })
@@ -91,15 +103,20 @@ export default function KanbanBoard() {
     if (currentProject && (currentProject !== 'all' || projects.length > 0)) {
       void fetchTasks()
     }
-  }, [currentProject, projects.length])
+  }, [currentProject, visibleProjects.length])
 
   const fetchProjects = async () => {
     try {
       const data = await getProjects()
       setProjects(data)
-      await refreshProjectCounts(data)
+      setError(null)
+      await refreshProjectCounts(data.filter((project) => project.status !== 'archived'))
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       console.error('Error fetching projects:', err)
+      setError(`加载项目失败：${errorMessage}`)
+      setProjects([])
+      setTaskCounts({})
     }
   }
 
@@ -110,7 +127,8 @@ export default function KanbanBoard() {
     }
 
     try {
-      const allTasks = await getTasksForProjects(projectList)
+      const activeProjects = projectList.filter((project) => project.status !== 'archived')
+      const allTasks = await getTasksForProjects(activeProjects)
       const counts = allTasks.reduce<Record<string, number>>((accumulator, task) => {
         if (task.projectId) {
           accumulator[task.projectId] = (accumulator[task.projectId] || 0) + 1
@@ -129,7 +147,7 @@ export default function KanbanBoard() {
     try {
       setLoading(true)
       if (currentProject === 'all') {
-        setTasks(await getTasksForProjects(projects))
+        setTasks(await getTasksForProjects(visibleProjects))
         return
       }
 
@@ -143,38 +161,121 @@ export default function KanbanBoard() {
     }
   }
 
-  const handleStatusChange = async (taskId: string, newStatus: 'todo' | 'in-progress' | 'done') => {
+  const handleStatusChange = async (taskId: string, newStatus: 'todo' | 'in-progress' | 'review' | 'done') => {
     try {
       const taskProjectId = getTaskProjectId(taskId)
       if (!taskProjectId) {
         throw new Error(`无法确定任务 ${taskId} 所属项目`)
       }
 
-      const updatedTask = await updateTask(taskProjectId, taskId, { status: newStatus })
+      const currentTask = tasks.find((task) => task.id === taskId)
+      const updates: Record<string, unknown> = { status: newStatus }
+
+      if (newStatus === 'todo') {
+        updates.claimedBy = null
+        updates.blockingReason = null
+        updates.startTime = null
+        updates.completeTime = null
+      } else if (newStatus === 'in-progress') {
+        updates.completeTime = null
+        updates.blockingReason = null
+        if (!currentTask?.startTime) {
+          updates.startTime = new Date().toISOString()
+        }
+      } else if (newStatus === 'review') {
+        updates.completeTime = new Date().toISOString()
+      } else if (newStatus === 'done') {
+        updates.claimedBy = null
+        updates.blockingReason = null
+        if (!currentTask?.completeTime) {
+          updates.completeTime = new Date().toISOString()
+        }
+      }
+
+      const updatedTask = await updateTask(taskProjectId, taskId, updates)
       setTasks((currentTasks) => currentTasks.map((t) => t.id === taskId ? updatedTask : t))
+      setNotice({ type: 'success', message: `任务 ${taskId} 已更新为 ${newStatus}` })
     } catch (err) {
       console.error('Error updating task:', err)
-      alert('更新失败，请重试')
+      setNotice({ type: 'error', message: err instanceof Error ? err.message : '更新失败，请重试' })
     }
+  }
+
+  const handleAssigneeChange = async (taskId: string, assignee: string | null) => {
+    const taskProjectId = getTaskProjectId(taskId)
+    if (!taskProjectId) {
+      throw new Error(`无法确定任务 ${taskId} 所属项目`)
+    }
+
+    const updatedTask = await updateTask(taskProjectId, taskId, { assignee })
+    setTasks((currentTasks) => currentTasks.map((task) => (
+      task.id === taskId ? updatedTask : task
+    )))
+    setNotice({
+      type: 'success',
+      message: assignee ? `任务 ${taskId} 已分配给 ${assignee}` : `任务 ${taskId} 的负责人已清空`,
+    })
   }
 
 
   // PMW-036: 处理新增任务成功
-  const handleCreateTaskSuccess = async (taskId: string) => {
-    console.log(`✅ Task created via doc: ${taskId}`)
-    
-    // 设置高亮任务ID
-    setHighlightedTaskId(taskId)
+  const handleCreateTaskSuccess = async (task: Task) => {
+    console.log(`✅ Task created: ${task.id}`)
+
+    setHighlightedTaskId(task.id)
     
     // 3秒后取消高亮
     window.setTimeout(() => {
       setHighlightedTaskId(null)
     }, 3000)
-    
-    // 刷新任务列表（延迟1秒，等待 watcher 触发同步）
-    window.setTimeout(() => {
-      void fetchTasks()
-    }, 1000)
+
+    if (currentProject === 'all' || currentProject === task.projectId) {
+      setTasks((currentTasks) => [task, ...currentTasks])
+    }
+
+    if (task.projectId) {
+      setTaskCounts((currentCounts) => ({
+        ...currentCounts,
+        [task.projectId!]: (currentCounts[task.projectId!] || 0) + 1,
+      }))
+    }
+  }
+
+  const handleCreateProjectSuccess = async (project: Project) => {
+    setProjects((currentProjects) => [...currentProjects, project])
+    setTaskCounts((currentCounts) => ({ ...currentCounts, [project.id]: 0 }))
+    setCurrentProject(project.id)
+    setTasks([])
+    setError(null)
+    setNotice({ type: 'success', message: `项目 ${project.name} 已创建` })
+  }
+
+  const handleArchiveProject = async () => {
+    if (currentProject === 'all') return
+
+    const project = projects.find((item) => item.id === currentProject)
+    if (!project) return
+
+    if (!window.confirm(`确认归档项目“${project.name}”吗？归档后它会从活跃看板中隐藏，但数据会保留。`)) {
+      return
+    }
+
+    try {
+      const updatedProject = await updateProject(project.id, { status: 'archived' })
+      setProjects((currentProjects) => currentProjects.map((item) => (
+        item.id === updatedProject.id ? updatedProject : item
+      )))
+      setCurrentProject('all')
+      setTasks([])
+      setTaskCounts((currentCounts) => {
+        const nextCounts = { ...currentCounts }
+        delete nextCounts[updatedProject.id]
+        return nextCounts
+      })
+      setNotice({ type: 'success', message: `项目 ${updatedProject.name} 已归档` })
+    } catch (err) {
+      setNotice({ type: 'error', message: err instanceof Error ? err.message : '归档项目失败' })
+    }
   }
 
   // ========================================
@@ -192,7 +293,7 @@ export default function KanbanBoard() {
       if (result.success) {
         // 从本地状态移除任务
         setTasks((currentTasks) => currentTasks.filter(t => t.id !== taskId))
-        alert(`✅ 任务 ${taskId} 已删除`)
+        setNotice({ type: 'success', message: `任务 ${taskId} 已删除` })
         setTaskCounts((currentCounts) => ({
           ...currentCounts,
           [taskProjectId]: Math.max(0, (currentCounts[taskProjectId] || 0) - 1),
@@ -200,7 +301,7 @@ export default function KanbanBoard() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-      alert(`❌ 删除失败：${errorMessage}`)
+      setNotice({ type: 'error', message: `删除失败：${errorMessage}` })
     }
   }
 
@@ -218,11 +319,14 @@ export default function KanbanBoard() {
       const result = await generateProgressDoc(projectId)
       
       if (result.success) {
-        alert(`✅ 进度跟踪文档已生成！\n\n路径: ${projectId}/docs/04-进度跟踪.md\n\n更新内容:\n- ${result.updatedSections?.join('\n- ') || '进度统计已更新'}`)
+        setNotice({
+          type: 'success',
+          message: `进度文档已生成：${projectId}/docs/04-进度跟踪.md${result.updatedSections?.length ? ` · ${result.updatedSections.join('、')}` : ''}`,
+        })
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-      alert(`❌ 生成失败：${errorMessage}`)
+      setNotice({ type: 'error', message: `生成失败：${errorMessage}` })
     } finally {
       setGeneratingProgress(false)
     }
@@ -284,6 +388,23 @@ export default function KanbanBoard() {
       <p className="mt-1 text-sm text-gray-500">
         {currentProject === 'all' ? '所有项目都没有任务' : '该项目没有任务'}
       </p>
+      {currentProject !== 'all' && (
+        <div className="mt-4 flex items-center justify-center gap-3">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+          >
+            创建首个任务
+          </button>
+          <button
+            onClick={handleGenerateProgress}
+            disabled={generatingProgress}
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {generatingProgress ? '生成中...' : '生成进度文档'}
+          </button>
+        </div>
+      )}
     </div>
   )
 
@@ -298,14 +419,32 @@ export default function KanbanBoard() {
 
   const todoCount = tasks.filter(t => t.status === 'todo').length
   const inProgressCount = tasks.filter(t => t.status === 'in-progress').length
+  const reviewCount = tasks.filter(t => t.status === 'review').length
   const doneCount = tasks.filter(t => t.status === 'done').length
   const total = tasks.length
   const progress = total > 0 ? Math.round((doneCount / total) * 100) : 0
+  const totalTaskCount = Object.values(taskCounts).reduce((sum, count) => sum + count, 0)
 
   const projectInfo = getCurrentProjectInfo()
 
+  useEffect(() => {
+    if (!notice) return
+    const timer = window.setTimeout(() => setNotice(null), 3000)
+    return () => window.clearTimeout(timer)
+  }, [notice])
+
   return (
     <div className="space-y-6">
+      {notice && (
+        <div className={`rounded-xl border px-4 py-3 text-sm shadow-sm ${
+          notice.type === 'success'
+            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+            : 'border-red-200 bg-red-50 text-red-700'
+        }`}>
+          {notice.message}
+        </div>
+      )}
+
       {/* 项目切换 Tab */}
       <div className="bg-white rounded-xl p-2 shadow-sm border border-slate-200">
         <div className="flex gap-2 overflow-x-auto">
@@ -317,10 +456,15 @@ export default function KanbanBoard() {
                 : 'text-gray-700 hover:bg-slate-100'
             }`}
           >
-            📁 全部项目
+            <span className="inline-flex items-center gap-2">
+              <span>📁 全部项目</span>
+              <span className={`px-1.5 py-0.5 text-xs rounded-full ${currentProject === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                {totalTaskCount}
+              </span>
+            </span>
           </button>
           
-          {projects.map(project => (
+          {visibleProjects.map(project => (
             <button
               key={project.id}
               onClick={() => setCurrentProject(project.id)}
@@ -341,6 +485,12 @@ export default function KanbanBoard() {
               </span>
             </button>
           ))}
+          <button
+            onClick={() => setShowCreateProjectModal(true)}
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200"
+          >
+            + 新增项目
+          </button>
         </div>
       </div>
 
@@ -395,12 +545,20 @@ export default function KanbanBoard() {
               )}
             </button>
           )}
+          {currentProject !== 'all' && (
+            <button
+              onClick={handleArchiveProject}
+              className="px-4 py-2.5 rounded-lg border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all text-sm font-semibold"
+            >
+              归档项目
+            </button>
+          )}
 
         </div>
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-5 gap-4">
         <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
           <div className="text-3xl font-bold text-gray-900 mb-1">{total}</div>
           <div className="text-sm text-gray-500 font-medium">任务总数</div>
@@ -412,6 +570,10 @@ export default function KanbanBoard() {
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 shadow-sm border border-blue-200">
           <div className="text-3xl font-bold text-blue-600 mb-1">{inProgressCount}</div>
           <div className="text-sm text-gray-500 font-medium">进行中</div>
+        </div>
+        <div className="bg-gradient-to-br from-violet-50 to-fuchsia-100 rounded-xl p-5 shadow-sm border border-violet-200">
+          <div className="text-3xl font-bold text-violet-600 mb-1">{reviewCount}</div>
+          <div className="text-sm text-gray-500 font-medium">待审核</div>
         </div>
         <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-5 shadow-sm border border-green-200">
           <div className="text-3xl font-bold text-green-600 mb-1">{doneCount}</div>
@@ -442,7 +604,7 @@ export default function KanbanBoard() {
 
       {/* 看板列 */}
       {!loading && !error && tasks.length > 0 && (
-        <div className="grid grid-cols-3 gap-5">
+        <div className="grid grid-cols-4 gap-5">
         {columns.map(column => {
           const columnTasks = tasks.filter(t => t.status === column.id)
           return (
@@ -471,10 +633,12 @@ export default function KanbanBoard() {
                       >
                         <TaskCard
                           task={task}
+                          projectId={getTaskProjectId(task.id)}
                           projectName={project?.name}
                           projectColor={project?.color}
                           projectIcon={project?.icon}
                           onStatusChange={handleStatusChange}
+                          onAssigneeChange={handleAssigneeChange}
                           onDelete={handleDeleteTask}
                         />
                       </div>
@@ -501,6 +665,13 @@ export default function KanbanBoard() {
           />
         ) : null
       })()}
+
+      {showCreateProjectModal && (
+        <CreateProjectModal
+          onClose={() => setShowCreateProjectModal(false)}
+          onSuccess={handleCreateProjectSuccess}
+        />
+      )}
     </div>
   )
 }

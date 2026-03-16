@@ -47,6 +47,51 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
     }
   });
 
+  // 创建项目，并自动生成对应任务文件
+  router.post('/projects', async (req, res) => {
+    try {
+      const { id, name, description, color, icon, taskPrefix, leadAgent, status } = req.body || {};
+
+      if (!id || !name) {
+        return res.status(400).json({ error: 'Project id and name are required' });
+      }
+
+      const project = await taskService.createProject({
+        id,
+        name,
+        description,
+        color,
+        icon,
+        taskPrefix,
+        leadAgent,
+        status,
+      });
+
+      res.status(201).json(project);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const status = message.includes('already exists') ? 409 : 500;
+      res.status(status).json({ error: 'Failed to create project', details: message });
+    }
+  });
+
+  router.put('/projects/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body || {};
+      const project = await taskService.updateProject(id, updates);
+
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      res.json(project);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: 'Failed to update project', details: message });
+    }
+  });
+
   // 获取指定项目的所有任务
   router.get('/projects/:id/tasks', async (req, res) => {
     try {
@@ -257,6 +302,7 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
       const total = tasks.length;
       const completed = tasks.filter(t => t.status === 'done').length;
       const inProgress = tasks.filter(t => t.status === 'in-progress').length;
+      const review = tasks.filter(t => t.status === 'review').length;
       const todo = tasks.filter(t => t.status === 'todo').length;
       const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
@@ -266,11 +312,13 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
         total,
         completed,
         inProgress,
+        review,
         todo,
         progress,
         taskCountByStatus: {
           done: completed,
           'in-progress': inProgress,
+          review,
           todo: todo,
         }
       });
@@ -365,7 +413,7 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
       res.json({
         success: true,
         task,
-        message: 'Subagent marked as complete and task status updated'
+        message: 'Subagent marked as complete and task status updated to review'
       });
     } catch (error) {
       console.error('Failed to mark subagent complete:', error);

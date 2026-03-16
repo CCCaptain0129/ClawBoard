@@ -92,7 +92,7 @@ export class MarkdownToJSON {
     let taskDescription = '';
     let priority = 'P2' as 'P0' | 'P1' | 'P2' | 'P3';
     let labels: string[] = [];
-    let status: 'todo' | 'in-progress' | 'done' = 'todo';
+    let status: 'todo' | 'in-progress' | 'review' | 'done' = 'todo';
     let assignee: string | null = null;
 
     // 格式1: - **PMW-001** `P0` meta
@@ -185,7 +185,15 @@ export class MarkdownToJSON {
       labels: this.deduplicateLabels(labels),
       assignee,
       claimedBy: null,
+      dependencies: [],
+      contextSummary: '',
+      acceptanceCriteria: [],
+      deliverables: [],
+      executionMode: 'manual',
+      agentType: 'general',
+      blockingReason: null,
       dueDate: null,
+      estimatedTime: null,
       startTime: null,
       completeTime: null,
       createdAt: new Date().toISOString(),
@@ -194,15 +202,17 @@ export class MarkdownToJSON {
     };
   }
 
-  private parseStatusText(text: string): 'todo' | 'in-progress' | 'done' {
+  private parseStatusText(text: string): 'todo' | 'in-progress' | 'review' | 'done' {
     if (text === '已完成' || text === 'done') return 'done';
+    if (text === '待审核' || text === 'review') return 'review';
     if (text === '进行中' || text === 'in-progress') return 'in-progress';
     return 'todo';
   }
 
-  private extractStatus(meta: string): 'todo' | 'in-progress' | 'done' {
+  private extractStatus(meta: string): 'todo' | 'in-progress' | 'review' | 'done' {
     const lowerMeta = meta.toLowerCase();
     if (lowerMeta.includes('done') || lowerMeta.includes('已完成')) return 'done';
+    if (lowerMeta.includes('review') || lowerMeta.includes('待审核')) return 'review';
     if (lowerMeta.includes('in-progress') || lowerMeta.includes('进行中')) return 'in-progress';
     return 'todo';
   }
@@ -232,7 +242,7 @@ export class MarkdownToJSON {
     const seen = new Set<string>();
     const result: string[] = [];
     for (const label of labels) {
-      if (!seen.has(label) && label !== 'todo' && label !== 'done' && label !== 'in-progress') {
+      if (!seen.has(label) && label !== 'todo' && label !== 'done' && label !== 'in-progress' && label !== 'review') {
         seen.add(label);
         result.push(label);
       }

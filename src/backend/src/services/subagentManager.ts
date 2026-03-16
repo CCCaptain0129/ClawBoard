@@ -27,7 +27,7 @@ export interface SubagentResult {
  *
  * 核心功能：
  * - 创建Subagent时自动更新任务状态为 "in-progress"
- * - Subagent完成时自动更新任务状态为 "done" 或 "todo"
+ * - Subagent完成时自动更新任务状态为 "review" 或 "todo"
  * - 实时更新SUBAGENTS任务分发记录.md
  */
 export class SubagentManager {
@@ -92,8 +92,8 @@ export class SubagentManager {
         return;
       }
 
-      // 2. 更新任务状态为 "done" 或 "todo"（根据结果）
-      const status = result.success ? 'done' : 'todo';
+      // 2. 成功完成后进入待审核，失败则回到 todo
+      const status = result.success ? 'review' : 'todo';
       console.log(`[SubagentManager] Updating task ${taskId} to status: ${status}`);
 
       // ✅ 不要硬编码项目ID：根据 taskId 反查所在项目
@@ -101,7 +101,7 @@ export class SubagentManager {
       if (!projectId) {
         console.warn(`[SubagentManager] Project ID not found for task ${taskId}; skip task update`);
       } else {
-        await this.updateTaskStatus(projectId, taskId, {
+      await this.updateTaskStatus(projectId, taskId, {
           status,
           claimedBy: null,
           updatedAt: new Date().toISOString()
@@ -135,7 +135,7 @@ export class SubagentManager {
     projectId: string,
     taskId: string,
     updates: Partial<{
-      status: 'todo' | 'in-progress' | 'done';
+      status: 'todo' | 'in-progress' | 'review' | 'done';
       claimedBy: string | null;
       updatedAt: string;
     }>

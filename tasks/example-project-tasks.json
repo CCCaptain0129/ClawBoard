@@ -1,0 +1,45 @@
+{
+  "id": "example-project",
+  "name": "示例项目",
+  "description": "用于演示项目看板、任务状态流转和负责人分配的示例项目。",
+  "status": "active",
+  "leadAgent": null,
+  "color": "#3B82F6",
+  "icon": "📁",
+  "taskPrefix": "EXP",
+  "createdAt": "2026-03-16T23:59:00.000Z",
+  "updatedAt": "2026-03-16T23:59:00.000Z",
+  "tasks": [
+    {
+      "id": "EXP-001",
+      "title": "浏览看板并了解状态流转",
+      "description": "查看任务如何从 todo 进入 in-progress、review 和 done。",
+      "status": "todo",
+      "priority": "P2",
+      "labels": [
+        "示例"
+      ],
+      "assignee": "产品负责人",
+      "claimedBy": null,
+      "dependencies": [],
+      "contextSummary": "这是一个示例任务，用于帮助新用户理解看板的基本工作方式。",
+      "acceptanceCriteria": [
+        "能理解 4 个状态的含义",
+        "能在卡片中修改负责人"
+      ],
+      "deliverables": [
+        "完成一次看板基本操作"
+      ],
+      "executionMode": "manual",
+      "agentType": "general",
+      "blockingReason": null,
+      "dueDate": null,
+      "estimatedTime": "10分钟",
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-16T23:59:00.000Z",
+      "updatedAt": "2026-03-16T23:59:00.000Z",
+      "comments": []
+    }
+  ]
+}

@@ -13,7 +13,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Task, Project } from '../types/tasks';
 import { TaskService } from '../services/taskService';
-import { getProjectRoot, getTasksRoot } from '../config/paths';
+import { getTasksRoot } from '../config/paths';
 
 // 项目文档路径配置
 export interface ProjectDocConfig {
@@ -23,20 +23,8 @@ export interface ProjectDocConfig {
   progressDoc?: string; // 进度跟踪文档相对路径（如 docs/04-进度跟踪.md）
 }
 
-// 默认项目文档配置
-const DEFAULT_PROJECT_DOCS: Record<string, ProjectDocConfig> = {
-  'pm-workflow-automation': {
-    projectId: 'pm-workflow-automation',
-    projectPath: getProjectRoot('pm-workflow-automation'),
-    taskDoc: 'docs/03-任务分解.md',
-    progressDoc: 'docs/04-进度跟踪.md',
-  },
-  'openclaw-visualization': {
-    projectId: 'openclaw-visualization',
-    projectPath: getProjectRoot('openclaw-visualization'),
-    taskDoc: 'tasks/openclaw-visualization-TASKS.md',
-  },
-};
+// 默认不预置任何项目配置，发布后由用户按需注入
+const DEFAULT_PROJECT_DOCS: Record<string, ProjectDocConfig> = {};
 
 // 运行态字段 - 这些字段在同步时不应该被覆盖
 const RUNTIME_FIELDS: (keyof Task)[] = ['status', 'claimedBy', 'assignee'];
@@ -73,7 +61,7 @@ export class SafeSyncService {
 
   /**
    * 安全同步：从 03-任务分解.md 同步到看板 JSON
-   * 保护运行态字段（in-progress/done 的 status/claimedBy 不被覆盖）
+   * 保护运行态字段（in-progress/review/done 的 status/claimedBy 不被覆盖）
    */
   async safeSyncFromMarkdown(projectId: string): Promise<{
     success: boolean;
@@ -124,7 +112,7 @@ export class SafeSyncService {
         
         if (existing) {
           // 检查是否需要保护运行态字段
-          const needsProtection = existing.status === 'in-progress' || existing.status === 'done';
+          const needsProtection = existing.status === 'in-progress' || existing.status === 'review' || existing.status === 'done';
           
           if (needsProtection) {
             // 保护运行态字段，只更新静态信息
@@ -247,7 +235,7 @@ export class SafeSyncService {
     meta: { id: string; title: string; priority: string; stage: string; projectId: string }
   ): { task: Task; linesConsumed: number } {
     let description = '';
-    let status: 'todo' | 'in-progress' | 'done' = 'todo';
+    let status: 'todo' | 'in-progress' | 'review' | 'done' = 'todo';
     let assignee: string | null = null;
     let dueDate: string | null = null;
     let dependencies: string[] = [];
@@ -331,14 +319,19 @@ export class SafeSyncService {
   /**
    * 解析状态文本
    */
-  private parseStatusText(text: string): 'todo' | 'in-progress' | 'done' {
+  private parseStatusText(text: string): 'todo' | 'in-progress' | 'review' | 'done' {
     const lowerText = text.toLowerCase();
-    
+
     // 检查是否包含"已完成"或"done"
     if (text.includes('已完成') || lowerText.includes('done')) {
       return 'done';
     }
-    
+
+    // 检查是否包含"待审核"或"review"
+    if (text.includes('待审核') || lowerText.includes('review')) {
+      return 'review';
+    }
+
     // 检查是否包含"进行中"或"in-progress"
     if (text.includes('进行中') || lowerText.includes('in-progress')) {
       return 'in-progress';

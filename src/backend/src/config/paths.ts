@@ -27,6 +27,11 @@ export function getTasksRoot(): string {
   return path.join(getWorkspaceRoot(), 'tasks');
 }
 
+export function getProjectExecutionConfigPath(): string {
+  return process.env.PROJECT_EXECUTION_CONFIG_PATH
+    || path.join(getTasksRoot(), 'project-execution-config.json');
+}
+
 function getProjectsParentDir(): string {
   return path.dirname(getWorkspaceRoot());
 }
@@ -44,17 +49,16 @@ function findSiblingProjectDir(projectSuffix: string): string | null {
 }
 
 export function getProjectRoot(projectId: string): string {
-  if (projectId === 'openclaw-visualization') {
-    return process.env.OPENCLAW_VISUALIZATION_ROOT || getWorkspaceRoot();
-  }
+  const workspaceRoot = getWorkspaceRoot();
+  const workspaceProjectId = path.basename(workspaceRoot);
 
-  if (projectId === 'pm-workflow-automation') {
-    return process.env.PM_WORKFLOW_AUTOMATION_ROOT
-      || findSiblingProjectDir('pm-workflow-automation')
-      || path.join(getProjectsParentDir(), 'pm-workflow-automation');
+  if (projectId === workspaceProjectId) {
+    return process.env[`PROJECT_ROOT_${projectId.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`]
+      || workspaceRoot;
   }
 
   return process.env[`PROJECT_ROOT_${projectId.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`]
+    || findSiblingProjectDir(projectId)
     || path.join(getProjectsParentDir(), projectId);
 }
 

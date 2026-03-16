@@ -1,6 +1,5 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { SubagentManager } from './subagentManager';
 import type { TaskService } from './taskService';
 import { getOpenClawSessionsPath, getSubagentRecordingPath } from '../config/paths';
 
@@ -44,7 +43,7 @@ interface OpenClawSessionsStore {
  * - 自动检测 OpenClaw sessions.json 中的新 subagent 会话
  * - 从 label 中解析任务 ID（如 "PMW-029-xxx" → "PMW-029"）
  * - 自动注册 subagent 并更新任务状态为 in-progress
- * - 监控 subagent 完成状态，自动将任务状态更新为 done
+ * - 监控 subagent 是否失活，并标记为需要人工复核
  * - 实现幂等、避免误判
  */
 export class SubagentMonitorService {
@@ -56,7 +55,6 @@ export class SubagentMonitorService {
   private isRunning: boolean = false;
   private intervalId: NodeJS.Timeout | null = null;
 
-  private subagentManager: SubagentManager;
   private taskService: TaskService;
 
   // 幂等性控制：记录已处理的 subagent，避免重复标记
@@ -72,7 +70,6 @@ export class SubagentMonitorService {
     completionThresholdMs?: number;
   }) {
     this.taskService = taskService;
-    this.subagentManager = new SubagentManager(taskService);
     // OpenClaw sessions store 路径
     this.sessionsJsonPath = options?.sessionsJsonPath ||
       getOpenClawSessionsPath();
@@ -133,7 +130,7 @@ export class SubagentMonitorService {
   }
 
   /**
-   * 检查并完成已结束的 Subagent
+   * 检查失活的 Subagent
    */
   async checkAndCompleteSubagents(): Promise<void> {
     try {
@@ -153,7 +150,7 @@ export class SubagentMonitorService {
       console.log(`[SubagentMonitorService] Found ${inProgressSubagents.length} in-progress subagents`);
 
       // 2. 检查每个 subagent 的状态
-      const completedSubagents: Array<{ subagentId: string; taskId: string }> = [];
+      const inactiveSubagents: Array<{ subagentId: string; taskId: string }> = [];
 
       for (const { subagentId, taskId } of inProgressSubagents) {
         // 跳过已处理的 subagent（幂等性）
@@ -171,21 +168,21 @@ export class SubagentMonitorService {
         });
 
         if (status.isLikelyFinished) {
-          completedSubagents.push({ subagentId, taskId });
+          inactiveSubagents.push({ subagentId, taskId });
           // 标记为已处理
           this.processedSubagents.add(subagentId);
         }
       }
 
-      // 3. 标记完成的 subagent
-      if (completedSubagents.length > 0) {
-        console.log(`[SubagentMonitorService] Found ${completedSubagents.length} completed subagents`);
+      // 3. 标记失活的 subagent
+      if (inactiveSubagents.length > 0) {
+        console.log(`[SubagentMonitorService] Found ${inactiveSubagents.length} inactive subagents`);
 
-        for (const { subagentId, taskId } of completedSubagents) {
-          await this.markSubagentComplete(subagentId, taskId);
+        for (const { subagentId, taskId } of inactiveSubagents) {
+          await this.markSubagentInactive(subagentId, taskId);
         }
       } else {
-        console.log('[SubagentMonitorService] No completed subagents detected');
+        console.log('[SubagentMonitorService] No inactive subagents detected');
       }
     } catch (error) {
       console.error('[SubagentMonitorService] Error during check:', error);
@@ -245,6 +242,12 @@ export class SubagentMonitorService {
         const task = await this.getTaskById(projectId, taskId);
         if (!task) {
           console.warn(`[SubagentMonitorService] Task ${taskId} not found in project ${projectId}`);
+          continue;
+        }
+
+        // dispatcher 已经写过记录或任务已经绑定到该 subagent 时，不再重复注册
+        if (await this.hasRecordForSubagent(subagentId) || task.claimedBy === subagentId) {
+          this.registeredSubagents.set(subagentId, { taskId, projectId });
           continue;
         }
 
@@ -318,13 +321,22 @@ export class SubagentMonitorService {
   /**
    * 获取任务详情
    */
-  private async getTaskById(projectId: string, taskId: string): Promise<{ id: string; title: string } | null> {
+  private async getTaskById(projectId: string, taskId: string): Promise<{ id: string; title: string; claimedBy?: string | null } | null> {
     try {
       const tasks = await this.taskService.getTasksByProject(projectId);
       return tasks.find(t => t.id === taskId) || null;
     } catch (err) {
       console.error('[SubagentMonitorService] getTaskById failed:', err);
       return null;
+    }
+  }
+
+  private async hasRecordForSubagent(subagentId: string): Promise<boolean> {
+    try {
+      const content = await fs.readFile(this.recordingPath, 'utf-8');
+      return content.includes(`**Subagent ID**: \`${subagentId}\``);
+    } catch {
+      return false;
     }
   }
 
@@ -480,21 +492,53 @@ export class SubagentMonitorService {
   }
 
   /**
-   * 标记 subagent 完成：调用 SubagentManager 统一更新任务状态 + 记录文件
+   * 标记 subagent 失活
+   *
+   * 注意：这里不再把“会话失活/超时”直接等同于“任务成功完成”。
+   * 否则会把短暂失败、无输出退出、人工中断等情况都误判成 done。
    */
-  private async markSubagentComplete(subagentId: string, taskId: string): Promise<void> {
+  private async markSubagentInactive(subagentId: string, taskId: string): Promise<void> {
     try {
-      console.log(`[SubagentMonitorService] Marking subagent ${subagentId} as complete... taskId=${taskId}`);
+      console.log(`[SubagentMonitorService] Marking subagent ${subagentId} as inactive... taskId=${taskId}`);
 
-      await this.subagentManager.markSubagentComplete(subagentId, {
-        success: true,
-        output: 'Subagent 已自动检测完成（monitor）',
-        completedAt: new Date().toISOString()
+      const projectId = await this.findProjectIdByTaskId(taskId);
+      if (!projectId) {
+        console.warn(`[SubagentMonitorService] Project not found for inactive subagent task ${taskId}`);
+        return;
+      }
+
+      await this.taskService.updateTask(projectId, taskId, {
+        status: 'in-progress',
+        claimedBy: subagentId,
+        blockingReason: 'Subagent 会话已失活或长时间无更新，需要人工复核后再决定是否完成。',
+        updatedAt: new Date().toISOString()
       });
 
-      console.log(`[SubagentMonitorService] ✓ Marked complete via SubagentManager: ${subagentId}`);
+      await this.appendInactiveNote(subagentId);
+
+      console.log(`[SubagentMonitorService] ✓ Marked inactive for manual review: ${subagentId}`);
     } catch (error) {
-      console.error(`[SubagentMonitorService] Error marking subagent ${subagentId} complete:`, error);
+      console.error(`[SubagentMonitorService] Error marking subagent ${subagentId} inactive:`, error);
+    }
+  }
+
+  private async appendInactiveNote(subagentId: string): Promise<void> {
+    const content = await fs.readFile(this.recordingPath, 'utf-8');
+    const escapedId = subagentId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = new RegExp('(\\*\\*Subagent ID\\*\\*:\\s*`' + escapedId + '`[\\s\\S]*?\\*\\*状态\\*\\*:\\s*🔄 进行中\\n)');
+
+    if (!pattern.test(content)) {
+      return;
+    }
+
+    const timestamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
+    const updatedContent = content.replace(
+      pattern,
+      `$1\n**监控备注**: ${timestamp} 检测到会话失活，已保留任务为进行中，等待人工复核。\n`
+    );
+
+    if (updatedContent !== content) {
+      await fs.writeFile(this.recordingPath, updatedContent, 'utf-8');
     }
   }
 

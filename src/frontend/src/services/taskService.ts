@@ -4,7 +4,7 @@ export interface Task {
   id: string
   title: string
   description: string
-  status: 'todo' | 'in-progress' | 'done'
+  status: 'todo' | 'in-progress' | 'review' | 'done'
   priority: 'P0' | 'P1' | 'P2' | 'P3'
   labels: string[]
   assignee: string | null
@@ -13,21 +13,123 @@ export interface Task {
   completeTime?: string | null
   dueDate?: string | null
   estimatedTime?: string | null
+  dependencies?: string[]
+  contextSummary?: string
+  acceptanceCriteria?: string[]
+  deliverables?: string[]
+  executionMode?: 'manual' | 'auto'
+  agentType?: 'general' | 'dev' | 'test' | 'debug'
+  blockingReason?: string | null
   projectId?: string
   comments?: any[]
+}
+
+export interface CreateTaskInput {
+  title: string
+  description?: string
+  priority?: 'P0' | 'P1' | 'P2' | 'P3'
+  labels?: string[]
+  assignee?: string | null
+  estimatedTime?: string
+  dependencies?: string[]
+  contextSummary?: string
+  acceptanceCriteria?: string[]
+  deliverables?: string[]
+  executionMode?: 'manual' | 'auto'
+  agentType?: 'general' | 'dev' | 'test' | 'debug'
 }
 
 export interface Project {
   id: string
   name: string
   description: string
+  status?: string
+  leadAgent?: string | null
   color: string
   icon: string
   taskPrefix: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface CreateProjectInput {
+  id: string
+  name: string
+  description?: string
+  color?: string
+  icon?: string
+  taskPrefix?: string
+  leadAgent?: string | null
+}
+
+export interface UpdateProjectInput {
+  name?: string
+  description?: string
+  status?: string
+  color?: string
+  icon?: string
+  leadAgent?: string | null
+}
+
+export interface ExecutionGuide {
+  projectId: string
+  projectName: string
+  docs: {
+    planningDoc: string | null
+    taskDoc: string | null
+    progressDoc: string | null
+  }
+  startupChecklist: string[]
+  subagentDispatchRules: string[]
+  suggestedPrompt: string
+}
+
+export interface TaskExecutionContext {
+  projectId: string
+  taskId: string
+  projectName: string
+  packet: {
+    projectId: string
+    taskId: string
+    taskTitle: string
+    taskGoal: string
+    projectSummary: string
+    hardConstraints: string[]
+    taskContextSummary: string
+    sourceOfTruthDocs: string[]
+    sourceOfTruthFiles: string[]
+    fallbackInstructions: string[]
+    constraints: string[]
+    acceptanceCriteria: string[]
+    expectedDeliverables: string[]
+    outputLocation: string | null
+    handoffNotes: string | null
+  }
+  prompt: string
+  mainAgentChecklist: string[]
 }
 
 async function parseJsonResponse<T>(response: Response, fallbackMessage: string): Promise<T> {
   if (!response.ok) {
+    const raw = await response.text()
+    if (raw) {
+      try {
+        const error = JSON.parse(raw)
+        const details = [error.error, error.details].filter(Boolean).join(': ')
+        if (details) {
+          throw new Error(details)
+        }
+      } catch (parseError) {
+        if (parseError instanceof Error && parseError.message !== raw) {
+          throw parseError
+        }
+
+        throw new Error(raw || fallbackMessage)
+      }
+
+      throw new Error(fallbackMessage)
+    }
+
     throw new Error(fallbackMessage)
   }
 
@@ -39,6 +141,24 @@ export async function getProjects() {
   return parseJsonResponse<Project[]>(response, 'Failed to fetch projects')
 }
 
+export async function createProject(input: CreateProjectInput) {
+  const response = await fetch(buildApiUrl('/api/tasks/projects'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  return parseJsonResponse<Project>(response, 'Failed to create project')
+}
+
+export async function updateProject(projectId: string, input: UpdateProjectInput) {
+  const response = await fetch(buildApiUrl(`/api/tasks/projects/${projectId}`), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  return parseJsonResponse<Project>(response, 'Failed to update project')
+}
+
 export async function getTasks(projectId: string) {
   const response = await fetch(buildApiUrl(`/api/tasks/projects/${projectId}/tasks`))
   const tasks = await parseJsonResponse<Task[]>(response, `Failed to fetch tasks for ${projectId}`)
@@ -46,8 +166,25 @@ export async function getTasks(projectId: string) {
 }
 
 export async function getTasksForProjects(projects: Project[]) {
-  const taskGroups = await Promise.all(projects.map((project) => getTasks(project.id)))
-  return taskGroups.flat()
+  const taskGroups = await Promise.allSettled(projects.map((project) => getTasks(project.id)))
+  const failedProjects: string[] = []
+  const tasks: Task[] = []
+
+  taskGroups.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      tasks.push(...result.value)
+      return
+    }
+
+    failedProjects.push(projects[index].name)
+  })
+
+  if (failedProjects.length > 0) {
+    const failedList = failedProjects.join('、')
+    throw new Error(`以下项目加载失败：${failedList}`)
+  }
+
+  return tasks
 }
 
 export async function updateTask(projectId: string, taskId: string, updates: any) {
@@ -58,6 +195,26 @@ export async function updateTask(projectId: string, taskId: string, updates: any
   })
   const task = await parseJsonResponse<Task>(response, 'Failed to update task')
   return { ...task, projectId }
+}
+
+export async function createTask(projectId: string, input: CreateTaskInput) {
+  const response = await fetch(buildApiUrl(`/api/tasks/projects/${projectId}/tasks`), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  const task = await parseJsonResponse<Task>(response, 'Failed to create task')
+  return { ...task, projectId }
+}
+
+export async function getExecutionGuide(projectId: string) {
+  const response = await fetch(buildApiUrl(`/api/execution/projects/${projectId}/guide`))
+  return parseJsonResponse<ExecutionGuide>(response, `Failed to fetch execution guide for ${projectId}`)
+}
+
+export async function getTaskExecutionContext(projectId: string, taskId: string) {
+  const response = await fetch(buildApiUrl(`/api/execution/projects/${projectId}/tasks/${taskId}/context`))
+  return parseJsonResponse<TaskExecutionContext>(response, `Failed to fetch execution context for ${taskId}`)
 }
 
 /**

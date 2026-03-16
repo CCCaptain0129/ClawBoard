@@ -2,7 +2,7 @@ import { Task, Project } from '../types/tasks';
 import * as fs from 'fs';
 import * as path from 'path';
 import { validateJSONFile } from '../middleware/jsonValidator';
-import { getTasksRoot } from '../config/paths';
+import { getProjectRoot, getTasksRoot } from '../config/paths';
 
 // 进度同步回调函数类型
 export type ProgressSyncCallback = (projectId: string) => Promise<void> | void;
@@ -37,12 +37,130 @@ export class TaskService {
     return projects.find(p => p.id === id) || null;
   }
 
+  private writeProjects(projects: Project[]): void {
+    fs.writeFileSync(this.projectsPath, JSON.stringify(projects, null, 2));
+  }
+
   getProjectTasksFilePath(projectId: string): string {
     return path.join(this.tasksPath, `${projectId}-tasks.json`);
   }
 
   validateProjectTasksFile(projectId: string) {
+    this.ensureProjectTasksFile(projectId);
     return validateJSONFile(this.getProjectTasksFilePath(projectId));
+  }
+
+  ensureProjectTasksFile(projectId: string): void {
+    const filePath = this.getProjectTasksFilePath(projectId);
+    if (fs.existsSync(filePath)) {
+      return;
+    }
+
+    const project = fs.existsSync(this.projectsPath)
+      ? (JSON.parse(fs.readFileSync(this.projectsPath, 'utf-8')) as Project[]).find((item) => item.id === projectId)
+      : null;
+
+    if (!project) {
+      return;
+    }
+
+    const initialData = {
+      ...project,
+      tasks: [],
+      updatedAt: new Date().toISOString(),
+    };
+
+    fs.writeFileSync(filePath, JSON.stringify(initialData, null, 2));
+  }
+
+  async createProject(input: Partial<Project> & { id: string; name: string }): Promise<Project> {
+    const projects = await this.getAllProjects();
+    if (projects.some((project) => project.id === input.id)) {
+      throw new Error(`Project "${input.id}" already exists`);
+    }
+
+    const now = new Date().toISOString();
+    const project: Project = {
+      id: input.id,
+      name: input.name,
+      description: input.description || '',
+      status: input.status || 'active',
+      leadAgent: input.leadAgent || null,
+      color: input.color || '#3B82F6',
+      icon: input.icon || '📁',
+      taskPrefix: input.taskPrefix || this.deriveTaskPrefix(input.id, input.name),
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.writeProjects([...projects, project]);
+    this.ensureProjectTasksFile(project.id);
+    this.ensureProjectDocs(project);
+    return project;
+  }
+
+  async updateProject(projectId: string, updates: Partial<Project>): Promise<Project | null> {
+    const projects = await this.getAllProjects();
+    const projectIndex = projects.findIndex((project) => project.id === projectId);
+
+    if (projectIndex === -1) {
+      return null;
+    }
+
+    const currentProject = projects[projectIndex];
+    const nextProject: Project = {
+      ...currentProject,
+      ...updates,
+      id: currentProject.id,
+      createdAt: currentProject.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+
+    projects[projectIndex] = nextProject;
+    this.writeProjects(projects);
+    return nextProject;
+  }
+
+  private ensureProjectDocs(project: Project): void {
+    const projectRoot = getProjectRoot(project.id);
+    const docsDir = path.join(projectRoot, 'docs');
+    fs.mkdirSync(docsDir, { recursive: true });
+
+    const planningPath = path.join(docsDir, '01-project-plan.md');
+    const taskBreakdownPath = path.join(docsDir, '03-task-breakdown.md');
+    const progressPath = path.join(docsDir, '04-进度跟踪.md');
+
+    if (!fs.existsSync(planningPath)) {
+      fs.writeFileSync(planningPath, `# ${project.name} - 项目规划\n\n## 项目目标\n\n- 待补充\n\n## 当前重点\n\n- 建立任务与文档基础结构\n\n## 技术栈\n\n- 待补充\n\n## 关键约束\n\n- 任务运行态以 tasks/*.json 为真源\n`, 'utf-8');
+    }
+
+    if (!fs.existsSync(taskBreakdownPath)) {
+      fs.writeFileSync(taskBreakdownPath, `# ${project.name} - 任务分解\n\n## 任务列表\n\n- 暂无任务\n`, 'utf-8');
+    }
+
+    if (!fs.existsSync(progressPath)) {
+      fs.writeFileSync(progressPath, `# ${project.name} - 进度跟踪\n\n## 项目状态\n\n- **完成度**: 0%\n- **总任务数**: 0\n- **已完成**: 0\n- **进行中**: 0\n- **待审核**: 0\n- **待处理**: 0\n\n## 里程碑进度\n\n| 里程碑 | 状态 |\n| --- | --- |\n| M1 | 未开始 |\n\n## 阶段进度\n\n- 暂无阶段数据\n\n*最后更新: 初始化*\n`, 'utf-8');
+    }
+  }
+
+  private deriveTaskPrefix(projectId: string, projectName: string): string {
+    const idPrefix = projectId
+      .split(/[^a-zA-Z0-9]+/)
+      .filter(Boolean)
+      .map((part) => part[0]?.toUpperCase() || '')
+      .join('')
+      .slice(0, 4);
+
+    if (idPrefix.length >= 2) {
+      return idPrefix;
+    }
+
+    const namePrefix = projectName
+      .replace(/[^A-Za-z0-9\u4e00-\u9fa5]/g, '')
+      .slice(0, 3)
+      .toUpperCase();
+
+    return namePrefix || 'TASK';
   }
 
   async createTask(projectId: string, task: Partial<Task>): Promise<Task> {
@@ -51,6 +169,7 @@ export class TaskService {
       throw new Error(`Project ${projectId} not found`);
     }
 
+    this.ensureProjectTasksFile(projectId);
     const tasks = await this.getTasksByProject(projectId);
 
     // 获取当前项目的任务前缀，并生成序号
@@ -68,7 +187,15 @@ export class TaskService {
       labels: task.labels || [],
       assignee: task.assignee || null,
       claimedBy: null,
+      dependencies: task.dependencies || [],
+      contextSummary: task.contextSummary || '',
+      acceptanceCriteria: task.acceptanceCriteria || [],
+      deliverables: task.deliverables || [],
+      executionMode: task.executionMode || 'manual',
+      agentType: task.agentType || 'general',
+      blockingReason: task.blockingReason || null,
       dueDate: null,
+      estimatedTime: task.estimatedTime || null,
       startTime: null,
       completeTime: null,
       createdAt: new Date().toISOString(),
@@ -95,6 +222,7 @@ export class TaskService {
 
   async getTasksByProject(projectId: string): Promise<Task[]> {
     const filePath = this.getProjectTasksFilePath(projectId);
+    this.ensureProjectTasksFile(projectId);
 
     // 提前验证 JSON 文件
     const validation = validateJSONFile(filePath);

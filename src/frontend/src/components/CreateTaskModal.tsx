@@ -8,14 +8,14 @@
  */
 
 import React, { useState } from 'react'
-import { buildApiUrl } from '../config'
+import { createTask, type Task } from '../services/taskService'
 
 interface CreateTaskModalProps {
   projectId: string
   projectName: string
   taskPrefix: string
   onClose: () => void
-  onSuccess: (taskId: string) => void
+  onSuccess: (task: Task) => void
 }
 
 export default function CreateTaskModal({
@@ -27,10 +27,16 @@ export default function CreateTaskModal({
 }: CreateTaskModalProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [assignee, setAssignee] = useState('')
   const [priority, setPriority] = useState<'P0' | 'P1' | 'P2' | 'P3'>('P2')
   const [category, setCategory] = useState<'main' | 'temp'>('temp')
   const [estimatedTime, setEstimatedTime] = useState('')
   const [dependencies, setDependencies] = useState('')
+  const [executionMode, setExecutionMode] = useState<'manual' | 'auto'>('manual')
+  const [agentType, setAgentType] = useState<'general' | 'dev' | 'test' | 'debug'>('general')
+  const [deliverables, setDeliverables] = useState('')
+  const [acceptanceCriteria, setAcceptanceCriteria] = useState('')
+  const [contextSummary, setContextSummary] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -42,32 +48,38 @@ export default function CreateTaskModal({
       return
     }
 
+    if (!deliverables.trim()) {
+      setError('请至少填写一项交付物')
+      return
+    }
+
+    if (!acceptanceCriteria.trim()) {
+      setError('请至少填写一项验收标准')
+      return
+    }
+
     setLoading(true)
     setError(null)
 
     try {
-      const response = await fetch(buildApiUrl(`/api/task-doc/${projectId}/tasks`), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim() || undefined,
-          priority,
-          category,
-          estimatedTime: estimatedTime.trim() || undefined,
-          dependencies: dependencies.trim() ? dependencies.split(',').map(d => d.trim()) : undefined,
-        })
+      const task = await createTask(projectId, {
+        title: title.trim(),
+        description: description.trim() || undefined,
+        priority,
+        labels: [category === 'main' ? '主线任务' : '临时任务'],
+        assignee: assignee.trim() || null,
+        estimatedTime: estimatedTime.trim() || undefined,
+        dependencies: dependencies.trim() ? dependencies.split(',').map((d) => d.trim()).filter(Boolean) : undefined,
+        contextSummary: contextSummary.trim() || undefined,
+        deliverables: deliverables.split('\n').map((item) => item.trim()).filter(Boolean),
+        acceptanceCriteria: acceptanceCriteria.split('\n').map((item) => item.trim()).filter(Boolean),
+        executionMode,
+        agentType,
       })
 
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || `HTTP ${response.status}`)
-      }
-
       // 成功
-      console.log(`✅ Task created: ${data.taskId}`)
-      onSuccess(data.taskId)
+      console.log(`✅ Task created: ${task.id}`)
+      onSuccess(task)
       onClose()
 
     } catch (err) {
@@ -86,10 +98,10 @@ export default function CreateTaskModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+    <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 overflow-y-auto px-4 py-6 sm:items-center">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[calc(100vh-3rem)] overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-500 to-purple-500 px-6 py-4">
+        <div className="bg-gradient-to-r from-indigo-500 to-purple-500 px-6 py-4 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-2xl">✨</span>
@@ -112,7 +124,8 @@ export default function CreateTaskModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="max-h-[calc(100vh-8.5rem)] overflow-y-auto">
+          <div className="p-6 space-y-5">
           {/* 任务标题 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -140,6 +153,22 @@ export default function CreateTaskModal({
               rows={3}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              负责人
+            </label>
+            <input
+              type="text"
+              value={assignee}
+              onChange={(e) => setAssignee(e.target.value)}
+              placeholder="例如：Alice、产品负责人、@zhangsan"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            />
+            <p className="text-xs text-gray-500 mt-1.5">
+              可填写姓名、角色或团队标识
+            </p>
           </div>
 
           {/* 优先级 */}
@@ -201,6 +230,49 @@ export default function CreateTaskModal({
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                执行模式
+              </label>
+              <div className="flex gap-2">
+                {([
+                  { id: 'manual', label: '人工确认' },
+                  { id: 'auto', label: '可自动派发' },
+                ] as const).map((mode) => (
+                  <button
+                    key={mode.id}
+                    type="button"
+                    onClick={() => setExecutionMode(mode.id)}
+                    className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-all ${
+                      executionMode === mode.id
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Agent 类型
+              </label>
+              <select
+                value={agentType}
+                onChange={(e) => setAgentType(e.target.value as 'general' | 'dev' | 'test' | 'debug')}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-white"
+              >
+                <option value="general">通用</option>
+                <option value="dev">开发</option>
+                <option value="test">测试</option>
+                <option value="debug">排障</option>
+              </select>
+            </div>
+          </div>
+
           {/* 预计时间 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -229,6 +301,45 @@ export default function CreateTaskModal({
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              任务上下文摘要
+            </label>
+            <textarea
+              value={contextSummary}
+              onChange={(e) => setContextSummary(e.target.value)}
+              placeholder="只写完成这项任务必须知道的背景，不要写太长..."
+              rows={3}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              交付物 <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              value={deliverables}
+              onChange={(e) => setDeliverables(e.target.value)}
+              placeholder={'每行一项，例如：\n更新后的组件代码\n接口联调说明'}
+              rows={3}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              验收标准 <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              value={acceptanceCriteria}
+              onChange={(e) => setAcceptanceCriteria(e.target.value)}
+              placeholder={'每行一项，例如：\n页面可正常创建任务\n创建后看板立即刷新'}
+              rows={3}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
+            />
+          </div>
+
           {/* 错误提示 */}
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
@@ -241,9 +352,11 @@ export default function CreateTaskModal({
             </div>
           )}
 
-
           {/* Buttons */}
-          <div className="flex gap-3 pt-2">
+          </div>
+
+          <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4">
+            <div className="flex gap-3">
             <button
               type="button"
               onClick={onClose}
@@ -270,6 +383,7 @@ export default function CreateTaskModal({
                 </>
               )}
             </button>
+            </div>
           </div>
         </form>
       </div>

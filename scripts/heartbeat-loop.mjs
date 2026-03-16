@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * heartbeat-loop.mjs - Project Manager 心跳脚本
- * 
+ * heartbeat-loop.mjs - 通用项目心跳脚本示例
+ *
  * 功能：
- * 1. 拉取 pm-workflow-automation 项目的 todo 任务
+ * 1. 拉取指定项目的 todo 任务
  * 2. 按优先级排序（P0→P1→P2→P3）
  * 3. 限制并发 subagent 数量
  * 4. 对高优先级任务创建 subagent
@@ -20,6 +20,7 @@ const __dirname = path.dirname(__filename);
 // 配置
 const CONFIG = {
   projectRoot: process.env.PROJECT_ROOT || path.resolve(__dirname, '..'),
+  projectId: process.env.PROJECT_ID || 'example-project',
   backendUrl: process.env.BACKEND_URL || 'http://localhost:3000',
   maxConcurrency: 3,
   logFile: path.resolve(__dirname, '../tmp/logs/heartbeat.log')
@@ -45,7 +46,7 @@ const PRIORITY_ORDER = { 'P0': 0, 'P1': 1, 'P2': 2, 'P3': 3 };
  * 获取待办任务
  */
 async function getTodoTasks() {
-  const tasksFile = path.join(CONFIG.projectRoot, 'tasks/pm-workflow-automation-tasks.json');
+  const tasksFile = path.join(CONFIG.projectRoot, `tasks/${CONFIG.projectId}-tasks.json`);
   
   if (!fs.existsSync(tasksFile)) {
     log(`任务文件不存在: ${tasksFile}`);
@@ -122,7 +123,7 @@ async function createSubagentForTask(task) {
  * 记录分发结果
  */
 function recordDispatch(task, subagentId) {
-  const recordFile = path.join(CONFIG.projectRoot, 'docs/internal/SUBAGENTS任务分发记录.md');
+  const recordFile = path.join(CONFIG.projectRoot, 'docs/internal/SUBAGENT_DISPATCH_RECORDS.md');
   
   // 确保目录存在
   const recordDir = path.dirname(recordFile);
@@ -154,7 +155,7 @@ function recordDispatch(task, subagentId) {
  * 主函数
  */
 async function main() {
-  log('========== 心跳开始 ==========');
+  log(`========== 心跳开始 (${CONFIG.projectId}) ==========`);
   
   // 1. 获取待办任务
   const todoTasks = await getTodoTasks();
@@ -197,7 +198,7 @@ async function main() {
   }
   
   log(`已分配 ${assignedCount} 个任务`);
-  log('========== 心跳结束 ==========');
+  log(`========== 心跳结束 (${CONFIG.projectId}) ==========`);
   
   // 输出结果供 Agent 读取
   if (assignedCount > 0) {

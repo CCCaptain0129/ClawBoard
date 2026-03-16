@@ -10,7 +10,7 @@ import { getSubagentRecordingPath } from '../config/paths';
 interface SubagentRecord {
   subagentId: string;
   taskId: string;
-  status: 'in-progress' | 'done' | 'failed';
+  status: 'in-progress' | 'review' | 'failed';
 }
 
 /**
@@ -19,7 +19,7 @@ interface SubagentRecord {
  * 工作流程：
  * 1. 使用 chokidar 监控文件变化
  * 2. 解析文件内容，提取 Subagent 信息
- * 3. 根据状态更新任务（创建 → in-progress，完成 → done/failed）
+ * 3. 根据状态更新任务（创建 → in-progress，完成 → review/failed）
  * 4. 通过 WebSocket 广播更新
  */
 export class StatusSyncService {
@@ -140,12 +140,12 @@ export class StatusSyncService {
       if (!statusMatch) continue;
 
       const statusStr = statusMatch[1];
-      let status: 'in-progress' | 'done' | 'failed';
+      let status: 'in-progress' | 'review' | 'failed';
 
       if (statusStr.includes('进行中')) {
         status = 'in-progress';
       } else if (statusStr.includes('成功') || statusStr.includes('完成')) {
-        status = 'done';
+        status = 'review';
       } else if (statusStr.includes('失败')) {
         status = 'failed';
       } else {
@@ -203,8 +203,8 @@ export class StatusSyncService {
    * 映射 Subagent 状态到任务状态
    */
   private mapStatusToTask(
-    subagentStatus: 'in-progress' | 'done' | 'failed'
-  ): Partial<{ status: 'todo' | 'in-progress' | 'done'; claimedBy: string | null; updatedAt: string }> {
+    subagentStatus: 'in-progress' | 'review' | 'failed'
+  ): Partial<{ status: 'todo' | 'in-progress' | 'review' | 'done'; claimedBy: string | null; updatedAt: string }> {
     const base = {
       updatedAt: new Date().toISOString()
     };
@@ -216,10 +216,10 @@ export class StatusSyncService {
           status: 'in-progress' as const,
           claimedBy: 'subagent' // 标记为 subagent 占用
         };
-      case 'done':
+      case 'review':
         return {
           ...base,
-          status: 'done' as const,
+          status: 'review' as const,
           claimedBy: null
         };
       case 'failed':

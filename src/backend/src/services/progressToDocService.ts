@@ -18,12 +18,12 @@ export class ProgressToDocService {
 
   /**
    * 将项目进度回写到 04-进度跟踪.md
-   * @param projectId 项目ID (e.g., "pm-workflow-automation")
+   * @param projectId 项目ID
    * @param docPath 可选的文档路径，默认为项目 docs 目录下的 04-进度跟踪.md
    */
   async syncProgressToDoc(projectId: string, docPath?: string): Promise<{
     success: boolean;
-    progress: { total: number; completed: number; inProgress: number; todo: number; percentage: number };
+    progress: { total: number; completed: number; inProgress: number; review: number; todo: number; percentage: number };
     updatedSections: string[];
     message: string;
   }> {
@@ -69,7 +69,7 @@ export class ProgressToDocService {
 
       console.log(`✅ Progress synced to ${targetDocPath}`);
       console.log(`   Overall progress: ${progress.percentage}%`);
-      console.log(`   Total tasks: ${progress.total} (done: ${progress.completed}, in-progress: ${progress.inProgress}, todo: ${progress.todo})`);
+      console.log(`   Total tasks: ${progress.total} (done: ${progress.completed}, in-progress: ${progress.inProgress}, review: ${progress.review}, todo: ${progress.todo})`);
 
       return {
         success: true,
@@ -90,27 +90,29 @@ export class ProgressToDocService {
     total: number;
     completed: number;
     inProgress: number;
+    review: number;
     todo: number;
     percentage: number;
   } {
     const total = tasks.length;
     const completed = tasks.filter(t => t.status === 'done').length;
     const inProgress = tasks.filter(t => t.status === 'in-progress').length;
+    const review = tasks.filter(t => t.status === 'review').length;
     const todo = tasks.filter(t => t.status === 'todo').length;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-    return { total, completed, inProgress, todo, percentage };
+    return { total, completed, inProgress, review, todo, percentage };
   }
 
   /**
    * 计算里程碑进度
-   * 
-   * 里程碑映射规则:
-   * - M1: 核心闭环 - PMW-021, PMW-022
-   * - M2: 同步功能 - PMW-023
-   * - M3: 安装脚本 - PMW-013~016
-   * - M4: 文档完善 - PMW-017~020
-   * - M5: 测试验证 - (无具体任务，暂按整体进度)
+   *
+   * 优先从任务 labels 中识别里程碑标签：
+   * - M1 / M2 / M3 ...
+   * - 里程碑:M1
+   * - 里程碑：M1
+   *
+   * 如果没有任何里程碑标签，则回退为整体进度的单一里程碑。
    */
   private calculateMilestoneProgress(tasks: Task[]): Map<string, {
     status: '已完成' | '进行中' | '未开始';
@@ -120,37 +122,36 @@ export class ProgressToDocService {
   }> {
     const milestoneTasks = new Map<string, Task[]>();
 
-    // 分类任务到里程碑
     tasks.forEach(task => {
-      // M1: 核心闭环
-      if (['PMW-021', 'PMW-022'].includes(task.id)) {
-        if (!milestoneTasks.has('M1')) milestoneTasks.set('M1', []);
-        milestoneTasks.get('M1')!.push(task);
+      const milestoneLabel = task.labels.find((label) => {
+        const normalized = label.trim().toUpperCase();
+        return /^M\d+$/.test(normalized) || /^里程碑[:：]\s*M\d+$/i.test(label.trim());
+      });
+
+      if (!milestoneLabel) {
+        return;
       }
-      // M2: 同步功能
-      else if (['PMW-006', 'PMW-007', 'PMW-008', 'PMW-009', 'PMW-023'].includes(task.id)) {
-        if (!milestoneTasks.has('M2')) milestoneTasks.set('M2', []);
-        milestoneTasks.get('M2')!.push(task);
+
+      const milestoneId = milestoneLabel
+        .replace(/^里程碑[:：]\s*/i, '')
+        .trim()
+        .toUpperCase();
+
+      if (!milestoneTasks.has(milestoneId)) {
+        milestoneTasks.set(milestoneId, []);
       }
-      // M3: 安装脚本
-      else if (['PMW-013', 'PMW-014', 'PMW-015', 'PMW-016'].includes(task.id)) {
-        if (!milestoneTasks.has('M3')) milestoneTasks.set('M3', []);
-        milestoneTasks.get('M3')!.push(task);
-      }
-      // M4: 文档完善
-      else if (['PMW-017', 'PMW-018', 'PMW-019', 'PMW-020'].includes(task.id)) {
-        if (!milestoneTasks.has('M4')) milestoneTasks.set('M4', []);
-        milestoneTasks.get('M4')!.push(task);
-      }
-      // M5: 测试验证 - 使用所有任务计算
-      else {
-        // M5 是最终验证，按整体进度计算
-      }
+      milestoneTasks.get(milestoneId)!.push(task);
     });
 
     const result = new Map<string, { status: '已完成' | '进行中' | '未开始'; percentage: number; done: number; total: number }>();
 
-    ['M1', 'M2', 'M3', 'M4'].forEach(m => {
+    const milestoneIds = Array.from(milestoneTasks.keys()).sort((a, b) => {
+      const aNumber = Number(a.replace(/\D/g, '')) || 0;
+      const bNumber = Number(b.replace(/\D/g, '')) || 0;
+      return aNumber - bNumber;
+    });
+
+    milestoneIds.forEach((m) => {
       const mTasks = milestoneTasks.get(m) || [];
       const done = mTasks.filter(t => t.status === 'done').length;
       const total = mTasks.length;
@@ -158,21 +159,22 @@ export class ProgressToDocService {
       
       let status: '已完成' | '进行中' | '未开始' = '未开始';
       if (percentage === 100) status = '已完成';
-      else if (mTasks.some(t => t.status === 'in-progress') || done > 0) status = '进行中';
+      else if (mTasks.some(t => t.status === 'in-progress' || t.status === 'review') || done > 0) status = '进行中';
 
       result.set(m, { status, percentage, done, total });
     });
 
-    // M5: 测试验证 - 基于整体进度
-    const allDone = tasks.filter(t => t.status === 'done').length;
-    const allTotal = tasks.length;
-    const m5Percentage = allTotal > 0 ? Math.round((allDone / allTotal) * 100) : 0;
-    result.set('M5', {
-      status: m5Percentage === 100 ? '已完成' : m5Percentage > 0 ? '进行中' : '未开始',
-      percentage: m5Percentage,
-      done: allDone,
-      total: allTotal
-    });
+    if (result.size === 0) {
+      const done = tasks.filter(t => t.status === 'done').length;
+      const total = tasks.length;
+      const percentage = total > 0 ? Math.round((done / total) * 100) : 0;
+      result.set('M1', {
+        status: percentage === 100 ? '已完成' : percentage > 0 ? '进行中' : '未开始',
+        percentage,
+        done,
+        total,
+      });
+    }
 
     return result;
   }
@@ -183,22 +185,24 @@ export class ProgressToDocService {
   private calculateStageProgress(tasks: Task[]): Map<string, {
     done: number;
     inProgress: number;
+    review: number;
     todo: number;
     total: number;
   }> {
-    const stageProgress = new Map<string, { done: number; inProgress: number; todo: number; total: number }>();
+    const stageProgress = new Map<string, { done: number; inProgress: number; review: number; todo: number; total: number }>();
 
     // 按标签分组计算阶段进度
     tasks.forEach(task => {
       const stageLabel = task.labels.find(l => l.startsWith('阶段') || l.includes('阶段'));
       if (stageLabel) {
         if (!stageProgress.has(stageLabel)) {
-          stageProgress.set(stageLabel, { done: 0, inProgress: 0, todo: 0, total: 0 });
+          stageProgress.set(stageLabel, { done: 0, inProgress: 0, review: 0, todo: 0, total: 0 });
         }
         const stage = stageProgress.get(stageLabel)!;
         stage.total++;
         if (task.status === 'done') stage.done++;
         else if (task.status === 'in-progress') stage.inProgress++;
+        else if (task.status === 'review') stage.review++;
         else stage.todo++;
       }
     });
@@ -217,9 +221,9 @@ export class ProgressToDocService {
    * 更新文档内容
    */
   private updateDocument(content: string, data: {
-    progress: { total: number; completed: number; inProgress: number; todo: number; percentage: number };
+    progress: { total: number; completed: number; inProgress: number; review: number; todo: number; percentage: number };
     milestoneProgress: Map<string, { status: string; percentage: number; done: number; total: number }>;
-    stageProgress: Map<string, { done: number; inProgress: number; todo: number; total: number }>;
+    stageProgress: Map<string, { done: number; inProgress: number; review: number; todo: number; total: number }>;
     updatedAt: string;
   }): string {
     let lines = content.split('\n');

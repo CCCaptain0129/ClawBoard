@@ -13,6 +13,7 @@ export class JSONToMarkdown {
     // 统计信息
     const todoCount = tasks.filter(t => t.status === 'todo').length;
     const inProgressCount = tasks.filter(t => t.status === 'in-progress').length;
+    const reviewCount = tasks.filter(t => t.status === 'review').length;
     const doneCount = tasks.filter(t => t.status === 'done').length;
     const totalTasks = tasks.length;
     const progress = totalTasks > 0 ? Math.round((doneCount / totalTasks) * 100) : 0;
@@ -22,6 +23,7 @@ export class JSONToMarkdown {
     lines.push(`- **任务总数**: ${totalTasks}`);
     lines.push(`- **待处理**: ${todoCount}`);
     lines.push(`- **进行中**: ${inProgressCount}`);
+    lines.push(`- **待审核**: ${reviewCount}`);
     lines.push(`- **已完成**: ${doneCount}`);
     lines.push(`- **进度**: ${progress}% (${doneCount}/${totalTasks})`);
     lines.push('');
@@ -62,7 +64,7 @@ export class JSONToMarkdown {
     tasks.forEach(task => {
       // 找到第一个非状态、非优先级的标签作为分组标签
       const groupLabel = task.labels.find(l => 
-        !['todo', 'in-progress', 'done', 'P1', 'P2', 'P3'].includes(l)
+        !['todo', 'in-progress', 'review', 'done', 'P1', 'P2', 'P3'].includes(l)
       ) || '未分类';
       
       if (!grouped[groupLabel]) {
@@ -77,6 +79,7 @@ export class JSONToMarkdown {
   private getStatusEmoji(status: string): string {
     switch (status) {
       case 'done': return '✅';
+      case 'review': return '🟣';
       case 'in-progress': return '🔄';
       default: return '⏳';
     }
@@ -85,6 +88,7 @@ export class JSONToMarkdown {
   private getStatusText(status: string): string {
     switch (status) {
       case 'done': return '已完成';
+      case 'review': return '待审核';
       case 'in-progress': return '进行中';
       default: return '待处理';
     }

@@ -1,39 +1,14 @@
 [
   {
-    "id": "openclaw-visualization",
-    "name": "OpenClaw 可视化",
-    "description": "OpenClaw Agent 可视化监控平台",
+    "id": "example-project",
+    "name": "示例项目",
+    "description": "用于演示项目看板、任务状态流转和负责人分配的示例项目。",
     "status": "active",
     "leadAgent": null,
     "color": "#3B82F6",
-    "icon": "📊",
-    "taskPrefix": "VIS",
-    "createdAt": "2026-03-10T00:00:00.000Z",
-    "updatedAt": "2026-03-12T00:00:00.000Z"
-  },
-  
-  {
-    "id": "openclaw-integration",
-    "name": "OpenClaw 集成",
-    "description": "将看板与 OpenClaw 深度集成，实现智能项目管理和任务跟踪",
-    "status": "active",
-    "leadAgent": null,
-    "color": "#8B5CF6",
-    "icon": "🤖",
-    "taskPrefix": "INT",
-    "createdAt": "2026-03-11T00:56:22.000Z",
-    "updatedAt": "2026-03-12T00:00:00.000Z"
-  },
-  {
-    "id": "pm-workflow-automation",
-    "name": "OpenClaw 项目管理自动工作流",
-    "description": "实现 OpenClaw 项目管理自动化工作流",
-    "status": "active",
-    "leadAgent": "project-manager",
-    "color": "#10B981",
-    "icon": "🔄",
-    "taskPrefix": "PMW",
-    "createdAt": "2026-03-12T17:49:00.000Z",
-    "updatedAt": "2026-03-12T17:49:00.000Z"
+    "icon": "📁",
+    "taskPrefix": "EXP",
+    "createdAt": "2026-03-16T23:59:00.000Z",
+    "updatedAt": "2026-03-16T23:59:00.000Z"
   }
 ]

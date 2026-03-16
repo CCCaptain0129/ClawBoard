@@ -17,12 +17,14 @@ import { SyncManager } from '../sync/syncManager';
 import { MarkdownToJSON } from '../sync/markdownToJSON';
 import { JSONToMarkdown } from '../sync/jsonToMarkdown';
 import { getTasksRoot } from '../config/paths';
+import { ProjectExecutionService } from '../execution/projectExecutionService';
 import { registerApiRoutes } from './routes';
 
 export interface AppServices {
   agentService: AgentService;
   taskService: TaskService;
   wsServer: WebSocketHandler;
+  projectExecutionService: ProjectExecutionService;
   scheduler: AgentTaskScheduler;
   statusSyncService: StatusSyncService;
   subagentMonitorService: SubagentMonitorService;
@@ -46,7 +48,8 @@ function createServices(wsPort: number): AppServices {
   const taskService = new TaskService();
   const wsHandler = new WebSocketServer({ port: wsPort });
   const wsServer = new WebSocketHandler(wsHandler);
-  const scheduler = new AgentTaskScheduler(taskService, wsServer);
+  const projectExecutionService = new ProjectExecutionService(taskService, wsServer);
+  const scheduler = new AgentTaskScheduler(taskService, wsServer, projectExecutionService);
   const statusSyncService = new StatusSyncService(taskService, wsServer);
   const subagentMonitorService = new SubagentMonitorService(taskService);
   const safeSyncService = new SafeSyncService(taskService);
@@ -78,6 +81,7 @@ function createServices(wsPort: number): AppServices {
     agentService,
     taskService,
     wsServer,
+    projectExecutionService,
     scheduler,
     statusSyncService,
     subagentMonitorService,
