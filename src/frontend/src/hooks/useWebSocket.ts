@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { wsUrl } from '../config'
+import { buildWsUrl } from '../config'
 
 interface WebSocketHookOptions {
   onMessage?: (message: any) => void
@@ -37,7 +37,7 @@ export function useWebSocket({ onMessage, onConnect, onDisconnect }: WebSocketHo
     const connect = () => {
       clearReconnectTimer()
       statusRef.current = 'connecting'
-      ws.current = new WebSocket(wsUrl)
+      ws.current = new WebSocket(buildWsUrl())
 
       ws.current.onopen = () => {
         reconnectAttemptsRef.current = 0

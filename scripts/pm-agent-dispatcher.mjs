@@ -431,6 +431,29 @@ ${fields.outOfScope.length > 0
 }
 
 /**
+ * 优先从后端获取结构化执行上下文和推荐 prompt。
+ * 如果接口不可用，再回退到本地模板生成。
+ */
+async function generateExecutionPrompt(task, project, constraints) {
+  try {
+    const response = await fetch(
+      `${config.backendUrl}/api/execution/projects/${project.id}/tasks/${task.id}/context`
+    );
+
+    if (response.ok) {
+      const result = await response.json();
+      if (result?.prompt) {
+        return result.prompt;
+      }
+    }
+  } catch (e) {
+    log(`获取执行上下文失败，回退到本地 prompt 模板: ${e.message}`, 'WARN');
+  }
+
+  return generatePrompt(task, project, constraints);
+}
+
+/**
  * 记录生成的 prompt 到日志文件
  */
 function logPrompt(taskId, prompt, subagentId) {
@@ -858,7 +881,7 @@ async function dispatchOnce() {
     
     try {
       // 生成 prompt
-      const prompt = generatePrompt(task, project, config.globalConstraints);
+      const prompt = await generateExecutionPrompt(task, project, config.globalConstraints);
       
       // 创建 subagent
       const spawnResult = await spawnSubagent(task, project, prompt);

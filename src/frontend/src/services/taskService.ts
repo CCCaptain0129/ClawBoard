@@ -1,4 +1,4 @@
-import { buildApiUrl } from '../config'
+import { authFetch, buildApiUrl } from '../config'
 
 export interface Task {
   id: string
@@ -137,12 +137,12 @@ async function parseJsonResponse<T>(response: Response, fallbackMessage: string)
 }
 
 export async function getProjects() {
-  const response = await fetch(buildApiUrl('/api/tasks/projects'))
+  const response = await authFetch(buildApiUrl('/api/tasks/projects'))
   return parseJsonResponse<Project[]>(response, 'Failed to fetch projects')
 }
 
 export async function createProject(input: CreateProjectInput) {
-  const response = await fetch(buildApiUrl('/api/tasks/projects'), {
+  const response = await authFetch(buildApiUrl('/api/tasks/projects'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -151,7 +151,7 @@ export async function createProject(input: CreateProjectInput) {
 }
 
 export async function updateProject(projectId: string, input: UpdateProjectInput) {
-  const response = await fetch(buildApiUrl(`/api/tasks/projects/${projectId}`), {
+  const response = await authFetch(buildApiUrl(`/api/tasks/projects/${projectId}`), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -160,7 +160,7 @@ export async function updateProject(projectId: string, input: UpdateProjectInput
 }
 
 export async function getTasks(projectId: string) {
-  const response = await fetch(buildApiUrl(`/api/tasks/projects/${projectId}/tasks`))
+  const response = await authFetch(buildApiUrl(`/api/tasks/projects/${projectId}/tasks`))
   const tasks = await parseJsonResponse<Task[]>(response, `Failed to fetch tasks for ${projectId}`)
   return tasks.map((task) => ({ ...task, projectId }))
 }
@@ -188,7 +188,7 @@ export async function getTasksForProjects(projects: Project[]) {
 }
 
 export async function updateTask(projectId: string, taskId: string, updates: any) {
-  const response = await fetch(buildApiUrl(`/api/tasks/projects/${projectId}/tasks/${taskId}`), {
+  const response = await authFetch(buildApiUrl(`/api/tasks/projects/${projectId}/tasks/${taskId}`), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),
@@ -198,7 +198,7 @@ export async function updateTask(projectId: string, taskId: string, updates: any
 }
 
 export async function createTask(projectId: string, input: CreateTaskInput) {
-  const response = await fetch(buildApiUrl(`/api/tasks/projects/${projectId}/tasks`), {
+  const response = await authFetch(buildApiUrl(`/api/tasks/projects/${projectId}/tasks`), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -208,12 +208,12 @@ export async function createTask(projectId: string, input: CreateTaskInput) {
 }
 
 export async function getExecutionGuide(projectId: string) {
-  const response = await fetch(buildApiUrl(`/api/execution/projects/${projectId}/guide`))
+  const response = await authFetch(buildApiUrl(`/api/execution/projects/${projectId}/guide`))
   return parseJsonResponse<ExecutionGuide>(response, `Failed to fetch execution guide for ${projectId}`)
 }
 
 export async function getTaskExecutionContext(projectId: string, taskId: string) {
-  const response = await fetch(buildApiUrl(`/api/execution/projects/${projectId}/tasks/${taskId}/context`))
+  const response = await authFetch(buildApiUrl(`/api/execution/projects/${projectId}/tasks/${taskId}/context`))
   return parseJsonResponse<TaskExecutionContext>(response, `Failed to fetch execution context for ${taskId}`)
 }
 
@@ -222,7 +222,7 @@ export async function getTaskExecutionContext(projectId: string, taskId: string)
  * 后端会校验状态，非 todo 任务会返回 400
  */
 export async function deleteTask(projectId: string, taskId: string) {
-  const response = await fetch(buildApiUrl(`/api/tasks/projects/${projectId}/tasks/${taskId}`), {
+  const response = await authFetch(buildApiUrl(`/api/tasks/projects/${projectId}/tasks/${taskId}`), {
     method: 'DELETE',
   })
   if (!response.ok) {
@@ -236,7 +236,7 @@ export async function deleteTask(projectId: string, taskId: string) {
  * 生成 04-进度跟踪.md
  */
 export async function generateProgressDoc(projectId: string) {
-  const response = await fetch(buildApiUrl(`/api/sync/progress-to-doc/${projectId}`), {
+  const response = await authFetch(buildApiUrl(`/api/sync/progress-to-doc/${projectId}`), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
   })

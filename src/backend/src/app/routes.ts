@@ -6,8 +6,10 @@ import { taskDocRoutes } from '../routes/taskDoc';
 import { executionRoutes } from '../routes/execution';
 import healthCheckRouter from '../routes/healthCheck';
 import type { AppServices } from './bootstrap';
+import { accessTokenMiddleware } from '../middleware/accessToken';
 
 export function registerApiRoutes(app: express.Express, services: AppServices): void {
+  app.use('/api', accessTokenMiddleware);
   app.use('/api/agents', agentRoutes(services.agentService));
   app.use('/api/tasks', taskRoutes(services.taskService, services.wsServer));
   app.use('/api/tasks', healthCheckRouter);

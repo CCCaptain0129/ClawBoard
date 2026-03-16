@@ -21,6 +21,7 @@ FRONTEND_DIR="$PROJECT_ROOT/src/frontend"
 CONFIG_DIR="$BACKEND_DIR/config"
 CONFIG_FILE="$CONFIG_DIR/openclaw.json"
 CONFIG_EXAMPLE="$CONFIG_DIR/openclaw.json.example"
+ENV_FILE="$PROJECT_ROOT/.env"
 
 # 最低版本要求
 MIN_NODE_VERSION=18
@@ -53,6 +54,13 @@ print_warning() {
 
 print_error() {
     echo -e "${RED}[✗]${NC} $1"
+}
+
+generate_token() {
+    python3 - <<'PY'
+import secrets
+print(secrets.token_urlsafe(24))
+PY
 }
 
 # 检测操作系统
@@ -147,6 +155,38 @@ create_tmp_dir() {
     
     # 创建 .gitkeep 防止空目录被 git 忽略
     touch "$PROJECT_ROOT/tmp/.gitkeep" 2>/dev/null || true
+}
+
+setup_access_token() {
+    print_step "生成看板访问码..."
+
+    if [ ! -f "$ENV_FILE" ]; then
+        touch "$ENV_FILE"
+        print_info "已创建 .env 文件"
+    fi
+
+    if grep -q '^BOARD_ACCESS_TOKEN=' "$ENV_FILE" 2>/dev/null; then
+        local existing_token
+        existing_token=$(grep '^BOARD_ACCESS_TOKEN=' "$ENV_FILE" | tail -n 1 | cut -d'=' -f2-)
+        print_success "已存在看板访问码"
+        echo ""
+        echo -e "  ${BOLD}访问码：${NC}${CYAN}${existing_token}${NC}"
+        echo -e "  ${YELLOW}请妥善保存这个访问码，首次打开看板时需要输入。${NC}"
+        return
+    fi
+
+    local generated_token
+    generated_token=$(generate_token)
+
+    {
+        echo ""
+        echo "BOARD_ACCESS_TOKEN=$generated_token"
+    } >> "$ENV_FILE"
+
+    print_success "已生成默认看板访问码并写入 .env"
+    echo ""
+    echo -e "  ${BOLD}访问码：${NC}${CYAN}${generated_token}${NC}"
+    echo -e "  ${YELLOW}请妥善保存这个访问码，后续访问看板需要输入。${NC}"
 }
 
 # 检查并提示配置文件
@@ -250,6 +290,7 @@ show_next_steps() {
     echo ""
     echo -e "  3. ${CYAN}访问应用${NC}"
     echo "     http://127.0.0.1:5173"
+    echo "     首次访问时输入安装向导生成的访问码"
     echo ""
     echo -e "  4. ${CYAN}验证服务状态${NC}"
     if [[ "$os" == "Windows" ]]; then
@@ -338,6 +379,10 @@ main() {
     
     # 创建目录
     create_tmp_dir
+    echo ""
+
+    # 初始化访问码
+    setup_access_token
     echo ""
     
     # 检查配置

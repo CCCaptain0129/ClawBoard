@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import Dashboard from './pages/Dashboard'
 import KanbanBoard from './components/KanbanBoard'
 import AgentInitPage from './pages/AgentInitPage'
-import { buildApiUrl } from './config'
+import { authFetch, buildApiUrl, clearStoredAccessToken, getStoredAccessToken, setStoredAccessToken } from './config'
 import './index.css'
 
 type AppPage = 'agents' | 'tasks' | 'agent-init'
@@ -30,6 +30,10 @@ function App() {
   const initialRoute = parseHashRoute()
   const [currentPage, setCurrentPage] = useState<AppPage>(initialRoute.page)
   const [isBackendConnected, setIsBackendConnected] = useState(false)
+  const [accessToken, setAccessTokenState] = useState(getStoredAccessToken())
+  const [tokenInput, setTokenInput] = useState('')
+  const [tokenError, setTokenError] = useState<string | null>(null)
+  const [isCheckingToken, setIsCheckingToken] = useState(false)
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -39,6 +43,17 @@ function App() {
 
     window.addEventListener('hashchange', handleHashChange)
     return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
+
+  useEffect(() => {
+    const handleInvalidToken = () => {
+      clearStoredAccessToken()
+      setAccessTokenState('')
+      setTokenError('访问码无效或已失效，请重新输入。')
+    }
+
+    window.addEventListener('board-auth-invalid', handleInvalidToken)
+    return () => window.removeEventListener('board-auth-invalid', handleInvalidToken)
   }, [])
 
   useEffect(() => {
@@ -80,6 +95,72 @@ function App() {
     }
 
     window.location.hash = 'agent-init'
+  }
+
+  const verifyAndStoreToken = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const nextToken = tokenInput.trim()
+    if (!nextToken) {
+      setTokenError('请输入访问码')
+      return
+    }
+
+    try {
+      setIsCheckingToken(true)
+      setTokenError(null)
+      setStoredAccessToken(nextToken)
+      const response = await authFetch(buildApiUrl('/api/tasks/projects'))
+      if (!response.ok) {
+        throw new Error(response.status === 401 ? '访问码不正确' : `验证失败：HTTP ${response.status}`)
+      }
+      setAccessTokenState(nextToken)
+      setTokenInput('')
+    } catch (error) {
+      clearStoredAccessToken()
+      setAccessTokenState('')
+      setTokenError(error instanceof Error ? error.message : '访问码验证失败')
+    } finally {
+      setIsCheckingToken(false)
+    }
+  }
+
+  if (!accessToken) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-200 flex items-center justify-center px-6">
+        <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/70">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-slate-900">输入访问码</h1>
+            <p className="mt-2 text-sm text-slate-600">
+              这是内部看板。首次访问时输入安装时生成的访问码，之后浏览器会自动记住。
+            </p>
+            <div className="mt-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+              访问码可在服务器项目根目录的 <span className="font-mono">.env</span> 文件中找到，对应字段是 <span className="font-mono">BOARD_ACCESS_TOKEN</span>。
+            </div>
+          </div>
+          <form className="space-y-4" onSubmit={verifyAndStoreToken}>
+            <input
+              type="password"
+              value={tokenInput}
+              onChange={(event) => setTokenInput(event.target.value)}
+              placeholder="请输入访问码"
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
+            />
+            {tokenError && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {tokenError}
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={isCheckingToken}
+              className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isCheckingToken ? '验证中...' : '进入看板'}
+            </button>
+          </form>
+        </div>
+      </div>
+    )
   }
 
   return (

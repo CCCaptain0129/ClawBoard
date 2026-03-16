@@ -1,4 +1,5 @@
 import { WebSocketServer as WS } from 'ws';
+import { isAccessTokenValid } from '../middleware/accessToken';
 
 export class WebSocketHandler {
   private server: WS;
@@ -29,7 +30,15 @@ export class WebSocketHandler {
   }
 
   private setupHandlers() {
-    this.server.on('connection', (ws) => {
+    this.server.on('connection', (ws, request) => {
+      const requestUrl = new URL(request.url || '/', 'http://127.0.0.1');
+      const token = requestUrl.searchParams.get('token') || '';
+
+      if (!isAccessTokenValid(token)) {
+        ws.close(1008, 'Unauthorized');
+        return;
+      }
+
       console.log('Client connected');
       
       ws.on('message', (data) => {

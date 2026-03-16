@@ -19,6 +19,7 @@ import { JSONToMarkdown } from '../sync/jsonToMarkdown';
 import { getTasksRoot } from '../config/paths';
 import { ProjectExecutionService } from '../execution/projectExecutionService';
 import { registerApiRoutes } from './routes';
+import { accessTokenMiddleware } from '../middleware/accessToken';
 
 export interface AppServices {
   agentService: AgentService;
@@ -102,7 +103,7 @@ export function createApp(): BootstrappedApp {
 
   app.use(cors());
   app.use(express.json());
-  app.use('/tasks', express.static(getTasksRoot()));
+  app.use('/tasks', accessTokenMiddleware, express.static(getTasksRoot()));
 
   registerApiRoutes(app, services);
 

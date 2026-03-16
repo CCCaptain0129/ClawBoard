@@ -1,5 +1,9 @@
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 import { createApp, runInitialSyncs, startBackgroundServices, stopBackgroundServices } from './app/bootstrap';
 import type { Socket } from 'net';
+
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 const { server, port, services } = createApp();
 let pollingInterval: NodeJS.Timeout | null = null;

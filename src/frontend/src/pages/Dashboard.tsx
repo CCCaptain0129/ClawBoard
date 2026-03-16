@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import AgentCard from '../components/AgentCard'
 import { useWebSocket } from '../hooks/useWebSocket'
-import { buildApiUrl } from '../config'
+import { authFetch, buildApiUrl } from '../config'
 
 interface Agent {
   id: string
@@ -47,7 +47,7 @@ export default function Dashboard() {
   })
 
   useEffect(() => {
-    fetch(buildApiUrl('/api/agents'))
+    authFetch(buildApiUrl('/api/agents'))
       .then(async (res) => {
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`)
