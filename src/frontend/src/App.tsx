@@ -179,7 +179,7 @@ function App() {
     if (nextMode === 'auto') {
       const gatewayReady = dispatcherPrerequisites?.gateway.status === 'ready'
       if (!gatewayReady) {
-        const gatewayMessage = dispatcherPrerequisites?.gateway.message || 'Gateway 未就绪'
+        const gatewayMessage = dispatcherPrerequisites?.gateway.message || 'OpenClaw 网关未就绪'
         const configPath = dispatcherPrerequisites?.gateway.configPath || 'src/backend/config/openclaw.json'
         window.alert(
           `当前无法开启自动调度。\n\n原因：${gatewayMessage}\n\n请先完成配置后再重试。\n配置文件：${configPath}`
@@ -211,11 +211,11 @@ function App() {
 
   const showGatewaySetupHint = () => {
     if (!dispatcherPrerequisites?.gateway) {
-      window.alert('Gateway 状态加载中，请稍后重试。')
+      window.alert('OpenClaw 网关状态加载中，请稍后重试。')
       return
     }
     window.alert(
-      `Gateway 配置说明\n\n状态：${dispatcherPrerequisites.gateway.message}\n\n配置文件：${dispatcherPrerequisites.gateway.configPath}\n命令建议：\n1) openclaw gateway start\n2) openclaw gateway status`
+      `OpenClaw 网关配置说明\n\n状态：${dispatcherPrerequisites.gateway.message}\n\n配置文件：${dispatcherPrerequisites.gateway.configPath}\n命令建议：\n1) openclaw gateway start\n2) openclaw gateway status`
     )
   }
 
@@ -264,28 +264,15 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 py-4 space-y-3">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 tracking-tight">OpenClaw Agent 可视化监控</h1>
               <p className="text-sm text-gray-500 mt-1">实时监控和管理 OpenClaw Agent</p>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={toggleDispatcherMode}
-                disabled={!dispatcherStatus || dispatcherLoading}
-                title={dispatcherStatus?.running ? '已开启，仅调度启用的项目' : '已关闭，仅手动管理任务'}
-                className={`h-10 px-4 text-sm font-semibold rounded-xl border transition-colors ${
-                  dispatcherStatus?.mode === 'auto'
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                    : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                {dispatcherLoading
-                  ? '切换中...'
-                  : `全局自动调度：${dispatcherStatus?.mode === 'auto' ? '开' : '关'}`}
-              </button>
-              <span className={`inline-flex items-center h-10 px-4 rounded-xl text-sm font-semibold border ${
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold text-slate-500 mr-1">系统状态</span>
+              <span className={`inline-flex items-center h-9 px-3 rounded-lg text-sm font-semibold border ${
                 isBackendConnected
                   ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
                   : 'border-rose-200 bg-rose-50 text-rose-700'
@@ -293,61 +280,78 @@ function App() {
                 <span className={`w-2 h-2 rounded-full mr-2 ${
                   isBackendConnected ? 'bg-emerald-500' : 'bg-rose-500'
                 }`}></span>
-                {isBackendConnected ? '服务在线' : '服务离线'}
+                {isBackendConnected ? '看板服务：在线' : '看板服务：离线'}
               </span>
               <button
                 onClick={showGatewaySetupHint}
-                className={`inline-flex items-center h-10 px-4 rounded-xl text-sm font-semibold border transition-colors ${
+                className={`inline-flex items-center h-9 px-3 rounded-lg text-sm font-semibold border transition-colors ${
                   dispatcherPrerequisites?.gateway.status === 'ready'
                     ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
                     : dispatcherPrerequisites?.gateway.status === 'connection_failed'
                       ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
                       : 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
                 }`}
-                title="点击查看 Gateway 配置说明"
+                title="点击查看 OpenClaw 网关配置说明"
               >
                 {dispatcherPrerequisites?.gateway.status === 'ready'
-                  ? 'Gateway 已连接'
+                  ? 'OpenClaw 网关：已连接'
                   : dispatcherPrerequisites?.gateway.status === 'connection_failed'
-                    ? 'Gateway 连接失败'
-                    : 'Gateway 未配置'}
+                    ? 'OpenClaw 网关：连接失败'
+                    : 'OpenClaw 网关：未配置'}
               </button>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => navigateTo('agents')}
-                  className={`h-10 px-4 text-sm font-semibold rounded-xl transition-all duration-200 ${
-                    currentPage === 'agents' 
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' 
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                  }`}
-                >
-                  Agent 监控
-                </button>
-                <button
-                  onClick={() => navigateTo('tasks')}
-                  className={`h-10 px-4 text-sm font-semibold rounded-xl transition-all duration-200 ${
-                    currentPage === 'tasks' 
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' 
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                  }`}
-                >
-                  任务看板
-                </button>
-                <button
-                  onClick={() => navigateTo('agent-init')}
-                  className={`h-10 px-4 text-sm font-semibold rounded-xl transition-all duration-200 ${
-                    currentPage === 'agent-init'
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                  }`}
-                >
-                  给 Agent 的说明
-                </button>
-              </div>
+              <button
+                onClick={toggleDispatcherMode}
+                disabled={!dispatcherStatus || dispatcherLoading}
+                title={dispatcherStatus?.running ? '已开启，仅调度启用的项目' : '已关闭，仅手动管理任务'}
+                className={`h-9 px-3 text-sm font-semibold rounded-lg border transition-colors ${
+                  dispatcherStatus?.mode === 'auto'
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                    : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {dispatcherLoading
+                  ? '切换中...'
+                  : `自动调度：${dispatcherStatus?.mode === 'auto' ? '开' : '关'}`}
+              </button>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <div className="text-xs font-semibold text-slate-500">页面导航</div>
+            <div className="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200">
+              <button
+                onClick={() => navigateTo('agents')}
+                className={`h-9 px-4 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                  currentPage === 'agents'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                    : 'bg-transparent text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Agent 监控
+              </button>
+              <button
+                onClick={() => navigateTo('tasks')}
+                className={`h-9 px-4 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                  currentPage === 'tasks'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                    : 'bg-transparent text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                任务看板
+              </button>
+              <button
+                onClick={() => navigateTo('agent-init')}
+                className={`h-9 px-4 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                  currentPage === 'agent-init'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                    : 'bg-transparent text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                给 Agent 的说明
+              </button>
             </div>
           </div>
           {dispatcherError && (
-            <div className="mt-2 text-right text-xs text-rose-600">{dispatcherError}</div>
+            <div className="text-xs text-rose-600">{dispatcherError}</div>
           )}
         </div>
       </header>
