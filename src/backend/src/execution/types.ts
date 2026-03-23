@@ -6,6 +6,8 @@ export interface ProjectExecutionConfig {
   projectId: string;
   leadAgent: string | null;
   autoDispatchEnabled: boolean;
+  // Legacy field: project-level executionMode no longer blocks auto dispatch.
+  // Kept for backward compatibility with existing config files.
   executionMode: ExecutionMode;
   maxConcurrentSubagents: number;
   planningDoc?: string;

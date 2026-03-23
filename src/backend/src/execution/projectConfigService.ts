@@ -7,7 +7,8 @@ import {
   ProjectExecutionConfigFile,
 } from './types';
 
-const DEFAULT_EXECUTION_MODE: ExecutionMode = 'manual';
+// Legacy compatibility default: keep a value for config shape, but this field no longer gates auto dispatch.
+const DEFAULT_EXECUTION_MODE: ExecutionMode = 'auto';
 const DEFAULT_MAX_CONCURRENT_SUBAGENTS = 1;
 
 export class ProjectConfigService {
