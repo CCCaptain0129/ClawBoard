@@ -341,7 +341,7 @@ function App() {
                       : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
-                  主 Agent 初始化
+                  给 Agent 的说明
                 </button>
               </div>
             </div>

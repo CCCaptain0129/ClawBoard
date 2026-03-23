@@ -195,12 +195,12 @@ export class ProjectExecutionService {
         '先阅读项目规划、任务拆解、进度跟踪三份文档，再决定是否执行任务。',
         '确认当前任务 JSON 真源文件中的状态、交付物、验收标准是否完整。',
         '优先通过 /api/execution/projects/:projectId/tasks/:taskId/context 获取结构化执行包，而不是手工拼接 prompt。',
-        '主 Agent 负责调度与验收，复杂实现、命令执行、跨文件检查应优先派发给 Subagent。',
+        '项目管理 Agent 负责调度与验收，复杂实现、命令执行、跨文件检查应优先派发给 Subagent。',
       ],
       subagentDispatchRules: [
         '任务目标、交付物、验收标准缺失时，不要直接派发。',
         'Subagent 默认只处理单个任务，不要让其从头理解整个项目。',
-        'Subagent 返回后先进入 review，由人工或主 Agent 验收后再进入 done。',
+        'Subagent 返回后先进入 review，由人工或项目管理 Agent 验收后再进入 done。',
         '如果执行包信息不足，只允许回查指定的真源文档和文件，不要自由扩展搜索范围。',
       ],
       suggestedPrompt: this.buildMainAgentPrompt(project.id, project.name, docs),
@@ -325,7 +325,7 @@ ${handoffNotes}## Output Format（输出格式）
       '只有在任务需要实际实现、命令执行、跨文件排查或较长时间处理时，才优先创建 Subagent。',
       '派发时直接使用执行上下文接口返回的 prompt 作为基础，不要手工遗漏硬约束。',
       '要求 Subagent 在回复末尾输出 completion_signal 代码块，便于系统识别结束状态。',
-      'Subagent 返回后先进入 review，再由人工或主 Agent 判断是否 done。',
+      'Subagent 返回后先进入 review，再由人工或项目管理 Agent 判断是否 done。',
     ];
 
     if (task.executionMode === 'manual') {
@@ -346,7 +346,7 @@ ${handoffNotes}## Output Format（输出格式）
       docs.progressDoc ? `- 进度跟踪: ${docs.progressDoc}` : null,
     ].filter(Boolean).join('\n');
 
-    return `你现在是项目 "${projectName}" 的主 Agent。
+    return `你现在是项目 "${projectName}" 的项目管理 Agent。
 
 你的职责是先理解项目，再挑选任务、打包上下文、决定是否创建 Subagent，并在结果返回后执行验收。
 

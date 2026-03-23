@@ -263,7 +263,7 @@ export default function TaskCard({
     event.stopPropagation()
     if (!projectId) {
       setCopyState('error')
-      setCopyMessage('缺少项目 ID，无法复制主 Agent 指引')
+      setCopyMessage('缺少项目 ID，无法复制项目管理 Agent 指引')
       return
     }
 
@@ -272,10 +272,10 @@ export default function TaskCard({
       const guide = await getExecutionGuide(projectId)
       await navigator.clipboard.writeText(guide.suggestedPrompt)
       setCopyState('copied')
-      setCopyMessage('已复制主 Agent 指引')
+      setCopyMessage('已复制项目管理 Agent 指引')
     } catch (error) {
       setCopyState('error')
-      setCopyMessage(error instanceof Error ? error.message : '复制主 Agent 指引失败')
+      setCopyMessage(error instanceof Error ? error.message : '复制项目管理 Agent 指引失败')
     }
   }
 
@@ -525,7 +525,7 @@ export default function TaskCard({
                     onClick={copyMainAgentGuide}
                     className="px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-medium hover:bg-slate-100 transition-colors"
                   >
-                    复制主 Agent 指引
+                    复制项目管理 Agent 指引
                   </button>
                   <button
                     type="button"
@@ -536,7 +536,7 @@ export default function TaskCard({
                   </button>
                 </div>
                 <div className="mt-2 text-xs text-slate-500">
-                  先给主 Agent 项目级指引，再给具体任务的 Subagent 执行包。
+                  先给项目管理 Agent 项目级指引，再给具体任务的 Subagent 执行包。
                 </div>
               </div>
             )}

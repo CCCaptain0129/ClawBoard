@@ -471,7 +471,7 @@ export class OpenClawAgentMonitor {
     }
 
     if (key === 'agent:main:main') {
-      return '主 Agent';
+      return '项目管理 Agent';
     }
 
     if (key.includes('feishu:group:')) {
