@@ -40,17 +40,17 @@ interface TaskCardProps {
 }
 
 const priorityColors = {
-  P0: 'bg-purple-100 text-purple-700 border-purple-200',
-  P1: 'bg-red-100 text-red-700 border-red-200',
-  P2: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-  P3: 'bg-gray-100 text-gray-700 border-gray-200',
+  P0: 'bg-rose-50 text-rose-700 border-rose-200',
+  P1: 'bg-orange-50 text-orange-700 border-orange-200',
+  P2: 'bg-amber-50 text-amber-700 border-amber-200',
+  P3: 'bg-slate-100 text-slate-700 border-slate-200',
 }
 
 const statusColors = {
-  todo: 'border-l-4 border-gray-400',
-  'in-progress': 'border-l-4 border-blue-500',
-  review: 'border-l-4 border-violet-500',
-  done: 'border-l-4 border-green-500',
+  todo: 'border-l-2 border-slate-300',
+  'in-progress': 'border-l-2 border-blue-400',
+  review: 'border-l-2 border-violet-400',
+  done: 'border-l-2 border-emerald-400',
 }
 
 /**
@@ -217,9 +217,9 @@ export default function TaskCard({
   const isDone = task.status === 'done'
   const statusBadge = {
     todo: null,
-    'in-progress': { text: '🔄 执行中', className: 'bg-blue-500 text-white animate-pulse' },
-    review: { text: '🟣 待审核', className: 'bg-violet-500 text-white' },
-    done: { text: '✅ 已完成', className: 'bg-green-500 text-white' },
+    'in-progress': { text: '执行中', className: 'border border-blue-200 bg-blue-50 text-blue-700' },
+    review: { text: '待审核', className: 'border border-violet-200 bg-violet-50 text-violet-700' },
+    done: { text: '已完成', className: 'border border-emerald-200 bg-emerald-50 text-emerald-700' },
   }[task.status]
 
   // PMW-010: 计算执行耗时
@@ -328,11 +328,6 @@ export default function TaskCard({
       }`}
       onClick={() => setIsExpanded(!isExpanded)}
     >
-      {/* 进行中状态 - 顶部高亮条 */}
-      {isInProgress && (
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 rounded-t-lg animate-pulse" />
-      )}
-
       {/* 展开指示器 */}
       <div className="absolute top-4 right-2 z-10">
         <svg
@@ -376,13 +371,11 @@ export default function TaskCard({
 
         <div className={`${isExpanded ? 'mb-3 flex flex-wrap gap-2' : 'mb-2 flex flex-wrap gap-1.5'}`}>
           {task.assignee && (
-            <span className={`${isExpanded ? 'px-2.5 py-1 text-xs' : 'px-2 py-0.5 text-[11px]'} inline-flex items-center gap-1 rounded-full bg-sky-50 border border-sky-200 text-sky-700`}>
-              <span>👤</span>
+            <span className={`${isExpanded ? 'px-2.5 py-1 text-xs' : 'px-2 py-0.5 text-[11px]'} inline-flex items-center gap-1 rounded-full bg-slate-50 border border-slate-200 text-slate-700`}>
               <span className="font-medium">{task.assignee}</span>
             </span>
           )}
-          <span className={`${isExpanded ? 'px-2.5 py-1 text-xs' : 'px-2 py-0.5 text-[11px]'} inline-flex items-center gap-1 rounded-full bg-violet-50 border border-violet-200 text-violet-700`}>
-            <span>🧩</span>
+          <span className={`${isExpanded ? 'px-2.5 py-1 text-xs' : 'px-2 py-0.5 text-[11px]'} inline-flex items-center gap-1 rounded-full bg-slate-50 border border-slate-200 text-slate-600`}>
             <span>{getAgentTypeLabel(task.agentType)}</span>
           </span>
           {task.estimatedTime && (
@@ -602,21 +595,21 @@ export default function TaskCard({
         {activeExecutorLabel && (
           <div className={`mb-2 p-2 rounded-lg border ${
             isOverdue
-              ? 'bg-gradient-to-r from-red-50 to-orange-50 border-red-300'
-              : 'bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200'
+              ? 'bg-red-50 border-red-200'
+              : 'bg-slate-50 border-slate-200'
           }`}>
             <div className="flex items-center gap-2 mb-2">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center shadow-sm ${
-                isOverdue ? 'bg-gradient-to-br from-red-500 to-orange-500' : 'bg-gradient-to-br from-purple-500 to-indigo-500'
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                isOverdue ? 'bg-red-100 text-red-600' : 'bg-slate-200 text-slate-700'
               }`}>
-                <span className="text-xs">🤖</span>
+                <span className="text-xs">A</span>
               </div>
               <div className="flex-1 min-w-0">
-                <div className={`text-xs font-semibold ${isOverdue ? 'text-red-700' : 'text-purple-700'}`}>
-                  {isOverdue ? '⚠️ 执行超时' : '分配给 Subagent'}
+                <div className={`text-xs font-semibold ${isOverdue ? 'text-red-700' : 'text-slate-700'}`}>
+                  {isOverdue ? '执行超时' : '当前执行者'}
                 </div>
                 <div
-                  className={`text-xs truncate ${isOverdue ? 'text-red-600' : 'text-purple-600'} ${
+                  className={`text-xs truncate ${isOverdue ? 'text-red-600' : 'text-slate-600'} ${
                     task.activeExecutorLabel ? 'font-medium' : 'font-mono'
                   }`}
                   title={task.activeExecutorLabel || task.activeExecutorId || task.claimedBy || ''}
@@ -627,10 +620,10 @@ export default function TaskCard({
             </div>
 
             {/* PMW-010: 执行时间信息 */}
-            <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-purple-200/50">
+            <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-slate-200">
               {/* 开始时间 */}
               {startTimeDisplay && (
-                <div className={`flex items-center gap-1 ${isOverdue ? 'text-red-500' : 'text-purple-500'}`} title={`开始时间: ${task.startTime}`}>
+                <div className={`flex items-center gap-1 ${isOverdue ? 'text-red-500' : 'text-slate-500'}`} title={`开始时间: ${task.startTime}`}>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -641,7 +634,7 @@ export default function TaskCard({
               {/* PMW-010: 执行耗时 */}
               {duration && (
                 <div className={`flex items-center gap-1 ${
-                isOverdue ? 'text-red-600 font-medium' : (isDone ? 'text-green-600' : isReview ? 'text-violet-600' : 'text-purple-500')
+                isOverdue ? 'text-red-600 font-medium' : (isDone ? 'text-emerald-600' : isReview ? 'text-violet-600' : 'text-slate-600')
               }`} title={isDone ? `完成时间: ${task.completeTime}` : '已执行时间'}>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -653,34 +646,16 @@ export default function TaskCard({
 
             {/* PMW-010: 预计时间提示（进行中且未超时时） */}
             {isInProgress && !isOverdue && task.estimatedTime && (
-              <div className="text-xs text-purple-400 mt-1 flex items-center gap-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <span>预计: {task.estimatedTime}</span>
-              </div>
+              <div className="text-xs text-slate-500 mt-1">预计: {task.estimatedTime}</div>
             )}
           </div>
         )}
 
         {/* PMW-010: 执行日志摘要 */}
         {(logSummary || (task.comments && task.comments.length > 0)) && !isExpanded && (
-          <div className="mb-3 p-2 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg border border-amber-200">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-5 h-5 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-full flex items-center justify-center shadow-sm">
-                <span className="text-xs">📝</span>
-              </div>
-              <div className="text-xs font-semibold text-amber-700">
-                执行日志
-                {task.comments && task.comments.length > 1 && (
-                  <span className="ml-1 text-amber-500 font-normal">({task.comments.length}条)</span>
-                )}
-              </div>
-            </div>
+          <div className="mb-2 text-[11px] text-slate-500 line-clamp-1">
             {logSummary && (
-              <div className="text-xs text-amber-600 line-clamp-2" title="最新执行记录">
-                {logSummary}
-              </div>
+              <span title="最新执行记录">最新日志：{logSummary}</span>
             )}
           </div>
         )}

@@ -9,34 +9,30 @@ const columns = [
   { 
     id: 'todo', 
     title: '待处理', 
-    icon: '⏳', 
-    color: 'bg-gradient-to-br from-slate-50 to-slate-100',
-    borderColor: 'border-slate-200',
-    iconColor: 'text-slate-500'
+    icon: '待', 
+    panelClass: 'bg-white border-slate-200',
+    dotClass: 'bg-slate-400'
   },
   { 
     id: 'in-progress', 
     title: '进行中', 
-    icon: '🔄', 
-    color: 'bg-gradient-to-br from-blue-50 to-blue-100',
-    borderColor: 'border-blue-200',
-    iconColor: 'text-blue-500'
+    icon: '进', 
+    panelClass: 'bg-white border-blue-200',
+    dotClass: 'bg-blue-500'
   },
   {
     id: 'review',
     title: '待审核',
-    icon: '🟣',
-    color: 'bg-gradient-to-br from-violet-50 to-fuchsia-100',
-    borderColor: 'border-violet-200',
-    iconColor: 'text-violet-500'
+    icon: '审',
+    panelClass: 'bg-white border-violet-200',
+    dotClass: 'bg-violet-500'
   },
   { 
     id: 'done', 
     title: '已完成', 
-    icon: '✅', 
-    color: 'bg-gradient-to-br from-green-50 to-green-100',
-    borderColor: 'border-green-200',
-    iconColor: 'text-green-500'
+    icon: '完', 
+    panelClass: 'bg-white border-emerald-200',
+    dotClass: 'bg-emerald-500'
   },
 ]
 
@@ -715,22 +711,24 @@ export default function TaskBoard() {
 
       {/* 看板列 */}
       {!loading && !error && tasks.length > 0 && (
-        <div className="grid grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {columns.map(column => {
           const columnTasks = tasks.filter(t => t.status === column.id)
           return (
-            <div key={column.id} className={`${column.color} rounded-xl p-4 border ${column.borderColor}`}>
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-2xl">{column.icon}</span>
-                <h3 className="font-bold text-gray-900 text-lg">{column.title}</h3>
-                <span className={`px-2 py-0.5 bg-white rounded-full text-xs font-semibold ${column.iconColor}`}>
+            <div key={column.id} className={`rounded-xl p-4 border ${column.panelClass}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold text-white ${column.dotClass}`}>
+                  {column.icon}
+                </span>
+                <h3 className="font-semibold text-slate-800 text-sm tracking-wide">{column.title}</h3>
+                <span className="px-2 py-0.5 bg-slate-100 rounded-full text-xs font-semibold text-slate-600">
                   {columnTasks.length}
                 </span>
               </div>
               
-              <div className="space-y-3 min-h-[200px]">
+              <div className="space-y-2.5 min-h-[140px]">
                 {columnTasks.length === 0 ? (
-                  <div className="text-center py-8 text-gray-400 text-sm">
+                  <div className="text-center py-6 text-slate-400 text-sm">
                     暂无任务
                   </div>
                 ) : (
