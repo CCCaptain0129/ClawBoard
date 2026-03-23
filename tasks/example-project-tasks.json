@@ -1,36 +1,28 @@
 {
   "id": "example-project",
   "name": "示例项目",
-  "description": "用于演示项目看板、任务状态流转和负责人分配的示例项目。",
+  "description": "开源版本的最小示例项目。",
   "status": "active",
   "leadAgent": null,
   "color": "#3B82F6",
   "icon": "📁",
   "taskPrefix": "EXP",
-  "createdAt": "2026-03-16T23:59:00.000Z",
-  "updatedAt": "2026-03-23T05:27:51.186Z",
+  "createdAt": "2026-03-23T00:00:00.000Z",
+  "updatedAt": "2026-03-23T00:00:00.000Z",
   "tasks": [
     {
-      "id": "EXP-003",
-      "title": "创建测试文档 test.md",
-      "description": "在项目 docs 目录创建一个最小测试文档 test.md，内容仅保留标题和一行说明。",
+      "id": "EXP-001",
+      "title": "创建测试文档",
+      "description": "在项目 docs 目录创建一个最小测试文档，用于验证任务流转。",
       "status": "todo",
-      "priority": "P3",
-      "labels": [
-        "临时任务",
-        "示例"
-      ],
+      "priority": "P2",
+      "labels": ["示例"],
       "assignee": null,
       "claimedBy": null,
       "dependencies": [],
-      "contextSummary": "",
-      "acceptanceCriteria": [
-        "文件可打开",
-        "包含标题和一行正文"
-      ],
-      "deliverables": [
-        "docs/test.md 文件"
-      ],
+      "contextSummary": "该任务仅用于演示最小流程。",
+      "acceptanceCriteria": ["文件可打开", "包含标题和一行正文"],
+      "deliverables": ["docs/test.md"],
       "executionMode": "manual",
       "agentType": "general",
       "blockingReason": null,
@@ -38,72 +30,8 @@
       "estimatedTime": "5分钟",
       "startTime": null,
       "completeTime": null,
-      "createdAt": "2026-03-23T04:23:35.870Z",
-      "updatedAt": "2026-03-23T05:24:49.315Z",
-      "comments": []
-    },
-    {
-      "id": "EXP-004",
-      "title": "打开 OpenAI 官网首页",
-      "description": "在浏览器打开 https://openai.com 并确认页面可正常访问。",
-      "status": "review",
-      "priority": "P3",
-      "labels": [
-        "临时任务",
-        "示例"
-      ],
-      "assignee": null,
-      "claimedBy": "agent:main:subagent:def899c9-533a-4f65-909e-796ff5f1c0a8",
-      "dependencies": [],
-      "contextSummary": "",
-      "acceptanceCriteria": [
-        "页面成功加载",
-        "记录访问时间"
-      ],
-      "deliverables": [
-        "访问确认说明"
-      ],
-      "executionMode": "manual",
-      "agentType": "general",
-      "blockingReason": "Subagent 会话已失活或长时间无更新，需要人工复核后再决定是否完成。",
-      "dueDate": null,
-      "estimatedTime": "3分钟",
-      "startTime": "2026-03-23T05:25:12.718Z",
-      "completeTime": "2026-03-23T05:27:49.799Z",
-      "createdAt": "2026-03-23T04:23:35.880Z",
-      "updatedAt": "2026-03-23T05:27:49.803Z",
-      "comments": []
-    },
-    {
-      "id": "EXP-005",
-      "title": "打开 GitHub Trending 页面",
-      "description": "在浏览器打开 https://github.com/trending 并确认可看到趋势仓库列表。",
-      "status": "in-progress",
-      "priority": "P3",
-      "labels": [
-        "临时任务",
-        "示例"
-      ],
-      "assignee": null,
-      "claimedBy": "agent:main:subagent:08296901-67f1-44c0-b65d-04140f69d6ad",
-      "dependencies": [],
-      "contextSummary": "",
-      "acceptanceCriteria": [
-        "页面成功加载",
-        "可见趋势仓库列表"
-      ],
-      "deliverables": [
-        "访问确认说明"
-      ],
-      "executionMode": "manual",
-      "agentType": "general",
-      "blockingReason": null,
-      "dueDate": null,
-      "estimatedTime": "3分钟",
-      "startTime": "2026-03-23T05:27:43.230Z",
-      "completeTime": null,
-      "createdAt": "2026-03-23T04:23:35.890Z",
-      "updatedAt": "2026-03-23T05:27:51.186Z",
+      "createdAt": "2026-03-23T00:00:00.000Z",
+      "updatedAt": "2026-03-23T00:00:00.000Z",
       "comments": []
     }
   ]

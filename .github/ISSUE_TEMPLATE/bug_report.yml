@@ -1,0 +1,54 @@
+name: Bug Report
+description: Report a reproducible bug
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈问题。请尽量提供可复现步骤，便于我们快速定位。
+  - type: textarea
+    id: summary
+    attributes:
+      label: 问题描述
+      description: 简要描述发生了什么
+      placeholder: 例如：将任务改为 in-progress 后，页面未显示 activeExecutorLabel
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 请按步骤描述
+      placeholder: |
+        1. 打开任务看板
+        2. 切换到 example-project
+        3. 将任务状态改为 in-progress
+        4. 观察...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期结果
+      placeholder: 应该显示...
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果
+      placeholder: 实际显示...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: 版本/Commit（可选）
+      placeholder: 例如：7cac732
+  - type: textarea
+    id: logs
+    attributes:
+      label: 相关日志/截图（可选）
+      description: 可粘贴关键日志或截图

@@ -183,7 +183,7 @@ Agent 身份模板，包含：
 ## 获取帮助
 
 - **GitHub Issues**: https://github.com/CCCaptain0129/OpenClaw_Visualization/issues
-- **飞书群**: oc_0754a493527ed8a4b28bd0dffdf802de
+- **飞书群**: 请在部署后填写你自己的群组 ID
 
 ---
 

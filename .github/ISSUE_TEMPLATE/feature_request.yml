@@ -1,0 +1,40 @@
+name: Feature Request
+description: Suggest an improvement or new feature
+title: "[Feature] "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        欢迎提交功能建议。请尽量说明场景、价值和可验收标准。
+  - type: textarea
+    id: background
+    attributes:
+      label: 背景与目标
+      description: 当前遇到的问题是什么？希望达成什么目标？
+      placeholder: 例如：希望在任务卡片中更直观显示 subagent 活跃状态
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 方案建议
+      description: 你期望的行为或交互
+      placeholder: 例如：增加项目级开关和状态提示
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收标准
+      description: 如何判断功能完成
+      placeholder: |
+        - [ ] 能在页面切换该功能
+        - [ ] 重启后状态保持
+        - [ ] 不影响现有任务流转
+  - type: textarea
+    id: extra
+    attributes:
+      label: 其他补充（可选）
+      description: 风险、兼容性、参考链接等

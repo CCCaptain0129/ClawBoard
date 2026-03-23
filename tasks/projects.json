@@ -2,25 +2,13 @@
   {
     "id": "example-project",
     "name": "示例项目",
-    "description": "用于演示项目看板、任务状态流转和负责人分配的示例项目。",
+    "description": "开源版本的最小示例项目。",
     "status": "active",
     "leadAgent": null,
     "color": "#3B82F6",
     "icon": "📁",
     "taskPrefix": "EXP",
-    "createdAt": "2026-03-16T23:59:00.000Z",
-    "updatedAt": "2026-03-16T23:59:00.000Z"
-  },
-  {
-    "id": "life-reset-mvp",
-    "name": "人生重启项目12题",
-    "description": "12题问卷+7天重启课程",
-    "status": "active",
-    "leadAgent": null,
-    "color": "#3B82F6",
-    "icon": "📁",
-    "taskPrefix": "EXP",
-    "createdAt": "2026-03-16T23:59:00.000Z",
-    "updatedAt": "2026-03-16T23:59:00.000Z"
+    "createdAt": "2026-03-23T00:00:00.000Z",
+    "updatedAt": "2026-03-23T00:00:00.000Z"
   }
 ]
