@@ -22,6 +22,8 @@ CONFIG_DIR="$BACKEND_DIR/config"
 CONFIG_FILE="$CONFIG_DIR/openclaw.json"
 CONFIG_EXAMPLE="$CONFIG_DIR/openclaw.json.example"
 ENV_FILE="$PROJECT_ROOT/.env"
+DEFAULT_TASKS_ROOT_REL="local/tasks"
+DEFAULT_TASKS_ROOT_ABS="$PROJECT_ROOT/$DEFAULT_TASKS_ROOT_REL"
 
 # 最低版本要求
 MIN_NODE_VERSION=18
@@ -218,6 +220,49 @@ setup_workspace_root() {
 
     mv "$temp_file" "$ENV_FILE"
     print_success "已写入安装路径: $value"
+}
+
+setup_tasks_runtime_root() {
+    print_step "配置任务运行态目录..."
+
+    if [ ! -f "$ENV_FILE" ]; then
+        touch "$ENV_FILE"
+    fi
+
+    local key="OPENCLAW_VIS_TASKS_ROOT"
+    local value="$DEFAULT_TASKS_ROOT_REL"
+    local temp_file
+    temp_file="$(mktemp)"
+
+    awk -v key="$key" -v value="$value" '
+      BEGIN { updated = 0 }
+      $0 ~ ("^" key "=") {
+        print key "=" value
+        updated = 1
+        next
+      }
+      { print }
+      END {
+        if (updated == 0) {
+          print key "=" value
+        }
+      }
+    ' "$ENV_FILE" > "$temp_file"
+
+    mv "$temp_file" "$ENV_FILE"
+
+    mkdir -p "$DEFAULT_TASKS_ROOT_ABS"
+
+    # 初始化最小示例，避免首次启动为空
+    if [ ! -f "$DEFAULT_TASKS_ROOT_ABS/projects.json" ] && [ -f "$PROJECT_ROOT/tasks/projects.json" ]; then
+        cp "$PROJECT_ROOT/tasks/projects.json" "$DEFAULT_TASKS_ROOT_ABS/projects.json"
+    fi
+    if [ ! -f "$DEFAULT_TASKS_ROOT_ABS/example-project-tasks.json" ] && [ -f "$PROJECT_ROOT/tasks/example-project-tasks.json" ]; then
+        cp "$PROJECT_ROOT/tasks/example-project-tasks.json" "$DEFAULT_TASKS_ROOT_ABS/example-project-tasks.json"
+    fi
+
+    print_success "任务运行态目录已设置为: $DEFAULT_TASKS_ROOT_REL"
+    print_info "本地任务数据将写入 $DEFAULT_TASKS_ROOT_REL (默认不进入 Git)"
 }
 
 # 检查并提示配置文件
@@ -418,6 +463,10 @@ main() {
 
     # 写入安装路径（供后端解析任务真源目录）
     setup_workspace_root
+    echo ""
+
+    # 配置任务运行态目录（默认 local/tasks）
+    setup_tasks_runtime_root
     echo ""
     
     # 检查配置

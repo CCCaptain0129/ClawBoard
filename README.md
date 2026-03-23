@@ -83,6 +83,12 @@ cd ClawBoard
 ./clawboard restart  # 重启服务
 ```
 
+## 避免测试数据误推送
+
+- 安装脚本会自动把任务运行态目录设置为 `local/tasks`（写入 `.env` 的 `OPENCLAW_VIS_TASKS_ROOT`）。
+- `local/` 默认在 `.gitignore` 中，本地测试任务不会进入 Git。
+- 仓库里的 `tasks/` 仅作为示例数据，建议不要在其中进行日常测试。
+
 ## 数据真源（Source of Truth）
 
 - 前端仅做可视化，不作为最终真源

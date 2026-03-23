@@ -1,6 +1,26 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+function readEnvFileValue(key: string, envPath: string): string | null {
+  if (!fs.existsSync(envPath)) {
+    return null;
+  }
+
+  try {
+    const content = fs.readFileSync(envPath, 'utf-8');
+    const line = content
+      .split(/\r?\n/)
+      .find((item) => item.startsWith(`${key}=`));
+    if (!line) {
+      return null;
+    }
+    const raw = line.slice(key.length + 1).trim();
+    return raw.length > 0 ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
 function isWorkspaceRoot(dir: string): boolean {
   return fs.existsSync(path.join(dir, 'src/backend/package.json'))
     && fs.existsSync(path.join(dir, 'src/frontend/package.json'))
@@ -38,7 +58,17 @@ export function getWorkspaceRoot(startDir: string = process.cwd()): string {
 }
 
 export function getTasksRoot(): string {
-  return path.join(getWorkspaceRoot(), 'tasks');
+  const workspaceRoot = getWorkspaceRoot();
+  const raw = process.env.OPENCLAW_VIS_TASKS_ROOT
+    || readEnvFileValue('OPENCLAW_VIS_TASKS_ROOT', path.join(workspaceRoot, '.env'));
+  if (!raw || !raw.trim()) {
+    return path.join(workspaceRoot, 'tasks');
+  }
+
+  const trimmed = raw.trim();
+  return path.isAbsolute(trimmed)
+    ? path.resolve(trimmed)
+    : path.resolve(workspaceRoot, trimmed);
 }
 
 export function getProjectExecutionConfigPath(): string {

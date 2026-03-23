@@ -11,6 +11,9 @@ set "FRONTEND_DIR=%PROJECT_ROOT%src\frontend"
 set "CONFIG_DIR=%BACKEND_DIR%\config"
 set "CONFIG_FILE=%CONFIG_DIR%\openclaw.json"
 set "CONFIG_EXAMPLE=%CONFIG_DIR%\openclaw.json.example"
+set "ENV_FILE=%PROJECT_ROOT%.env"
+set "DEFAULT_TASKS_ROOT_REL=local\tasks"
+set "DEFAULT_TASKS_ROOT_ABS=%PROJECT_ROOT%local\tasks"
 
 REM 最低版本要求
 set "MIN_NODE_VERSION=18"
@@ -134,6 +137,32 @@ if exist "%PROJECT_ROOT%tmp" (
 
 if not exist "%PROJECT_ROOT%tmp\logs" mkdir "%PROJECT_ROOT%tmp\logs"
 type nul > "%PROJECT_ROOT%tmp\.gitkeep" 2>nul
+
+REM ========================================
+REM 配置任务运行态目录（默认 local\tasks）
+REM ========================================
+echo.
+echo %CYAN%[STEP]%NC% 配置任务运行态目录...
+
+if not exist "%ENV_FILE%" (
+    type nul > "%ENV_FILE%"
+)
+
+findstr /b /c:"OPENCLAW_VIS_TASKS_ROOT=" "%ENV_FILE%" >nul 2>&1
+if %errorlevel% neq 0 (
+    echo OPENCLAW_VIS_TASKS_ROOT=%DEFAULT_TASKS_ROOT_REL%>> "%ENV_FILE%"
+)
+
+if not exist "%DEFAULT_TASKS_ROOT_ABS%" mkdir "%DEFAULT_TASKS_ROOT_ABS%"
+if not exist "%DEFAULT_TASKS_ROOT_ABS%\projects.json" (
+    if exist "%PROJECT_ROOT%tasks\projects.json" copy "%PROJECT_ROOT%tasks\projects.json" "%DEFAULT_TASKS_ROOT_ABS%\projects.json" >nul
+)
+if not exist "%DEFAULT_TASKS_ROOT_ABS%\example-project-tasks.json" (
+    if exist "%PROJECT_ROOT%tasks\example-project-tasks.json" copy "%PROJECT_ROOT%tasks\example-project-tasks.json" "%DEFAULT_TASKS_ROOT_ABS%\example-project-tasks.json" >nul
+)
+
+echo %GREEN%[OK]%NC% 任务运行态目录已设置为: local\tasks
+echo %BLUE%[INFO]%NC% 本地任务数据将写入 local\tasks ^(默认不进入 Git^)
 
 REM ========================================
 REM 检查配置文件
