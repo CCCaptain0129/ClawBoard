@@ -189,7 +189,7 @@ export class MarkdownToJSON {
       contextSummary: '',
       acceptanceCriteria: [],
       deliverables: [],
-      executionMode: 'manual',
+      executionMode: 'auto',
       agentType: 'general',
       blockingReason: null,
       dueDate: null,

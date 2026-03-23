@@ -32,7 +32,7 @@ export default function CreateTaskModal({
   const [category, setCategory] = useState<'main' | 'temp'>('temp')
   const [estimatedTime, setEstimatedTime] = useState('')
   const [dependencies, setDependencies] = useState('')
-  const [executionMode, setExecutionMode] = useState<'manual' | 'auto'>('manual')
+  const [executionMode, setExecutionMode] = useState<'manual' | 'auto'>('auto')
   const [agentType, setAgentType] = useState<'general' | 'dev' | 'test' | 'debug'>('general')
   const [deliverables, setDeliverables] = useState('')
   const [acceptanceCriteria, setAcceptanceCriteria] = useState('')
@@ -237,8 +237,8 @@ export default function CreateTaskModal({
               </label>
               <div className="flex gap-2">
                 {([
-                  { id: 'manual', label: '人工确认' },
                   { id: 'auto', label: '可自动派发' },
+                  { id: 'manual', label: '人工确认' },
                 ] as const).map((mode) => (
                   <button
                     key={mode.id}

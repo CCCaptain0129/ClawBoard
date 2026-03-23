@@ -192,7 +192,7 @@ export class TaskService {
       contextSummary: task.contextSummary || '',
       acceptanceCriteria: task.acceptanceCriteria || [],
       deliverables: task.deliverables || [],
-      executionMode: task.executionMode || 'manual',
+      executionMode: task.executionMode || 'auto',
       agentType: task.agentType || 'general',
       blockingReason: task.blockingReason || null,
       dueDate: null,
