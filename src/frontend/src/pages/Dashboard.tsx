@@ -39,6 +39,31 @@ export default function Dashboard() {
     return !isSubagent || showStoppedSubagents || agent.status !== 'stopped'
   })
 
+  // 按最近活跃时间降序排序（最近活跃的排在前面）
+  // 无活跃时间（lastActiveRaw 为空或无效）的项排在末尾
+  const sortedAgents = [...visibleAgents].sort((a, b) => {
+    const timeA = a.lastActiveRaw ? new Date(a.lastActiveRaw).getTime() : 0
+    const timeB = b.lastActiveRaw ? new Date(b.lastActiveRaw).getTime() : 0
+
+    // 都有活跃时间，按降序排列（最近活跃的在前）
+    if (timeA > 0 && timeB > 0) {
+      return timeB - timeA
+    }
+
+    // 只有 A 有活跃时间，A 排在前面
+    if (timeA > 0) {
+      return -1
+    }
+
+    // 只有 B 有活跃时间，B 排在前面
+    if (timeB > 0) {
+      return 1
+    }
+
+    // 都没有活跃时间，保持原有顺序
+    return 0
+  })
+
   useWebSocket({
     onMessage: (message) => {
       if (message.type === 'AGENTS_UPDATE') {
@@ -150,7 +175,7 @@ export default function Dashboard() {
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Agent 列表</h2>
         <div className="grid grid-cols-2 gap-6">
-          {visibleAgents.map(agent => (
+          {sortedAgents.map(agent => (
             <AgentCard key={agent.id} agent={agent} />
           ))}
         </div>

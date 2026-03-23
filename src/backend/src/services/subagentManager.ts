@@ -1,5 +1,7 @@
 import { TaskService } from './taskService';
 import { getSubagentRecordingPath } from '../config/paths';
+import { randomUUID } from 'crypto';
+import { spawn } from 'child_process';
 
 /**
  * Subagent配置接口
@@ -46,10 +48,14 @@ export class SubagentManager {
    * @returns Subagent ID
    */
   async createSubagent(config: SubagentConfig): Promise<string> {
-    const subagentId = `agent:main:subagent:${Date.now()}`;
+    const subagentId = `agent:main:subagent:${randomUUID()}`;
+    const subagentLabel = `${config.taskId}-${Date.now().toString(36)}`;
     const now = new Date().toISOString();
 
     try {
+      // 1. 先创建并启动真实 subagent 会话
+      await this.createAndStartSubagent(subagentId, subagentLabel, config.taskDescription);
+
       // 1. 更新任务状态为 "in-progress"
       await this.updateTaskStatus(config.projectId, config.taskId, {
         status: 'in-progress',
@@ -71,6 +77,97 @@ export class SubagentManager {
       console.error(`❌ Failed to create subagent for task ${config.taskId}:`, error);
       throw error;
     }
+  }
+
+  private createAndStartSubagent(subagentId: string, label: string, taskDescription: string): Promise<void> {
+    const message = `[Subagent Context] You are running as a subagent (depth 1/1). Results auto-announce to your requester; do not busy-poll for status.\n\n[Subagent Task]: ${taskDescription}`;
+    const model = process.env.OPENCLAW_SUBAGENT_MODEL?.trim();
+
+    return (async () => {
+      const patchResult = await this.callGatewayRPC('sessions.patch', {
+        key: subagentId,
+        spawnDepth: 1
+      });
+
+      if (!patchResult.ok) {
+        throw new Error(patchResult.error || 'sessions.patch failed');
+      }
+
+      if (model) {
+        // 模型设置失败不阻塞创建流程
+        try {
+          await this.callGatewayRPC('sessions.patch', {
+            key: subagentId,
+            model
+          });
+        } catch {
+          // ignore
+        }
+      }
+
+      const agentResult = await this.callGatewayRPC('agent', {
+        message,
+        sessionKey: subagentId,
+        deliver: false,
+        label,
+        spawnedBy: 'backend-dispatch-once',
+        idempotencyKey: randomUUID()
+      });
+
+      if (!agentResult.ok && !agentResult.runId) {
+        try {
+          await this.callGatewayRPC('sessions.delete', {
+            key: subagentId,
+            emitLifecycleHooks: false
+          });
+        } catch {
+          // ignore cleanup failure
+        }
+        throw new Error(agentResult.error || 'agent RPC failed');
+      }
+    })();
+  }
+
+  private callGatewayRPC(method: string, params: Record<string, unknown>): Promise<Record<string, any>> {
+    return new Promise((resolve, reject) => {
+      const args = ['gateway', 'call', method, '--json', '--params', JSON.stringify(params)];
+      const child = spawn('openclaw', args, {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        shell: false
+      });
+
+      let stdout = '';
+      let stderr = '';
+
+      child.stdout.on('data', (data: Buffer) => {
+        stdout += data.toString();
+      });
+
+      child.stderr.on('data', (data: Buffer) => {
+        stderr += data.toString();
+      });
+
+      child.on('close', (code: number | null) => {
+        if (code === 0) {
+          try {
+            resolve(JSON.parse(stdout || '{}'));
+          } catch (error) {
+            reject(new Error(`Failed to parse gateway response: ${String(error)}`));
+          }
+          return;
+        }
+        reject(new Error(`Gateway call failed (${method}): ${stderr || stdout || `exit=${String(code)}`}`));
+      });
+
+      child.on('error', (error: Error) => {
+        reject(new Error(`Failed to start openclaw CLI: ${error.message}`));
+      });
+
+      setTimeout(() => {
+        child.kill();
+        reject(new Error(`Gateway call timeout (${method})`));
+      }, 30000);
+    });
   }
 
   /**

@@ -4,17 +4,15 @@
  *
  * === 模块概述 ===
  *
- * 本脚本是 OpenClaw 的任务调度器,负责自动发现和分配项目任务给 subagent 执行。
- * 它是项目管理自动化工作流的核心组件,将任务定义转换为可执行的工作单元。
+ * 本脚本是 OpenClaw 的任务调度触发器,负责按周期触发后端统一调度入口。
+ * 任务筛选和派发决策统一由后端 execution 服务处理，避免多套规则冲突。
  *
  * === 核心功能 ===
  *
- * 1. 任务发现: 监控 tasks JSON (通过 API 或直接读文件)
- * 2. 任务筛选: 发现 status=in-progress 且 claimedBy 为空的任务
- * 3. Prompt 生成: 使用 8 段式模板生成高质量 prompt (全局约束 + 任务信息)
- * 4. Agent 创建: 调用 OpenClaw Gateway RPC 创建 subagent
- * 5. 状态同步: 通过后端 API 更新任务状态 (claimedBy, updatedAt)
- * 6. 日志记录: 记录生成的 prompt 到日志文件,便于调试和审计
+ * 1. 项目发现: 拉取可调度项目列表（API 优先）
+ * 2. 调度触发: 调用 /api/execution/projects/:id/dispatch-once
+ * 3. 并发控制: 在触发前检查全局并发上限
+ * 4. 日志记录: 记录触发结果和后端返回原因，便于审计
  *
  * === 使用场景 ===
  *
@@ -35,13 +33,10 @@
  *
  * 1. 启动调度器 (watch 模式)
  * 2. 定期轮询任务 (默认 10 秒)
- * 3. 查找符合条件的任务 (status=in-progress, claimedBy=null)
- * 4. 检查并发限制 (maxConcurrent)
- * 5. 生成 8 段式 prompt
- * 6. 调用 Gateway 创建 subagent
- * 7. 更新任务状态 (claimedBy=subagentId)
- * 8. 记录分发信息到日志
- * 9. 等待 subagent 完成并自动检测
+ * 3. 检查并发限制 (maxConcurrent)
+ * 4. 逐项目触发 dispatch-once
+ * 5. 后端返回是否派发及原因
+ * 6. 记录触发结果
  *
  * === 配置说明 ===
  *
@@ -101,7 +96,7 @@
  * 【任务管理】
  * - getProjects() - 获取所有项目 (API 优先,回退到文件)
  * - getProjectTasks(projectId) - 获取项目的任务列表 (API 优先,回退到文件)
- * - findTasksToDispatch() - 查找需要分配的任务 (status=in-progress 且 claimedBy 为空)
+ * - findTasksToDispatch() - 查找需要分配的任务 (status=in-progress 且 claimedBy/assignee 为空)
  * - getRunningSubagentCount() - 获取运行中的 subagent 数量 (通过 sessions.json)
  *
  * 【Gateway RPC】
@@ -246,8 +241,8 @@ let isRunning = false;
 let intervalId = null;
 let isShuttingDown = false;
 
-// 已处理的任务（避免重复处理）
-const processedTasks = new Set();
+// 调度触发过程中，避免并发重入
+let isDispatching = false;
 
 // ============================================================
 // 工具函数
@@ -589,8 +584,48 @@ async function getProjectTasks(projectId) {
 }
 
 /**
+ * 触发后端统一调度入口（单项目单次）
+ */
+async function triggerProjectDispatch(projectId, forceAutoDispatch = true) {
+  try {
+    const response = await fetch(
+      `${config.backendUrl}/api/execution/projects/${projectId}/dispatch-once`,
+      {
+        method: 'POST',
+        headers: createApiHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ forceAutoDispatch })
+      }
+    );
+
+    if (!response.ok) {
+      const text = await response.text();
+      return {
+        ok: false,
+        dispatched: false,
+        reason: `HTTP ${response.status}: ${text || 'dispatch-once failed'}`
+      };
+    }
+
+    const result = await response.json();
+    return {
+      ok: true,
+      dispatched: Boolean(result?.dispatched),
+      taskId: result?.taskId || null,
+      subagentId: result?.subagentId || null,
+      reason: result?.reason || ''
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      dispatched: false,
+      reason: `调用 dispatch-once 异常: ${e.message}`
+    };
+  }
+}
+
+/**
  * 查找需要分配的任务
- * 条件：status=in-progress 且 claimedBy 为空
+ * 条件：status=in-progress 且 claimedBy 为空 且 assignee 为空
  */
 async function findTasksToDispatch() {
   const projects = await getProjects();
@@ -606,13 +641,10 @@ async function findTasksToDispatch() {
     const tasks = await getProjectTasks(project.id);
     
     for (const task of tasks) {
-      // 筛选条件：status=in-progress 且 claimedBy 为空
-      if (task.status === 'in-progress' && !task.claimedBy) {
-        // 检查是否已处理过
-        if (processedTasks.has(task.id)) {
-          continue;
-        }
-        
+      const hasAssignee = typeof task.assignee === 'string' && task.assignee.trim().length > 0;
+
+      // 筛选条件：status=in-progress 且 claimedBy 为空 且 assignee 为空
+      if (task.status === 'in-progress' && !task.claimedBy && !hasAssignee) {
         tasksToDispatch.push({ task, project });
       }
     }
@@ -898,83 +930,60 @@ ${prompt.slice(0, 500)}...
  * 执行一次调度
  */
 async function dispatchOnce() {
+  if (isDispatching) {
+    log('上一次调度仍在执行，跳过本轮');
+    return { dispatched: 0, reason: 'in_progress' };
+  }
+
+  isDispatching = true;
   log('开始调度检查...');
-  
-  // 1. 查找需要分配的任务
-  const tasksToDispatch = await findTasksToDispatch();
-  
-  if (tasksToDispatch.length === 0) {
-    log('没有需要分配的任务');
-    return { dispatched: 0 };
-  }
-  
-  log(`发现 ${tasksToDispatch.length} 个待分配任务`);
-  
-  // 2. 检查并发限制
-  const runningCount = await getRunningSubagentCount();
-  log(`当前运行中 subagent: ${runningCount}`);
-  
-  const availableSlots = config.maxConcurrent - runningCount;
-  if (availableSlots <= 0) {
-    log('已达到并发上限，跳过分配');
-    return { dispatched: 0, reason: 'max_concurrency' };
-  }
-  
-  // 3. 按优先级排序
-  const priorityOrder = { 'P0': 0, 'P1': 1, 'P2': 2, 'P3': 3 };
-  tasksToDispatch.sort((a, b) => {
-    const pa = priorityOrder[a.task.priority] ?? 99;
-    const pb = priorityOrder[b.task.priority] ?? 99;
-    return pa - pb;
-  });
-  
-  // 4. 分配任务
-  const tasksToProcess = tasksToDispatch.slice(0, availableSlots);
-  let dispatchedCount = 0;
-  
-  for (const { task, project } of tasksToProcess) {
-    log(`处理任务: ${task.id} [${task.priority || 'P2'}] ${task.title}`);
-    
-    try {
-      // 生成 prompt
-      const prompt = await generateExecutionPrompt(task, project, config.globalConstraints);
-      
-      // 创建 subagent
-      const spawnResult = await spawnSubagent(task, project, prompt);
-      
-      if (spawnResult.success) {
-        const subagentId = spawnResult.subagentId;
-        
-        // 记录 prompt
-        logPrompt(task.id, prompt, subagentId);
-        
-        // 更新任务状态
-        await updateTaskStatus(project.id, task.id, {
-          claimedBy: subagentId,
-          updatedAt: new Date().toISOString()
-        });
-        
-        // 记录分发
-        recordDispatch(task, project, subagentId, prompt);
-        
-        // 标记为已处理
-        processedTasks.add(task.id);
-        
-        dispatchedCount++;
-        log(`✓ 任务 ${task.id} 已分配给 ${subagentId}`);
-      } else {
-        log(`✗ 任务 ${task.id} 分配失败: ${spawnResult.error}`, 'ERROR');
+  try {
+    const projects = await getProjects();
+    const targetProjects = projects.filter((project) => {
+      if (!project?.id) {
+        return false;
       }
-    } catch (e) {
-      log(`处理任务 ${task.id} 异常: ${e.message}`, 'ERROR');
+      return config.projectAllowlist.length === 0 || config.projectAllowlist.includes(project.id);
+    });
+
+    if (targetProjects.length === 0) {
+      log('没有可调度项目（请检查项目白名单）');
+      return { dispatched: 0, projectsChecked: 0 };
     }
-    
-    // 间隔 1 秒
-    await sleep(1000);
+
+    const runningCount = await getRunningSubagentCount();
+    const availableSlots = config.maxConcurrent - runningCount;
+    log(`当前运行中 subagent: ${runningCount}，可用并发槽位: ${Math.max(availableSlots, 0)}`);
+    if (availableSlots <= 0) {
+      log('已达到并发上限，跳过本轮触发');
+      return { dispatched: 0, projectsChecked: targetProjects.length, reason: 'max_concurrency' };
+    }
+
+    let dispatchedCount = 0;
+    let checkedCount = 0;
+
+    for (const project of targetProjects) {
+      if (dispatchedCount >= availableSlots) {
+        break;
+      }
+
+      checkedCount++;
+      const result = await triggerProjectDispatch(project.id, true);
+      if (result.ok && result.dispatched) {
+        dispatchedCount++;
+        log(`✓ 项目 ${project.id} 触发成功: task=${result.taskId || '-'} subagent=${result.subagentId || '-'} (${result.reason || 'dispatched'})`);
+      } else {
+        log(`- 项目 ${project.id} 未派发: ${result.reason || 'no-op'}`);
+      }
+
+      await sleep(200);
+    }
+
+    log(`本次调度完成，检查项目 ${checkedCount} 个，触发派发 ${dispatchedCount} 个`);
+    return { dispatched: dispatchedCount, projectsChecked: checkedCount };
+  } finally {
+    isDispatching = false;
   }
-  
-  log(`本次调度完成，分配 ${dispatchedCount} 个任务`);
-  return { dispatched: dispatchedCount };
 }
 
 /**
