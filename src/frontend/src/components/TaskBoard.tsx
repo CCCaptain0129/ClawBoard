@@ -40,7 +40,7 @@ const columns = [
   },
 ]
 
-export default function KanbanBoard() {
+export default function TaskBoard() {
   const [projects, setProjects] = useState<Project[]>([])
   const [currentProject, setCurrentProject] = useState<string>('all')
   const [tasks, setTasks] = useState<Task[]>([])

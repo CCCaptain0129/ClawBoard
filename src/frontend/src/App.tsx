@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import Dashboard from './pages/Dashboard'
-import KanbanBoard from './components/KanbanBoard'
+import TaskBoard from './components/TaskBoard'
 import AgentInitPage from './pages/AgentInitPage'
 import { authFetch, buildApiUrl, clearStoredAccessToken, getStoredAccessToken, setStoredAccessToken } from './config'
 import {
@@ -364,7 +364,7 @@ function App() {
       </header>
       <main className="max-w-7xl mx-auto px-6 py-8">
         {currentPage === 'agents' && <Dashboard />}
-        {currentPage === 'tasks' && <KanbanBoard />}
+        {currentPage === 'tasks' && <TaskBoard />}
         {currentPage === 'agent-init' && <AgentInitPage />}
       </main>
     </div>
