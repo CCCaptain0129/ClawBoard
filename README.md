@@ -15,17 +15,23 @@
 
 ## 快速开始（3 分钟）
 
-1. 安装依赖与初始化：
+1. 克隆仓库并进入目录：
+```bash
+git clone https://github.com/CCCaptain0129/ClawBoard.git
+cd ClawBoard
+```
+
+2. 安装依赖与初始化：
 ```bash
 ./clawboard install
 ```
 
-2. 启动服务：
+3. 启动服务：
 ```bash
 ./clawboard start
 ```
 
-3. 打开看板：
+4. 打开看板：
 - 前端：[http://127.0.0.1:5173](http://127.0.0.1:5173)
 - 后端：[http://127.0.0.1:3000](http://127.0.0.1:3000)
 
