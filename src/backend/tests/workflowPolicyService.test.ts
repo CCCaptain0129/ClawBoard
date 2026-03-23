@@ -43,17 +43,17 @@ function createProjectConfig(overrides: Partial<ProjectExecutionConfig> = {}): P
 }
 
 describe('WorkflowPolicyService', () => {
-  it('当任务已指定负责人时，不应自动派发', () => {
+  it('当任务已指定负责人且满足其他条件时，仍允许自动派发', () => {
     const service = new WorkflowPolicyService();
     const task = createTask({ assignee: 'Alice' });
     const config = createProjectConfig();
 
     const eligible = service.isTaskAutoDispatchEligible(task, [task], config);
 
-    expect(eligible).toBe(false);
+    expect(eligible).toBe(true);
   });
 
-  it('当负责人为空白字符串时，应视为未指定负责人', () => {
+  it('当负责人为空白字符串时，应允许自动派发', () => {
     const service = new WorkflowPolicyService();
     const task = createTask({ assignee: '   ' });
     const config = createProjectConfig();
@@ -71,5 +71,38 @@ describe('WorkflowPolicyService', () => {
     const eligible = service.isTaskAutoDispatchEligible(task, [task], config);
 
     expect(eligible).toBe(true);
+  });
+
+  it('进行中但未被占用的任务，应允许自动派发', () => {
+    const service = new WorkflowPolicyService();
+    const task = createTask({ status: 'in-progress', claimedBy: null });
+    const config = createProjectConfig();
+
+    const eligible = service.isTaskAutoDispatchEligible(task, [task], config);
+
+    expect(eligible).toBe(true);
+  });
+
+  it('进行中且已被占用的任务，不应重复自动派发', () => {
+    const service = new WorkflowPolicyService();
+    const task = createTask({ status: 'in-progress', claimedBy: 'agent:main:subagent:abc' });
+    const config = createProjectConfig();
+
+    const eligible = service.isTaskAutoDispatchEligible(task, [task], config);
+
+    expect(eligible).toBe(false);
+  });
+
+  it('并发上限只应统计已被占用的进行中任务', () => {
+    const service = new WorkflowPolicyService();
+    const tasks: Task[] = [
+      createTask({ id: 'A', status: 'in-progress', claimedBy: 'agent:main:subagent:1' }),
+      createTask({ id: 'B', status: 'in-progress', claimedBy: null }),
+      createTask({ id: 'C', status: 'todo', claimedBy: null }),
+    ];
+
+    expect(service.getActiveTaskCount(tasks)).toBe(1);
+    expect(service.hasAvailableCapacity(tasks, createProjectConfig({ maxConcurrentSubagents: 1 }))).toBe(false);
+    expect(service.hasAvailableCapacity(tasks, createProjectConfig({ maxConcurrentSubagents: 2 }))).toBe(true);
   });
 });

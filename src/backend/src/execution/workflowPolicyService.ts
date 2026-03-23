@@ -22,16 +22,16 @@ export class WorkflowPolicyService {
       return '项目执行模式为手动';
     }
 
-    if (task.status !== 'todo') {
+    if (task.status !== 'todo' && task.status !== 'in-progress') {
       return `任务状态为 ${task.status}`;
+    }
+
+    if (this.hasClaimedBy(task)) {
+      return `任务已被占用（${task.claimedBy?.trim()}）`;
     }
 
     if (task.executionMode === 'manual') {
       return '任务执行模式为手动';
-    }
-
-    if (this.hasAssignee(task)) {
-      return `任务已指定负责人（${task.assignee?.trim()}）`;
     }
 
     if (!this.hasMinimumExecutionInfo(task)) {
@@ -45,8 +45,8 @@ export class WorkflowPolicyService {
     return null;
   }
 
-  private hasAssignee(task: Task): boolean {
-    return (task.assignee ?? '').trim().length > 0;
+  private hasClaimedBy(task: Task): boolean {
+    return (task.claimedBy ?? '').trim().length > 0;
   }
 
   hasMinimumExecutionInfo(task: Task): boolean {
@@ -72,7 +72,7 @@ export class WorkflowPolicyService {
   }
 
   getActiveTaskCount(tasks: Task[]): number {
-    return tasks.filter((task) => task.status === 'in-progress').length;
+    return tasks.filter((task) => task.status === 'in-progress' && this.hasClaimedBy(task)).length;
   }
 
   hasAvailableCapacity(tasks: Task[], projectConfig: ProjectExecutionConfig): boolean {

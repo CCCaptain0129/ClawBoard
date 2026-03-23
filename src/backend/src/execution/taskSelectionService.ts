@@ -41,7 +41,7 @@ export class TaskSelectionService {
 
   private buildIneligibleSummary(tasks: Task[], projectConfig: ProjectExecutionConfig): string {
     const details = tasks
-      .filter((task) => task.status === 'todo')
+      .filter((task) => task.status === 'todo' || task.status === 'in-progress')
       .map((task) => {
         const reason = this.workflowPolicyService.getIneligibleReason(task, tasks, projectConfig);
         if (!reason) {

@@ -43,16 +43,14 @@ function createConfig(overrides: Partial<ProjectExecutionConfig> = {}): ProjectE
 }
 
 describe('TaskSelectionService', () => {
-  it('当任务已指定负责人时，应在未派发原因中体现', () => {
+  it('当任务已指定负责人且满足条件时，仍应可被选中自动派发', () => {
     const service = new TaskSelectionService();
     const task = createTask({ id: 'TASK-ASSIGNED', assignee: 'Alice' });
     const config = createConfig();
 
     const result = service.selectNextTask([task], config);
 
-    expect(result.taskId).toBeNull();
-    expect(result.reason).toContain('TASK-ASSIGNED');
-    expect(result.reason).toContain('任务已指定负责人（Alice）');
+    expect(result.taskId).toBe('TASK-ASSIGNED');
   });
 
   it('应优先选择可自动派发的任务', () => {
