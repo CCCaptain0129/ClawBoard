@@ -307,6 +307,14 @@ ${handoffNotes}## Output Format（输出格式）
 - 列出关键结果或产物位置
 - 说明是否已满足验收标准
 - 如果没有满足，明确指出阻塞点
+- 在回复末尾必须输出“完成信号”代码块，严格使用以下格式（不要改字段名）：
+  \`\`\`completion_signal
+  task_id: ${packet.taskId}
+  status: done | blocked
+  summary: <一句话总结>
+  deliverables: <逗号分隔的产物路径或结果>
+  next_step: <若 blocked，写阻塞点和建议下一步；若 done，写 N/A>
+  \`\`\`
 `.trim();
   }
 
@@ -316,6 +324,7 @@ ${handoffNotes}## Output Format（输出格式）
       `优先调用 /api/execution/projects/${projectId}/tasks/${task.id}/context 获取结构化执行包。`,
       '只有在任务需要实际实现、命令执行、跨文件排查或较长时间处理时，才优先创建 Subagent。',
       '派发时直接使用执行上下文接口返回的 prompt 作为基础，不要手工遗漏硬约束。',
+      '要求 Subagent 在回复末尾输出 completion_signal 代码块，便于系统识别结束状态。',
       'Subagent 返回后先进入 review，再由人工或主 Agent 判断是否 done。',
     ];
 

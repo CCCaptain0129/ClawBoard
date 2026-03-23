@@ -20,6 +20,7 @@ import { getTasksRoot } from '../config/paths';
 import { ProjectExecutionService } from '../execution/projectExecutionService';
 import { registerApiRoutes } from './routes';
 import { accessTokenMiddleware } from '../middleware/accessToken';
+import { DispatcherControlService } from '../services/dispatcherControlService';
 
 export interface AppServices {
   agentService: AgentService;
@@ -34,6 +35,7 @@ export interface AppServices {
   progressOrchestrator: ProgressOrchestrator;
   fileWatcherService: FileWatcherService;
   syncManager: SyncManager;
+  dispatcherControlService: DispatcherControlService;
 }
 
 export interface BootstrappedApp {
@@ -74,6 +76,7 @@ function createServices(wsPort: number): AppServices {
     }
   );
   const syncManager = new SyncManager(new MarkdownToJSON(), new JSONToMarkdown(), taskService);
+  const dispatcherControlService = new DispatcherControlService();
 
   (progressOrchestrator as any).fileWatcherService = fileWatcherService;
   taskService.registerProgressSyncCallback((projectId: string) => progressOrchestrator.triggerProgressSync(projectId));
@@ -91,6 +94,7 @@ function createServices(wsPort: number): AppServices {
     progressOrchestrator,
     fileWatcherService,
     syncManager,
+    dispatcherControlService,
   };
 }
 

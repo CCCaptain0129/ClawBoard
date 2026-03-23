@@ -3,6 +3,7 @@ import Dashboard from './pages/Dashboard'
 import KanbanBoard from './components/KanbanBoard'
 import AgentInitPage from './pages/AgentInitPage'
 import { authFetch, buildApiUrl, clearStoredAccessToken, getStoredAccessToken, setStoredAccessToken } from './config'
+import { getDispatcherStatus, setDispatcherMode, type DispatcherStatus } from './services/taskService'
 import './index.css'
 
 type AppPage = 'agents' | 'tasks' | 'agent-init'
@@ -34,6 +35,9 @@ function App() {
   const [tokenInput, setTokenInput] = useState('')
   const [tokenError, setTokenError] = useState<string | null>(null)
   const [isCheckingToken, setIsCheckingToken] = useState(false)
+  const [dispatcherStatus, setDispatcherStatus] = useState<DispatcherStatus | null>(null)
+  const [dispatcherLoading, setDispatcherLoading] = useState(false)
+  const [dispatcherError, setDispatcherError] = useState<string | null>(null)
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -44,6 +48,37 @@ function App() {
     window.addEventListener('hashchange', handleHashChange)
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
+
+  useEffect(() => {
+    if (!accessToken) {
+      return
+    }
+
+    let disposed = false
+    const loadDispatcher = async () => {
+      try {
+        const status = await getDispatcherStatus()
+        if (!disposed) {
+          setDispatcherStatus(status)
+          setDispatcherError(null)
+        }
+      } catch (error) {
+        if (!disposed) {
+          setDispatcherError(error instanceof Error ? error.message : '加载调度状态失败')
+        }
+      }
+    }
+
+    void loadDispatcher()
+    const timer = window.setInterval(() => {
+      void loadDispatcher()
+    }, 10000)
+
+    return () => {
+      disposed = true
+      window.clearInterval(timer)
+    }
+  }, [accessToken])
 
   useEffect(() => {
     const handleInvalidToken = () => {
@@ -124,6 +159,35 @@ function App() {
     }
   }
 
+  const toggleDispatcherMode = async () => {
+    if (!dispatcherStatus || dispatcherLoading) {
+      return
+    }
+
+    const nextMode = dispatcherStatus.mode === 'auto' ? 'manual' : 'auto'
+    if (nextMode === 'auto') {
+      const noProjectEnabled = (dispatcherStatus.projectAllowlist?.length || 0) === 0
+      const message = noProjectEnabled
+        ? '开启全局自动调度后，系统会尝试自动分派任务。\n\n当前还没有启用任何项目，所以不会立即分派任务。\n下一步：到任务看板打开“本项目自动调度”，再把任务改为“进行中”。\n\n是否继续开启？'
+        : '开启全局自动调度后，系统会自动分派“已启用项目”中处于“进行中”的任务给 subagent。\n\n是否继续？'
+      const confirmed = window.confirm(message)
+      if (!confirmed) {
+        return
+      }
+    }
+
+    try {
+      setDispatcherLoading(true)
+      const status = await setDispatcherMode(nextMode, dispatcherStatus.intervalMs)
+      setDispatcherStatus(status)
+      setDispatcherError(null)
+    } catch (error) {
+      setDispatcherError(error instanceof Error ? error.message : '切换调度模式失败')
+    } finally {
+      setDispatcherLoading(false)
+    }
+  }
+
   if (!accessToken) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-200 flex items-center justify-center px-6">
@@ -172,42 +236,58 @@ function App() {
               <h1 className="text-2xl font-bold text-gray-900 tracking-tight">OpenClaw Agent 可视化监控</h1>
               <p className="text-sm text-gray-500 mt-1">实时监控和管理 OpenClaw Agent</p>
             </div>
-            <div className="flex items-center gap-4">
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                isBackendConnected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleDispatcherMode}
+                disabled={!dispatcherStatus || dispatcherLoading}
+                title={dispatcherStatus?.running ? '已开启，仅调度启用的项目' : '已关闭，仅手动管理任务'}
+                className={`h-10 px-4 text-sm font-semibold rounded-xl border transition-colors ${
+                  dispatcherStatus?.mode === 'auto'
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                    : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {dispatcherLoading
+                  ? '切换中...'
+                  : `全局自动调度：${dispatcherStatus?.mode === 'auto' ? '开' : '关'}`}
+              </button>
+              <span className={`inline-flex items-center h-10 px-4 rounded-xl text-sm font-semibold border ${
+                isBackendConnected
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : 'border-rose-200 bg-rose-50 text-rose-700'
               }`}>
                 <span className={`w-2 h-2 rounded-full mr-2 ${
-                  isBackendConnected ? 'bg-green-500' : 'bg-red-500'
+                  isBackendConnected ? 'bg-emerald-500' : 'bg-rose-500'
                 }`}></span>
                 {isBackendConnected ? '服务在线' : '服务离线'}
               </span>
               <div className="flex gap-2">
                 <button
                   onClick={() => navigateTo('agents')}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  className={`h-10 px-4 text-sm font-semibold rounded-xl transition-all duration-200 ${
                     currentPage === 'agents' 
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' 
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
                   Agent 监控
                 </button>
                 <button
                   onClick={() => navigateTo('tasks')}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  className={`h-10 px-4 text-sm font-semibold rounded-xl transition-all duration-200 ${
                     currentPage === 'tasks' 
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' 
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
                   任务看板
                 </button>
                 <button
                   onClick={() => navigateTo('agent-init')}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  className={`h-10 px-4 text-sm font-semibold rounded-xl transition-all duration-200 ${
                     currentPage === 'agent-init'
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
                   主 Agent 初始化
@@ -215,8 +295,18 @@ function App() {
               </div>
             </div>
           </div>
+          {dispatcherError && (
+            <div className="mt-2 text-right text-xs text-rose-600">{dispatcherError}</div>
+          )}
         </div>
       </header>
+      {currentPage === 'tasks' && (
+        <div className="max-w-7xl mx-auto px-6 pt-3">
+          <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+            自动调度使用顺序：1) 开启“全局自动调度” 2) 在项目内开启“本项目自动调度” 3) 将任务切换到“进行中”。
+          </div>
+        </div>
+      )}
       <main className="max-w-7xl mx-auto px-6 py-8">
         {currentPage === 'agents' && <Dashboard />}
         {currentPage === 'tasks' && <KanbanBoard />}

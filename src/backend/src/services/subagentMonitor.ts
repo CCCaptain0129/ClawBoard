@@ -385,6 +385,12 @@ export class SubagentMonitorService {
         }
 
         const subagentId = sessionKey;
+        const lastUpdateTime = typeof session.updatedAt === 'number' ? session.updatedAt : 0;
+
+        // 只自动注册“当前仍在运行”的会话，避免历史会话在重启后反复回写
+        if (this.determineSessionActivity(session, sessionKey, lastUpdateTime) !== 'running') {
+          continue;
+        }
 
         // 跳过已注册的 subagent
         if (this.registeredSubagents.has(subagentId)) {
@@ -726,6 +732,17 @@ export class SubagentMonitorService {
       const projectId = await this.findProjectIdByTaskId(taskId);
       if (!projectId) {
         console.warn(`[SubagentMonitorService] Project not found for inactive subagent task ${taskId}`);
+        return;
+      }
+
+      const currentTask = await this.getTaskById(projectId, taskId);
+      if (!currentTask) {
+        return;
+      }
+
+      // 如果用户或主流程已手动解绑该 subagent（例如改回 todo），不要再覆盖回 in-progress
+      if (currentTask.claimedBy !== subagentId) {
+        console.log(`[SubagentMonitorService] Skip inactive mark for ${subagentId}: task ${taskId} is no longer claimed by this subagent`);
         return;
       }
 

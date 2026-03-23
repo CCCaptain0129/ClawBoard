@@ -1,6 +1,8 @@
 {
   "$schema": "./pm-agent-dispatcher.schema.json",
-  "projectAllowlist": [],
+  "projectAllowlist": [
+    "example-project"
+  ],
   "pollIntervalMs": 10000,
   "maxConcurrent": 3,
   "backendUrl": "http://localhost:3000",

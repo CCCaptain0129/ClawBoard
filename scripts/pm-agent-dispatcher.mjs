@@ -239,6 +239,7 @@ const DEFAULT_CONFIG = {
 
 // 运行时配置
 let config = { ...DEFAULT_CONFIG };
+let boardAccessTokenCache = null;
 
 // 运行状态
 let isRunning = false;
@@ -268,6 +269,46 @@ function log(message, level = 'INFO') {
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function readBoardAccessToken() {
+  if (boardAccessTokenCache) {
+    return boardAccessTokenCache;
+  }
+
+  if (process.env.BOARD_ACCESS_TOKEN && process.env.BOARD_ACCESS_TOKEN.trim()) {
+    boardAccessTokenCache = process.env.BOARD_ACCESS_TOKEN.trim();
+    return boardAccessTokenCache;
+  }
+
+  const envPath = path.join(PROJECT_ROOT, '.env');
+  if (!fs.existsSync(envPath)) {
+    return '';
+  }
+
+  try {
+    const raw = fs.readFileSync(envPath, 'utf-8');
+    const line = raw.split('\n').find((item) => item.startsWith('BOARD_ACCESS_TOKEN='));
+    if (!line) {
+      return '';
+    }
+    const token = line.slice('BOARD_ACCESS_TOKEN='.length).trim();
+    boardAccessTokenCache = token;
+    return token;
+  } catch {
+    return '';
+  }
+}
+
+function createApiHeaders(extraHeaders = {}) {
+  const token = readBoardAccessToken();
+  if (!token) {
+    return extraHeaders;
+  }
+  return {
+    ...extraHeaders,
+    'x-access-token': token
+  };
 }
 
 /**
@@ -422,6 +463,16 @@ ${fields.outOfScope.length > 0
 - 提交信息简洁明了，说明做了什么
 - 示例：\`feat: 实现 XX 功能\` 或 \`fix: 修复 XX bug\`
 
+## Completion Signal（完成信号）
+在回复末尾必须输出以下代码块（字段名保持一致）：
+\`\`\`completion_signal
+task_id: ${id}
+status: done | blocked
+summary: <一句话总结>
+deliverables: <逗号分隔的产物路径或结果>
+next_step: <若 blocked，写阻塞点和建议下一步；若 done，写 N/A>
+\`\`\`
+
 ---
 *此 prompt 由 PM-Agent-Dispatcher 自动生成*
 *生成时间: ${new Date().toISOString()}*
@@ -437,7 +488,8 @@ ${fields.outOfScope.length > 0
 async function generateExecutionPrompt(task, project, constraints) {
   try {
     const response = await fetch(
-      `${config.backendUrl}/api/execution/projects/${project.id}/tasks/${task.id}/context`
+      `${config.backendUrl}/api/execution/projects/${project.id}/tasks/${task.id}/context`,
+      { headers: createApiHeaders() }
     );
 
     if (response.ok) {
@@ -487,7 +539,9 @@ ${prompt}
 async function getProjects() {
   try {
     // 首先尝试 API
-    const response = await fetch(`${config.backendUrl}/api/tasks/projects`);
+    const response = await fetch(`${config.backendUrl}/api/tasks/projects`, {
+      headers: createApiHeaders()
+    });
     if (response.ok) {
       return await response.json();
     }
@@ -512,7 +566,9 @@ async function getProjects() {
 async function getProjectTasks(projectId) {
   try {
     // 首先尝试 API
-    const response = await fetch(`${config.backendUrl}/api/tasks/projects/${projectId}/tasks`);
+    const response = await fetch(`${config.backendUrl}/api/tasks/projects/${projectId}/tasks`, {
+      headers: createApiHeaders()
+    });
     if (response.ok) {
       return await response.json();
     }
@@ -761,7 +817,7 @@ async function updateTaskStatus(projectId, taskId, updates) {
       `${config.backendUrl}/api/tasks/projects/${projectId}/tasks/${taskId}`,
       {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: createApiHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(updates)
       }
     );
@@ -939,6 +995,9 @@ async function startDispatcher() {
   log(`配置: 轮询间隔=${config.pollIntervalMs}ms (${config.pollIntervalMs/1000}s), 最大并发=${config.maxConcurrent}`);
   log(`PID: ${process.pid}`);
   log(`日志: ${config.logsDir}/pm-dispatcher.log`);
+  if (!readBoardAccessToken()) {
+    log('未检测到 BOARD_ACCESS_TOKEN，后端 API 可能返回 401（将回退为文件读取）。', 'WARN');
+  }
   
   // 立即执行一次
   await dispatchOnce();

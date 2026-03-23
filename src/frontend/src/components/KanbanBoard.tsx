@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import TaskCard from './TaskCard'
 import CreateTaskModal from './CreateTaskModal'
 import CreateProjectModal from './CreateProjectModal'
-import { deleteTask, generateProgressDoc, getProjects, getTasks, getTasksForProjects, updateProject, updateTask, type Project, type Task } from '../services/taskService'
+import { deleteTask, generateProgressDoc, getDispatcherStatus, getProjects, getTasks, getTasksForProjects, setProjectDispatcherEnabled, updateProject, updateTask, type DispatcherStatus, type Project, type Task } from '../services/taskService'
 import { useWebSocket } from '../hooks/useWebSocket'
 
 const columns = [
@@ -54,6 +54,8 @@ export default function KanbanBoard() {
   const [showCreateProjectModal, setShowCreateProjectModal] = useState(false)
   const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null)
   const [pendingDeleteTask, setPendingDeleteTask] = useState<{ id: string; title: string } | null>(null)
+  const [dispatcherStatus, setDispatcherStatus] = useState<DispatcherStatus | null>(null)
+  const [projectDispatchLoading, setProjectDispatchLoading] = useState(false)
   
   // JSON-first: 生成04进度跟踪状态
   const [generatingProgress, setGeneratingProgress] = useState(false)
@@ -119,6 +121,32 @@ export default function KanbanBoard() {
       window.clearInterval(intervalId)
     }
   }, [currentProject, projects.length])
+
+  useEffect(() => {
+    let disposed = false
+    const loadDispatcher = async () => {
+      try {
+        const status = await getDispatcherStatus()
+        if (!disposed) {
+          setDispatcherStatus(status)
+        }
+      } catch {
+        if (!disposed) {
+          setDispatcherStatus(null)
+        }
+      }
+    }
+
+    void loadDispatcher()
+    const timer = window.setInterval(() => {
+      void loadDispatcher()
+    }, 10000)
+
+    return () => {
+      disposed = true
+      window.clearInterval(timer)
+    }
+  }, [])
 
   const fetchProjects = async () => {
     try {
@@ -377,6 +405,29 @@ export default function KanbanBoard() {
     return projects.find(p => p.id === currentProject) || { name: '未知项目', color: '#6366F1', icon: '📁' }
   }
 
+  const currentProjectAutoEnabled = currentProject !== 'all'
+    && Boolean(dispatcherStatus?.projectAllowlist?.includes(currentProject))
+
+  const handleToggleProjectDispatch = async () => {
+    if (currentProject === 'all' || projectDispatchLoading) return
+    try {
+      setProjectDispatchLoading(true)
+      const nextEnabled = !currentProjectAutoEnabled
+      const status = await setProjectDispatcherEnabled(currentProject, nextEnabled)
+      setDispatcherStatus(status)
+      setNotice({
+        type: 'success',
+        message: nextEnabled
+          ? `项目 ${projectInfo.name} 已加入自动调度`
+          : `项目 ${projectInfo.name} 已移出自动调度`,
+      })
+    } catch (err) {
+      setNotice({ type: 'error', message: err instanceof Error ? err.message : '更新项目自动调度失败' })
+    } finally {
+      setProjectDispatchLoading(false)
+    }
+  }
+
   // 根据任务 ID 前缀查找对应的项目
   const findProjectByTaskPrefix = (taskId: string) => {
     return projects.find(p => taskId.startsWith(p.taskPrefix))
@@ -538,6 +589,30 @@ export default function KanbanBoard() {
         </div>
         <div className="flex items-center gap-3">
           {/* PMW-036: 新增任务按钮 */}
+          {currentProject !== 'all' && (
+            <button
+              onClick={handleToggleProjectDispatch}
+              disabled={projectDispatchLoading}
+              className={`px-4 py-2.5 rounded-lg transition-all text-sm font-semibold border ${
+                currentProjectAutoEnabled
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                  : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              title={dispatcherStatus?.running
+                ? '切换当前项目是否自动调度'
+                : '当前全局自动调度关闭，开启后将在全局开启时生效'}
+            >
+              {projectDispatchLoading
+                ? '更新中...'
+                : `本项目自动调度：${currentProjectAutoEnabled ? '开' : '关'}`}
+            </button>
+          )}
+          {currentProject !== 'all' && (
+            <span className="text-xs text-slate-500">
+              仅影响当前项目；任务需为“进行中”才会自动分派
+            </span>
+          )}
+
           {currentProject !== 'all' && (
             <button
               onClick={() => setShowCreateModal(true)}
