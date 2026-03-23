@@ -628,35 +628,36 @@ export default function TaskBoard() {
             </div>
 
             {currentProject !== 'all' && (
-              <div className="mt-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+              <div className="mt-3">
                 <div className="inline-flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-medium text-slate-600">Agent 自动调度</span>
                   <button
                     onClick={handleToggleProjectDispatch}
                     disabled={projectDispatchLoading}
-                    className={`h-8 px-3 rounded-lg text-xs font-semibold border transition-colors ${
-                      currentProjectAutoEnabled
-                        ? 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
-                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    className="h-8 px-3 rounded-lg text-xs font-semibold border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title={dispatcherStatus?.running
                       ? '切换当前项目是否自动调度'
                       : '当前全局自动调度关闭，开启后将在全局开启时生效'}
                   >
-                    {projectDispatchLoading ? '更新中...' : currentProjectAutoEnabled ? '状态：已开启' : '状态：已关闭'}
+                    {projectDispatchLoading ? '更新中...' : 'Agent 自动调度'}
                   </button>
-                </div>
-                <div className="mt-2.5 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-800">
-                  <svg className="mt-0.5 h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <span
+                    className={`inline-flex h-8 items-center rounded-lg border px-3 text-xs font-semibold ${
+                      currentProjectAutoEnabled
+                        ? 'border-blue-200 bg-blue-50 text-blue-700'
+                        : 'border-slate-200 bg-slate-100 text-slate-600'
+                    }`}
+                  >
+                    {currentProjectAutoEnabled ? '已开启' : '已关闭'}
+                  </span>
+                  <span className="inline-flex h-8 items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2.5 text-xs text-amber-800">
+                    <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path
                       fillRule="evenodd"
                       d="M8.257 3.099c.765-1.36 2.72-1.36 3.485 0l5.58 9.918c.75 1.334-.213 2.983-1.742 2.983H4.419c-1.53 0-2.492-1.649-1.742-2.983l5.58-9.918zM11 7a1 1 0 10-2 0v3a1 1 0 102 0V7zm-1 7a1.25 1.25 0 100-2.5A1.25 1.25 0 0010 14z"
                       clipRule="evenodd"
                     />
-                  </svg>
-                  <span>
-                    风险预警：开启后会自动创建 SubAgent 执行当前项目中符合条件的任务（`todo` 与未认领的 `in-progress`）。
-                    请先确认任务内容、范围和验收标准。
+                    </svg>
+                    <span>风险预警：开启后会自动执行符合条件任务，请先确认任务范围与验收标准</span>
                   </span>
                 </div>
               </div>
