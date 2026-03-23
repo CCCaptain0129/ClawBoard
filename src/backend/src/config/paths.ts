@@ -7,7 +7,21 @@ function isWorkspaceRoot(dir: string): boolean {
     && fs.existsSync(path.join(dir, 'tasks'));
 }
 
+function getWorkspaceRootFromEnv(): string | null {
+  const raw = process.env.OPENCLAW_VIS_WORKSPACE_ROOT || process.env.WORKSPACE_ROOT;
+  if (!raw) {
+    return null;
+  }
+  const resolved = path.resolve(raw.trim());
+  return isWorkspaceRoot(resolved) ? resolved : null;
+}
+
 export function getWorkspaceRoot(startDir: string = process.cwd()): string {
+  const envRoot = getWorkspaceRootFromEnv();
+  if (envRoot) {
+    return envRoot;
+  }
+
   let current = path.resolve(startDir);
 
   while (true) {

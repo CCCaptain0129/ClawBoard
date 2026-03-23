@@ -21,6 +21,9 @@ export interface Task {
   agentType?: 'general' | 'dev' | 'test' | 'debug'
   blockingReason?: string | null
   projectId?: string
+  activeExecutorId?: string | null
+  activeExecutorLabel?: string | null
+  activeExecutorLastUpdate?: string | null
   comments?: any[]
 }
 

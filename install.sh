@@ -189,6 +189,37 @@ setup_access_token() {
     echo -e "  ${YELLOW}请妥善保存这个访问码，后续访问看板需要输入。${NC}"
 }
 
+setup_workspace_root() {
+    print_step "写入安装路径配置..."
+
+    if [ ! -f "$ENV_FILE" ]; then
+        touch "$ENV_FILE"
+    fi
+
+    local key="OPENCLAW_VIS_WORKSPACE_ROOT"
+    local value="$PROJECT_ROOT"
+    local temp_file
+    temp_file="$(mktemp)"
+
+    awk -v key="$key" -v value="$value" '
+      BEGIN { updated = 0 }
+      $0 ~ ("^" key "=") {
+        print key "=" value
+        updated = 1
+        next
+      }
+      { print }
+      END {
+        if (updated == 0) {
+          print key "=" value
+        }
+      }
+    ' "$ENV_FILE" > "$temp_file"
+
+    mv "$temp_file" "$ENV_FILE"
+    print_success "已写入安装路径: $value"
+}
+
 # 检查并提示配置文件
 check_config() {
     print_step "检查配置文件..."
@@ -383,6 +414,10 @@ main() {
 
     # 初始化访问码
     setup_access_token
+    echo ""
+
+    # 写入安装路径（供后端解析任务真源目录）
+    setup_workspace_root
     echo ""
     
     # 检查配置

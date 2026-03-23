@@ -52,7 +52,7 @@ function createServices(wsPort: number): AppServices {
   const projectExecutionService = new ProjectExecutionService(taskService, wsServer);
   const scheduler = new AgentTaskScheduler(taskService, wsServer, projectExecutionService);
   const statusSyncService = new StatusSyncService(taskService, wsServer);
-  const subagentMonitorService = new SubagentMonitorService(taskService);
+  const subagentMonitorService = new SubagentMonitorService(taskService, { wsServer });
   const safeSyncService = new SafeSyncService(taskService);
   const syncLockService = new SyncLockService(5000);
   const progressToDocService = new ProgressToDocService(taskService);

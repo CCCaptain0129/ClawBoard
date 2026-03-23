@@ -1,14 +1,82 @@
 import { Router } from 'express';
+import * as fs from 'fs';
+import * as path from 'path';
 import { TaskService } from '../services/taskService';
 import { WebSocketHandler } from '../websocket/server';
 import { SubagentManager } from '../services/subagentManager';
-import { getSubagentRecordingPath } from '../config/paths';
+import type { SubagentMonitorService } from '../services/subagentMonitor';
+import type { Task } from '../types/tasks';
+import { getProjectRoot, getSubagentRecordingPath, getTasksRoot } from '../config/paths';
 
-export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler) {
+export function taskRoutes(
+  taskService: TaskService,
+  wsServer: WebSocketHandler,
+  subagentMonitorService: SubagentMonitorService
+) {
   const router = Router();
+  const projectSourceMapPath = path.join(getTasksRoot(), 'project-source-map.json');
 
   // 初始化SubagentManager
   const subagentManager = new SubagentManager(taskService);
+
+  type ProjectSourceMapEntry = {
+    projectRoot?: string;
+    docsRoot?: string;
+    taskJsonPath?: string;
+    notes?: string;
+  };
+
+  const loadProjectSourceMap = (): Record<string, ProjectSourceMapEntry> => {
+    if (!fs.existsSync(projectSourceMapPath)) {
+      return {};
+    }
+    try {
+      const raw = fs.readFileSync(projectSourceMapPath, 'utf-8');
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  };
+
+  const saveProjectSourceMap = (sourceMap: Record<string, ProjectSourceMapEntry>): void => {
+    fs.writeFileSync(projectSourceMapPath, JSON.stringify(sourceMap, null, 2), 'utf-8');
+  };
+
+  const buildProjectSourceOfTruth = (projectId: string) => {
+    const sourceMap = loadProjectSourceMap();
+    const mapped = sourceMap[projectId] || {};
+
+    const projectRoot = mapped.projectRoot || getProjectRoot(projectId);
+    const docsRoot = mapped.docsRoot || path.join(projectRoot, 'docs');
+    const taskJsonPath = mapped.taskJsonPath || taskService.getProjectTasksFilePath(projectId);
+
+    return {
+      projectId,
+      apiSource: {
+        mode: 'api-first',
+        listProjects: '/api/tasks/projects',
+        listTasks: `/api/tasks/projects/${projectId}/tasks`,
+        createTask: `/api/tasks/projects/${projectId}/tasks`,
+        updateTask: `/api/tasks/projects/${projectId}/tasks/:taskId`,
+        updateSourceMapping: `/api/tasks/projects/${projectId}/source-of-truth`,
+      },
+      guidance: '如果 Agent 与看板不在同一文件系统，请只使用 apiSource，不要直接写本地文件路径。',
+      serverLocalFileSource: {
+        enabled: true,
+        serverLocalOnly: true,
+        taskJsonPath,
+        projectRoot,
+        docsRoot,
+      },
+      taskJsonPath,
+      projectRoot,
+      docsRoot,
+      memoryRule: 'MEMORY.MD 只保存长期规则、项目索引和最新进度摘要',
+      notes: mapped.notes || '',
+      sourceMapPath: projectSourceMapPath,
+    };
+  };
 
   const validateProjectAccess = async (projectId: string) => {
     const project = await taskService.getProjectById(projectId);
@@ -37,6 +105,24 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
     return { ok: true as const };
   };
 
+  const enrichTasks = async (projectId: string, tasks: Task[]): Promise<Task[]> => {
+    const executions = await subagentMonitorService.getActiveExecutions();
+    return tasks.map((task) => {
+      const execution = executions.get(`${projectId}:${task.id}`);
+      return {
+        ...task,
+        activeExecutorId: execution?.subagentId || null,
+        activeExecutorLabel: execution?.label || null,
+        activeExecutorLastUpdate: execution?.lastUpdateTimestamp || null,
+      };
+    });
+  };
+
+  const enrichTask = async (projectId: string, task: Task): Promise<Task> => {
+    const [enrichedTask] = await enrichTasks(projectId, [task]);
+    return enrichedTask;
+  };
+
   // 获取所有项目
   router.get('/projects', async (req, res) => {
     try {
@@ -44,6 +130,87 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
       res.json(projects);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch projects' });
+    }
+  });
+
+  // 获取项目真源路径（给 Agent/自动化系统使用）
+  router.get('/projects/:id/source-of-truth', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const validation = await validateProjectAccess(id);
+      if (!validation.ok) {
+        return res.status(validation.status).json(validation.body);
+      }
+      res.json(buildProjectSourceOfTruth(id));
+    } catch (error) {
+      const details = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: 'Failed to load source-of-truth paths', details });
+    }
+  });
+
+  // 全局真源信息（用于 Agent 启动时定位规则，不依赖本地目录）
+  router.get('/source-of-truth', async (_req, res) => {
+    try {
+      res.json({
+        mode: 'api-first',
+        guidance: '外部 Agent 默认通过 API 读写任务；tasks/*.json 属于看板服务端内部真源。',
+        api: {
+          listProjects: '/api/tasks/projects',
+          projectSourceOfTruth: '/api/tasks/projects/:projectId/source-of-truth',
+          createProject: '/api/tasks/projects',
+          createTask: '/api/tasks/projects/:projectId/tasks',
+          updateTask: '/api/tasks/projects/:projectId/tasks/:taskId',
+        },
+        serverLocalFileSource: {
+          enabled: true,
+          serverLocalOnly: true,
+          tasksRoot: getTasksRoot(),
+          mappingFile: projectSourceMapPath,
+        },
+      });
+    } catch (error) {
+      const details = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: 'Failed to load global source-of-truth', details });
+    }
+  });
+
+  // 更新项目真源路径映射（绝对路径优先）
+  router.put('/projects/:id/source-of-truth', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const validation = await validateProjectAccess(id);
+      if (!validation.ok) {
+        return res.status(validation.status).json(validation.body);
+      }
+
+      const { projectRoot, docsRoot, taskJsonPath, notes } = req.body || {};
+      const hasAnyField = [projectRoot, docsRoot, taskJsonPath, notes].some(
+        (value) => typeof value === 'string' && value.trim().length > 0
+      );
+      if (!hasAnyField) {
+        return res.status(400).json({
+          error: 'At least one field is required: projectRoot, docsRoot, taskJsonPath, notes',
+        });
+      }
+
+      const sourceMap = loadProjectSourceMap();
+      const current = sourceMap[id] || {};
+      sourceMap[id] = {
+        ...current,
+        ...(typeof projectRoot === 'string' ? { projectRoot: projectRoot.trim() } : {}),
+        ...(typeof docsRoot === 'string' ? { docsRoot: docsRoot.trim() } : {}),
+        ...(typeof taskJsonPath === 'string' ? { taskJsonPath: taskJsonPath.trim() } : {}),
+        ...(typeof notes === 'string' ? { notes: notes.trim() } : {}),
+      };
+      saveProjectSourceMap(sourceMap);
+
+      res.json({
+        success: true,
+        sourceOfTruth: buildProjectSourceOfTruth(id),
+      });
+    } catch (error) {
+      const details = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: 'Failed to update source-of-truth paths', details });
     }
   });
 
@@ -118,7 +285,7 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
         tasks = tasks.filter(t => t.assignee === assignee);
       }
       
-      res.json(tasks);
+      res.json(await enrichTasks(id, tasks));
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch tasks' });
     }
@@ -133,11 +300,12 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
 
       // JSON-first: 所有项目都支持直接创建 JSON 任务
       const newTask = await taskService.createTask(id, task);
+      const enrichedTask = await enrichTask(id, newTask);
       
       // 广播任务创建
-      wsServer.broadcastTaskUpdate(id, newTask);
+      wsServer.broadcastTaskUpdate(id, enrichedTask);
       
-      res.json(newTask);
+      res.json(enrichedTask);
     } catch (error) {
       res.status(500).json({ error: 'Failed to create task' });
     }
@@ -184,7 +352,7 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
         return res.status(404).json({ error: 'Task not found' });
       }
       
-      res.json(task);
+      res.json(await enrichTask(id, task));
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch task' });
     }
@@ -206,8 +374,9 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
       }
       
       // 广播任务更新
-      wsServer.broadcastTaskUpdate(id, task);
-      res.json(task);
+      const enrichedTask = await enrichTask(id, task);
+      wsServer.broadcastTaskUpdate(id, enrichedTask);
+      res.json(enrichedTask);
     } catch (error) {
       res.status(500).json({ error: 'Failed to update task' });
     }
@@ -352,7 +521,7 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
 
       // 广播任务更新
       if (task) {
-        wsServer.broadcastTaskUpdate(projectId, task);
+        wsServer.broadcastTaskUpdate(projectId, await enrichTask(projectId, task));
       }
 
       res.json({
@@ -382,7 +551,6 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
       }
 
       // 查找任务ID - 使用更灵活的正则表达式
-      const fs = await import('fs');
       const recordingPath = getSubagentRecordingPath();
       const content = fs.readFileSync(recordingPath, 'utf-8');
       // 支持多种任务ID格式：VIS-xxx, INT-xxx, EXA-xxx, TASK-xxx, TASK-TEST-xxx, TEST-xxx 等
@@ -404,7 +572,7 @@ export function taskRoutes(taskService: TaskService, wsServer: WebSocketHandler)
           task = await taskService.getTasksByProject(project.id)
             .then(tasks => tasks.find(t => t.id === taskId));
           if (task) {
-            wsServer.broadcastTaskUpdate(project.id, task);
+            wsServer.broadcastTaskUpdate(project.id, await enrichTask(project.id, task));
             break;
           }
         }

@@ -22,6 +22,9 @@ interface Task {
   executionMode?: 'manual' | 'auto'
   agentType?: 'general' | 'dev' | 'test' | 'debug'
   blockingReason?: string | null
+  activeExecutorId?: string | null
+  activeExecutorLabel?: string | null
+  activeExecutorLastUpdate?: string | null
   comments?: any[]  // PMW-010: 执行日志
 }
 
@@ -33,7 +36,7 @@ interface TaskCardProps {
   projectIcon?: string
   onStatusChange?: (taskId: string, newStatus: 'todo' | 'in-progress' | 'review' | 'done') => void
   onAssigneeChange?: (taskId: string, assignee: string | null) => Promise<void> | void
-  onDelete?: (taskId: string) => void // JSON-first: 删除任务
+  onDelete?: (taskId: string, taskTitle: string) => void // JSON-first: 删除任务
 }
 
 const priorityColors = {
@@ -72,6 +75,18 @@ function formatSubagentId(claimedBy: string | null): string | null {
 
   // 通用处理：取后12位
   return claimedBy.slice(-12)
+}
+
+function formatActiveExecutor(task: Task): string | null {
+  if (task.activeExecutorLabel?.trim()) {
+    return task.activeExecutorLabel.trim()
+  }
+
+  if (task.activeExecutorId) {
+    return formatSubagentId(task.activeExecutorId)
+  }
+
+  return formatSubagentId(task.claimedBy)
 }
 
 /**
@@ -195,7 +210,7 @@ export default function TaskCard({
   const normalizedAssignee = task.assignee ?? ''
   const hasAssigneeChanges = assigneeDraft.trim() !== normalizedAssignee.trim()
 
-  const shortSubagentId = formatSubagentId(task.claimedBy)
+  const activeExecutorLabel = formatActiveExecutor(task)
   const startTimeDisplay = formatTime(task.startTime)
   const isInProgress = task.status === 'in-progress'
   const isReview = task.status === 'review'
@@ -584,7 +599,7 @@ export default function TaskCard({
         )}
 
         {/* Subagent 分配信息 - 优先显示 */}
-        {shortSubagentId && (
+        {activeExecutorLabel && (
           <div className={`mb-2 p-2 rounded-lg border ${
             isOverdue
               ? 'bg-gradient-to-r from-red-50 to-orange-50 border-red-300'
@@ -600,8 +615,13 @@ export default function TaskCard({
                 <div className={`text-xs font-semibold ${isOverdue ? 'text-red-700' : 'text-purple-700'}`}>
                   {isOverdue ? '⚠️ 执行超时' : '分配给 Subagent'}
                 </div>
-                <div className={`text-xs font-mono truncate ${isOverdue ? 'text-red-600' : 'text-purple-600'}`} title={task.claimedBy || ''}>
-                  {shortSubagentId}
+                <div
+                  className={`text-xs truncate ${isOverdue ? 'text-red-600' : 'text-purple-600'} ${
+                    task.activeExecutorLabel ? 'font-medium' : 'font-mono'
+                  }`}
+                  title={task.activeExecutorLabel || task.activeExecutorId || task.claimedBy || ''}
+                >
+                  {activeExecutorLabel}
                 </div>
               </div>
             </div>
@@ -676,7 +696,7 @@ export default function TaskCard({
               </div>
               <span className="text-xs font-medium text-gray-700">{task.assignee}</span>
             </div>
-          ) : !shortSubagentId ? (
+          ) : !activeExecutorLabel ? (
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
                 <span className="text-xs text-gray-400">?</span>
@@ -691,11 +711,11 @@ export default function TaskCard({
             {/* JSON-first: 删除按钮 - 仅 todo 状态显示 */}
             {onDelete && task.status === 'todo' && (
               <button
+                type="button"
                 onClick={(e) => {
+                  e.preventDefault()
                   e.stopPropagation()
-                  if (confirm(`确定要删除任务 "${task.title}" 吗？\n\n注意：只有 todo 状态的任务可以删除。`)) {
-                    onDelete(task.id)
-                  }
+                  onDelete(task.id, task.title)
                 }}
                 className="text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors"
                 title="删除任务（仅 todo 状态）"

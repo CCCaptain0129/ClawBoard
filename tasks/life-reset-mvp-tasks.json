@@ -1,0 +1,13 @@
+{
+  "id": "life-reset-mvp",
+  "name": "示例项目",
+  "description": "用于演示项目看板、任务状态流转和负责人分配的示例项目。",
+  "status": "active",
+  "leadAgent": null,
+  "color": "#3B82F6",
+  "icon": "📁",
+  "taskPrefix": "EXP",
+  "createdAt": "2026-03-16T23:59:00.000Z",
+  "updatedAt": "2026-03-21T07:16:27.514Z",
+  "tasks": []
+}

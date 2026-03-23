@@ -32,6 +32,12 @@ export default function Dashboard() {
   const [agents, setAgents] = useState<Agent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showStoppedSubagents, setShowStoppedSubagents] = useState(false)
+
+  const visibleAgents = agents.filter((agent) => {
+    const isSubagent = agent.id.includes(':subagent:')
+    return !isSubagent || showStoppedSubagents || agent.status !== 'stopped'
+  })
 
   useWebSocket({
     onMessage: (message) => {
@@ -66,8 +72,8 @@ export default function Dashboard() {
       })
   }, [])
 
-  const runningCount = agents.filter(a => a.status === 'running').length
-  const highRiskCount = agents.filter((agent) =>
+  const runningCount = visibleAgents.filter(a => a.status === 'running').length
+  const highRiskCount = visibleAgents.filter((agent) =>
     agent.contextUsage?.risk === 'high' || agent.contextUsage?.risk === 'overflow'
   ).length
 
@@ -90,7 +96,20 @@ export default function Dashboard() {
         </div>
       )}
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Agent 概览</h2>
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <h2 className="text-2xl font-bold text-gray-900">Agent 概览</h2>
+          <button
+            type="button"
+            onClick={() => setShowStoppedSubagents((value) => !value)}
+            className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+              showStoppedSubagents
+                ? 'bg-slate-900 text-white hover:bg-slate-800'
+                : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            {showStoppedSubagents ? '隐藏已结束 Subagent' : '显示已结束 Subagent'}
+          </button>
+        </div>
         <div className="grid grid-cols-3 gap-6">
           <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center gap-3 mb-2">
@@ -99,7 +118,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-sm text-gray-500">总 Agent 数</p>
-                <p className="text-2xl font-bold text-gray-900">{agents.length}</p>
+                <p className="text-2xl font-bold text-gray-900">{visibleAgents.length}</p>
               </div>
             </div>
           </div>
@@ -131,7 +150,7 @@ export default function Dashboard() {
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Agent 列表</h2>
         <div className="grid grid-cols-2 gap-6">
-          {agents.map(agent => (
+          {visibleAgents.map(agent => (
             <AgentCard key={agent.id} agent={agent} />
           ))}
         </div>

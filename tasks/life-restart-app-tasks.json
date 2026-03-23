@@ -1,0 +1,320 @@
+{
+  "id": "life-restart-app",
+  "name": "人生重启应用（life-restart-app）",
+  "description": "Web MVP：不登录、完整问卷、生成个人重启地图、今日最小行动、正反馈升级、本地保存与导出。",
+  "status": "active",
+  "leadAgent": null,
+  "color": "#3B82F6",
+  "icon": "🎯",
+  "taskPrefix": "LRA",
+  "createdAt": "2026-03-16T11:16:51.699Z",
+  "updatedAt": "2026-03-16T16:36:11.686Z",
+  "tasks": [
+    {
+      "id": "LRA-001",
+      "title": "定义「人生重启地图」数据结构（JSON Schema）+ 示例地图",
+      "description": "把 MVP 地图的 6 组件（反愿景/愿景/1年目标/1月项目/每日行动/约束）抽象成可持久化的数据结构，供前端生成与导出使用。",
+      "status": "done",
+      "priority": "P1",
+      "labels": [
+        "主线任务"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dependencies": [],
+      "contextSummary": "",
+      "acceptanceCriteria": [
+        "Schema 覆盖 6 组件且字段命名清晰",
+        "sample-map.json 可通过 schema 校验",
+        "前端可据此渲染卡片层级"
+      ],
+      "deliverables": [
+        "map.schema.json（或 TS 类型定义）",
+        "示例地图 sample-map.json",
+        "字段说明（简短）"
+      ],
+      "executionMode": "manual",
+      "agentType": "general",
+      "blockingReason": null,
+      "dueDate": null,
+      "estimatedTime": "0.5天",
+      "startTime": "2026-03-16T11:54:41.798Z",
+      "completeTime": "2026-03-16T12:18:43.854Z",
+      "createdAt": "2026-03-16T11:17:45.174Z",
+      "updatedAt": "2026-03-16T12:19:42.976Z",
+      "comments": []
+    },
+    {
+      "id": "LRA-002",
+      "title": "定义问卷→地图字段映射 + 评分/路线推荐规则（对齐题库 v0）",
+      "description": "把 question-bank.v0.json 的维度/属性分数，映射到地图字段（6组件）与推荐路线（Top3）。明确计算公式与默认阈值，供前端实现。",
+      "status": "done",
+      "priority": "P1",
+      "labels": [
+        "主线任务"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dependencies": [],
+      "contextSummary": "",
+      "acceptanceCriteria": [
+        "映射覆盖题库所有题目",
+        "能从答案稳定生成 6 组件地图 + Top3 路线",
+        "规则可被前端直接实现（无歧义）"
+      ],
+      "deliverables": [
+        "映射表（questionId -> mapField / routeWeight）",
+        "评分与推荐公式说明",
+        "1 份示例输入输出（answers -> map + routes）"
+      ],
+      "executionMode": "manual",
+      "agentType": "general",
+      "blockingReason": null,
+      "dueDate": null,
+      "estimatedTime": "0.5天",
+      "startTime": "2026-03-16T12:20:12.147Z",
+      "completeTime": "2026-03-16T12:37:04.074Z",
+      "createdAt": "2026-03-16T11:18:22.779Z",
+      "updatedAt": "2026-03-16T12:39:06.560Z",
+      "comments": []
+    },
+    {
+      "id": "LRA-003",
+      "title": "实现问卷流程（分步/进度/可中断继续/本地草稿）",
+      "description": "前端接入题库 v0：逐题展示，显示进度/预估时长；支持退出后继续（localStorage）；提交后生成答案对象。",
+      "status": "done",
+      "priority": "P1",
+      "labels": [
+        "主线任务"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dependencies": [],
+      "contextSummary": "",
+      "acceptanceCriteria": [
+        "支持完整走完题库并提交",
+        "刷新页面后能从上次进度继续",
+        "移动端可用（不溢出/可滚动）"
+      ],
+      "deliverables": [
+        "问卷页面（可运行）",
+        "本地草稿存取",
+        "提交输出 answers JSON"
+      ],
+      "executionMode": "manual",
+      "agentType": "general",
+      "blockingReason": null,
+      "dueDate": null,
+      "estimatedTime": "1天",
+      "startTime": "2026-03-16T12:40:02.460Z",
+      "completeTime": "2026-03-16T13:06:21.141Z",
+      "createdAt": "2026-03-16T11:19:09.597Z",
+      "updatedAt": "2026-03-16T13:06:35.649Z",
+      "comments": []
+    },
+    {
+      "id": "LRA-004",
+      "title": "实现地图生成 + 地图页面（卡片可展开/一屏聚焦关键信息）",
+      "description": "根据答案与映射规则生成地图 JSON，并在地图页以“地图总览+可展开卡片”形式展示。首屏必须看到：反愿景一句话、愿景一句话、1月项目、今日最小行动入口、等级/连续。",
+      "status": "done",
+      "priority": "P1",
+      "labels": [
+        "主线任务"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dependencies": [],
+      "contextSummary": "",
+      "acceptanceCriteria": [
+        "提交问卷后自动进入地图页",
+        "首屏信息齐全且不拥挤",
+        "卡片展开可查看 6 组件全部内容"
+      ],
+      "deliverables": [
+        "map generator（答案→地图 JSON）",
+        "地图页面 UI",
+        "示例用户走通截图/录屏（可选）"
+      ],
+      "executionMode": "manual",
+      "agentType": "general",
+      "blockingReason": null,
+      "dueDate": null,
+      "estimatedTime": "1天",
+      "startTime": "2026-03-16T13:06:52.612Z",
+      "completeTime": "2026-03-16T14:24:52.990Z",
+      "createdAt": "2026-03-16T11:19:51.687Z",
+      "updatedAt": "2026-03-16T14:26:14.230Z",
+      "comments": []
+    },
+    {
+      "id": "LRA-005",
+      "title": "实现「今日最小行动」+ XP/等级/连续（正反馈）",
+      "description": "从地图的 dailyLevers 里生成 1-3 个今日动作（5-10 分钟优先）；用户选择并完成打勾；完成后获得 XP、等级提升与连续天数展示；未完成可降级为更小动作。",
+      "status": "done",
+      "priority": "P1",
+      "labels": [
+        "主线任务"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dependencies": [],
+      "contextSummary": "",
+      "acceptanceCriteria": [
+        "地图页可进入“今日最小行动”并完成打勾",
+        "完成后 XP/等级/连续即时更新",
+        "未完成次日能生成更小动作（失败友好）"
+      ],
+      "deliverables": [
+        "今日动作生成器",
+        "完成/连续/等级状态存储",
+        "正反馈 UI（toast/动画可简化）"
+      ],
+      "executionMode": "manual",
+      "agentType": "general",
+      "blockingReason": null,
+      "dueDate": null,
+      "estimatedTime": "1天",
+      "startTime": "2026-03-16T14:30:59.053Z",
+      "completeTime": "2026-03-16T14:53:54.391Z",
+      "createdAt": "2026-03-16T11:20:37.273Z",
+      "updatedAt": "2026-03-16T14:54:28.854Z",
+      "comments": []
+    },
+    {
+      "id": "LRA-006",
+      "title": "本地保存 + 导出（Markdown/复制）",
+      "description": "不登录前提下：自动保存问卷答案、地图、今日打卡、等级/连续到 localStorage；提供“一键导出我的地图”为 Markdown（可复制到 Notion/飞书/Obsidian）。",
+      "status": "done",
+      "priority": "P2",
+      "labels": [
+        "主线任务"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dependencies": [],
+      "contextSummary": "",
+      "acceptanceCriteria": [
+        "刷新页面数据不丢",
+        "导出内容结构清晰可读",
+        "可在移动端完成复制/下载"
+      ],
+      "deliverables": [
+        "localStorage 持久化实现",
+        "导出 Markdown（含 6 组件 + 今日动作/进度）",
+        "复制按钮/下载文件（二选一）"
+      ],
+      "executionMode": "manual",
+      "agentType": "general",
+      "blockingReason": null,
+      "dueDate": null,
+      "estimatedTime": "0.5天",
+      "startTime": "2026-03-16T14:30:59.055Z",
+      "completeTime": "2026-03-16T14:37:50.747Z",
+      "createdAt": "2026-03-16T11:21:28.191Z",
+      "updatedAt": "2026-03-16T14:39:37.457Z",
+      "comments": []
+    },
+    {
+      "id": "LRA-007",
+      "title": "上线准备：部署（Vercel/Netlify）+ MVP 验收走查（15分钟流程）",
+      "description": "把 Web MVP 部署到可访问环境；配置基础 SEO/分享信息；做一轮端到端走查（开场→问卷→地图→今日行动→导出），修复阻塞上线的 bug。",
+      "status": "done",
+      "priority": "P2",
+      "labels": [
+        "主线任务"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dependencies": [],
+      "contextSummary": "",
+      "acceptanceCriteria": [
+        "公开可访问链接可用",
+        "关键路径无阻塞 bug",
+        "移动端/桌面端体验可接受"
+      ],
+      "deliverables": [
+        "部署链接（预发/正式）",
+        "验收 checklist（覆盖关键路径）",
+        "阻塞问题清单（如有）"
+      ],
+      "executionMode": "manual",
+      "agentType": "general",
+      "blockingReason": null,
+      "dueDate": null,
+      "estimatedTime": "0.5天",
+      "startTime": "2026-03-16T14:30:59.056Z",
+      "completeTime": "2026-03-16T14:42:03.042Z",
+      "createdAt": "2026-03-16T11:22:17.571Z",
+      "updatedAt": "2026-03-16T14:43:28.000Z",
+      "comments": []
+    },
+    {
+      "id": "LRA-008",
+      "title": "增加愿景/反愿景具像化回答（开放题）并写入地图",
+      "description": "在问卷完成后增加 2-4 个开放题：反愿景具体描述（未来5-10年不变的一天/不可承受的代价），愿景具体描述（3年后理想周二/身份宣言）。保存到 localStorage，并在生成 map 时覆盖 antiVision/vision 的 summary+details，使结果更有感觉。",
+      "status": "done",
+      "priority": "P1",
+      "labels": [
+        "主线任务"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dependencies": [],
+      "contextSummary": "",
+      "acceptanceCriteria": [
+        "填写开放题后刷新不丢",
+        "提交问卷→/map 展示为用户自己的描述（非模板）",
+        "无填写时有合理默认文案"
+      ],
+      "deliverables": [
+        "问卷新增“愿景/反愿景”页面（开放题）",
+        "localStorage keys 与结构说明",
+        "map 生成时应用用户输入（覆盖 summary/details）"
+      ],
+      "executionMode": "manual",
+      "agentType": "general",
+      "blockingReason": null,
+      "dueDate": null,
+      "estimatedTime": "0.5天",
+      "startTime": "2026-03-16T16:35:47.884Z",
+      "completeTime": "2026-03-16T16:35:56.823Z",
+      "createdAt": "2026-03-16T16:29:00.177Z",
+      "updatedAt": "2026-03-16T16:36:11.686Z",
+      "comments": []
+    },
+    {
+      "id": "LRA-009",
+      "title": "结果可视化（<=6维度）：角色面板+条形图/雷达+优势短板+路线切换",
+      "description": "在 /map 首屏增加更游戏化、更直观的“人生面板”：\n- 只展示 <=6 个聚合维度（从现有10维度聚合）条形图或雷达\n- 显示优势Top3/短板Top3\n- 路线Top3做成可点击切换（切换1月项目/建议文案来源），避免看起来只有财务\n- 同时保留 Lv/XP/连续 + 今日任务卡",
+      "status": "todo",
+      "priority": "P1",
+      "labels": [
+        "主线任务"
+      ],
+      "assignee": null,
+      "claimedBy": null,
+      "dependencies": [],
+      "contextSummary": "",
+      "acceptanceCriteria": [
+        "首屏一眼能看到 6 维度分布",
+        "能切换路线，内容不再像“只有财务”",
+        "移动端可用，信息层级清晰"
+      ],
+      "deliverables": [
+        "/map 首屏新增人生面板（<=6维）",
+        "路线Top3可切换",
+        "样式优化（更像游戏面板）"
+      ],
+      "executionMode": "manual",
+      "agentType": "general",
+      "blockingReason": null,
+      "dueDate": null,
+      "estimatedTime": "0.5天",
+      "startTime": null,
+      "completeTime": null,
+      "createdAt": "2026-03-16T16:30:21.575Z",
+      "updatedAt": "2026-03-16T16:30:21.575Z",
+      "comments": []
+    }
+  ]
+}

@@ -1,0 +1,242 @@
+{
+  "projectId": "life-reset-mvp",
+  "projectName": "人生重启 App / Life Reset",
+  "updatedAt": "2026-03-21",
+  "tasks": [
+    {
+      "id": "T001",
+      "title": "吸收 PDF 真源并初始化项目文档",
+      "status": "done",
+      "priority": "P0",
+      "description": "将 MVP、问卷、结果页、结构设计、营销页 5 份 PDF 的核心信息整理为项目真源。",
+      "deliverables": [
+        "PROJECT.md",
+        "MVP_SPEC.md",
+        "TASKS.md",
+        "PROGRESS.md",
+        "MEMORY.MD"
+      ],
+      "acceptanceCriteria": [
+        "项目目标、范围、主路径、关键页面和转化逻辑已明确",
+        "后续设计与开发不依赖反复手翻 PDF"
+      ]
+    },
+    {
+      "id": "T002",
+      "title": "整理 12 题问卷结构化题库",
+      "status": "done",
+      "priority": "P0",
+      "description": "把 12 题问卷转为开发可直接消费的结构化数据与说明。",
+      "deliverables": [
+        "questionnaire schema/json",
+        "题目文案映射说明"
+      ],
+      "acceptanceCriteria": [
+        "每题都包含题干、选项、分值、维度",
+        "Q0 权重逻辑被明确记录"
+      ]
+    },
+    {
+      "id": "T003",
+      "title": "定义分型和结果映射规则",
+      "status": "done",
+      "priority": "P0",
+      "description": "明确 direction/execution/state 三维得分规则与 3 类结果模板的映射方式。",
+      "deliverables": [
+        "result scoring spec",
+        "边界情况说明"
+      ],
+      "acceptanceCriteria": [
+        "开发可根据规则直接实现结果判定",
+        "接近分数场景有默认归类策略"
+      ]
+    },
+    {
+      "id": "T004",
+      "title": "输出测评页页面和组件规格",
+      "status": "done",
+      "priority": "P0",
+      "description": "把测评页交互拆为设计和前端共享的页面结构与组件说明。",
+      "deliverables": [
+        "页面结构说明",
+        "组件清单",
+        "交互状态说明"
+      ],
+      "acceptanceCriteria": [
+        "包含进度条、自动下一题、返回和 loading 设计",
+        "可支持移动端流畅答题"
+      ]
+    },
+    {
+      "id": "T005",
+      "title": "输出 3 类结果页模板",
+      "status": "done",
+      "priority": "P0",
+      "description": "整理方向模糊型、行动卡住型、状态透支型 3 套结果页模板。",
+      "deliverables": [
+        "结果页模板",
+        "共享模块说明",
+        "CTA 承接逻辑"
+      ],
+      "acceptanceCriteria": [
+        "每类结果页均包含主问题、原因、今日行动、路线和 CTA"
+      ]
+    },
+    {
+      "id": "T006",
+      "title": "整理营销页结构与转化节奏",
+      "status": "done",
+      "priority": "P0",
+      "description": "沉淀《7天人生重启行动营》销售页的内容结构、CTA 节奏和素材需求。",
+      "deliverables": [
+        "营销页结构说明",
+        "素材建议",
+        "价格和 CTA 逻辑"
+      ],
+      "acceptanceCriteria": [
+        "营销页可完整承接结果页流量",
+        "价值、差异、收获、价格、CTA 结构完整"
+      ]
+    },
+    {
+      "id": "T007",
+      "title": "定义 MVP 埋点方案",
+      "status": "done",
+      "priority": "P1",
+      "description": "定义问卷完成、结果 CTA、支付点击等最小关键数据埋点。",
+      "deliverables": [
+        "event list"
+      ],
+      "acceptanceCriteria": [
+        "能支撑 MVP 的完成率和转化率判断"
+      ]
+    },
+    {
+      "id": "T008",
+      "title": "技术方案与前端骨架",
+      "status": "done",
+      "priority": "P1",
+      "description": "确定 Web MVP 技术栈和页面路由骨架，并实现主链路页面。",
+      "deliverables": [
+        "Next.js web app",
+        "landing/questionnaire/result/sales pages"
+      ],
+      "acceptanceCriteria": [
+        "问卷、结果页、营销页三段式流程可运行",
+        "项目通过 build 与 lint"
+      ]
+    },
+    {
+      "id": "T009",
+      "title": "示例用户跑通",
+      "status": "done",
+      "priority": "P1",
+      "description": "用一个虚拟用户从问卷到结果页到营销承接跑通全流程。",
+      "deliverables": [
+        "示例答案",
+        "链路验证记录"
+      ],
+      "acceptanceCriteria": [
+        "链路可验证",
+        "结果合理",
+        "CTA 一致"
+      ]
+    },
+    {
+      "id": "T010",
+      "title": "7天课程真源文档沉淀",
+      "status": "done",
+      "priority": "P0",
+      "description": "把 7 天课程从营销描述升级为可执行产品真源。",
+      "deliverables": [
+        "docs/course-7day/curriculum.md",
+        "docs/course-7day/day-templates.md",
+        "docs/course-7day/entry-rules.md",
+        "docs/course-7day/acceptance.md"
+      ],
+      "acceptanceCriteria": [
+        "Day1-Day7 有明确输入输出",
+        "AI 任务生成规则明确",
+        "课程入口规则可执行"
+      ]
+    },
+    {
+      "id": "T011",
+      "title": "课程页面与路由骨架",
+      "status": "todo",
+      "priority": "P0",
+      "description": "在现有 Web 应用内新增课程入口与 Day 页面骨架。",
+      "deliverables": [
+        "/course 入口页",
+        "/course/day/[day] 日页面"
+      ],
+      "acceptanceCriteria": [
+        "Day1-Day7 页面可访问",
+        "占位数据可正确渲染"
+      ]
+    },
+    {
+      "id": "T012",
+      "title": "AI任务生成链路（MVP）",
+      "status": "todo",
+      "priority": "P0",
+      "description": "根据用户输入与问卷结果生成每日主任务与备选任务。",
+      "deliverables": [
+        "任务生成接口",
+        "前端调用流程"
+      ],
+      "acceptanceCriteria": [
+        "输出结构稳定",
+        "任务可在 30-60 分钟完成"
+      ]
+    },
+    {
+      "id": "T013",
+      "title": "问卷结果到课程入口联动",
+      "status": "todo",
+      "priority": "P1",
+      "description": "将结果页与课程入口打通，实现默认路线分流。",
+      "deliverables": [
+        "result_type 到 entry_track 映射接入",
+        "结果页进入课程入口"
+      ],
+      "acceptanceCriteria": [
+        "3 类结果进入对应默认路线",
+        "Day1 任务策略随结果类型变化"
+      ]
+    },
+    {
+      "id": "T014",
+      "title": "课程埋点与完成率看板",
+      "status": "todo",
+      "priority": "P1",
+      "description": "补充课程关键行为埋点并支持完成率分析。",
+      "deliverables": [
+        "课程事件表",
+        "页面埋点代码",
+        "基础漏斗定义"
+      ],
+      "acceptanceCriteria": [
+        "可观测 Day1 进入率",
+        "可观测 Day7 完成率",
+        "可识别中途流失点"
+      ]
+    },
+    {
+      "id": "T015",
+      "title": "课程MVP走查与发布清单",
+      "status": "todo",
+      "priority": "P1",
+      "description": "使用典型用户完成课程流程走查并产出发布清单。",
+      "deliverables": [
+        "走查记录",
+        "问题清单",
+        "上线前检查表"
+      ],
+      "acceptanceCriteria": [
+        "阻断问题清零",
+        "核心流程稳定可用"
+      ]
+    }
+  ]
+}

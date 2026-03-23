@@ -10,5 +10,29 @@
     "taskPrefix": "EXP",
     "createdAt": "2026-03-16T23:59:00.000Z",
     "updatedAt": "2026-03-16T23:59:00.000Z"
+  },
+{
+    "id": "life-reset-mvp",
+    "name": "人生重启项目12题",
+    "description": "12题问卷+7天重启课程",
+    "status": "active",
+    "leadAgent": null,
+    "color": "#3B82F6",
+    "icon": "📁",
+    "taskPrefix": "EXP",
+    "createdAt": "2026-03-16T23:59:00.000Z",
+    "updatedAt": "2026-03-16T23:59:00.000Z"
+  },
+  {
+    "id": "life-restart-app",
+    "name": "人生重启应用（life-restart-app）",
+    "description": "Web MVP：不登录、完整问卷、生成个人重启地图、今日最小行动、正反馈升级、本地保存与导出。",
+    "status": "active",
+    "leadAgent": null,
+    "color": "#3B82F6",
+    "icon": "🎯",
+    "taskPrefix": "LRA",
+    "createdAt": "2026-03-16T11:16:51.699Z",
+    "updatedAt": "2026-03-16T11:16:51.699Z"
   }
 ]

@@ -2,6 +2,8 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import type { TaskService } from './taskService';
 import { getOpenClawSessionsPath, getSubagentRecordingPath } from '../config/paths';
+import type { WebSocketHandler } from '../websocket/server';
+import type { Task } from '../types/tasks';
 
 /**
  * Subagent 状态接口
@@ -36,6 +38,25 @@ interface OpenClawSessionsStore {
   [key: string]: OpenClawSession;
 }
 
+interface OpenClawRunsStore {
+  runs?: Record<string, {
+    runId: string;
+    childSessionKey?: string;
+    task?: string;
+    endedAt?: number;
+    endedReason?: string;
+  }>;
+}
+
+export interface ActiveSubagentExecution {
+  projectId: string;
+  taskId: string;
+  subagentId: string;
+  label: string;
+  lastUpdateTime: number;
+  lastUpdateTimestamp: string;
+}
+
 /**
  * SubagentMonitorService - 监控 Subagent 完成状态并自动补齐任务状态
  *
@@ -56,6 +77,7 @@ export class SubagentMonitorService {
   private intervalId: NodeJS.Timeout | null = null;
 
   private taskService: TaskService;
+  private wsServer?: WebSocketHandler;
 
   // 幂等性控制：记录已处理的 subagent，避免重复标记
   private processedSubagents: Set<string> = new Set();
@@ -68,8 +90,10 @@ export class SubagentMonitorService {
     recordingPath?: string;
     intervalMs?: number;
     completionThresholdMs?: number;
+    wsServer?: WebSocketHandler;
   }) {
     this.taskService = taskService;
+    this.wsServer = options?.wsServer;
     // OpenClaw sessions store 路径
     this.sessionsJsonPath = options?.sessionsJsonPath ||
       getOpenClawSessionsPath();
@@ -84,6 +108,153 @@ export class SubagentMonitorService {
 
     // 完成判定阈值：默认 2 分钟（120,000 毫秒）
     this.completionThresholdMs = options?.completionThresholdMs || 120000;
+  }
+
+  async getActiveExecutions(): Promise<Map<string, ActiveSubagentExecution>> {
+    const executions = new Map<string, ActiveSubagentExecution>();
+
+    try {
+      const sessions = await this.readAllSubagentSessions();
+      const tasksByProject = await this.readTasksByProject();
+
+      for (const [sessionKey, session] of sessions.entries()) {
+        if (!sessionKey.startsWith('agent:main:subagent:')) {
+          const runMatch = await this.matchRunBackedExecution(sessionKey, session, tasksByProject);
+          if (runMatch) {
+            executions.set(`${runMatch.projectId}:${runMatch.taskId}`, runMatch);
+          }
+          continue;
+        }
+
+        const directMatch = await this.matchLabelBackedExecution(sessionKey, session);
+        if (directMatch) {
+          executions.set(`${directMatch.projectId}:${directMatch.taskId}`, directMatch);
+        }
+      }
+    } catch (error) {
+      console.error('[SubagentMonitorService] Error collecting active executions:', error);
+    }
+
+    return executions;
+  }
+
+  private async readAllSubagentSessions(): Promise<Map<string, OpenClawSession>> {
+    const sessionMap = new Map<string, OpenClawSession>();
+    const agentsRoot = path.join(process.env.HOME || '', '.openclaw/agents');
+
+    try {
+      const entries = await fs.readdir(agentsRoot, { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isDirectory()) {
+          continue;
+        }
+
+        const sessionsPath = path.join(agentsRoot, entry.name, 'sessions', 'sessions.json');
+        try {
+          const content = await fs.readFile(sessionsPath, 'utf-8');
+          const sessions: OpenClawSessionsStore = JSON.parse(content);
+          for (const [sessionKey, session] of Object.entries(sessions)) {
+            if (sessionKey.includes(':subagent:')) {
+              sessionMap.set(sessionKey, session);
+            }
+          }
+        } catch {
+          continue;
+        }
+      }
+    } catch (error) {
+      console.error('[SubagentMonitorService] Failed to read session directories:', error);
+    }
+
+    return sessionMap;
+  }
+
+  private async readTasksByProject(): Promise<Map<string, Awaited<ReturnType<TaskService['getTasksByProject']>>>> {
+    const taskMap = new Map<string, Awaited<ReturnType<TaskService['getTasksByProject']>>>();
+    const projects = await this.taskService.getAllProjects();
+    for (const project of projects) {
+      taskMap.set(project.id, await this.taskService.getTasksByProject(project.id));
+    }
+    return taskMap;
+  }
+
+  private async matchLabelBackedExecution(
+    sessionKey: string,
+    session: OpenClawSession
+  ): Promise<ActiveSubagentExecution | null> {
+    const label = session.label || '';
+    const taskId = this.parseTaskIdFromLabel(label);
+    if (!taskId) {
+      return null;
+    }
+
+    const lastUpdateTime = typeof session.updatedAt === 'number' ? session.updatedAt : 0;
+    if (this.determineSessionActivity(session, sessionKey, lastUpdateTime) !== 'running') {
+      return null;
+    }
+
+    const projectId = await this.findProjectIdByTaskId(taskId);
+    if (!projectId) {
+      return null;
+    }
+
+    return {
+      projectId,
+      taskId,
+      subagentId: sessionKey,
+      label: this.normalizeExecutionLabel(label, sessionKey),
+      lastUpdateTime,
+      lastUpdateTimestamp: new Date(lastUpdateTime).toISOString(),
+    };
+  }
+
+  private async matchRunBackedExecution(
+    sessionKey: string,
+    session: OpenClawSession,
+    tasksByProject: Map<string, Awaited<ReturnType<TaskService['getTasksByProject']>>>
+  ): Promise<ActiveSubagentExecution | null> {
+    const lastUpdateTime = typeof session.updatedAt === 'number' ? session.updatedAt : 0;
+    if (this.determineSessionActivity(session, sessionKey, lastUpdateTime) !== 'running') {
+      return null;
+    }
+
+    const runsPath = path.join(process.env.HOME || '', '.openclaw/subagents/runs.json');
+    let runsStore: OpenClawRunsStore;
+    try {
+      runsStore = JSON.parse(await fs.readFile(runsPath, 'utf-8'));
+    } catch {
+      return null;
+    }
+
+    const run = Object.values(runsStore.runs || {}).find((item) =>
+      item.childSessionKey === sessionKey && !item.endedAt
+    );
+    if (!run?.task) {
+      return null;
+    }
+
+    const directTaskId = this.parseTaskIdFromLabel(run.task);
+
+    for (const [projectId, tasks] of tasksByProject.entries()) {
+      const matchedTask = tasks.find((task) => (
+        (directTaskId && task.id === directTaskId)
+        || run.task?.includes(task.id)
+        || run.task?.includes(task.title)
+      ));
+
+      if (matchedTask) {
+        return {
+          projectId,
+          taskId: matchedTask.id,
+          subagentId: sessionKey,
+          label: this.normalizeExecutionLabel(session.label || matchedTask.title, sessionKey),
+          lastUpdateTime,
+          lastUpdateTimestamp: new Date(lastUpdateTime).toISOString(),
+        };
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -321,7 +492,7 @@ export class SubagentMonitorService {
   /**
    * 获取任务详情
    */
-  private async getTaskById(projectId: string, taskId: string): Promise<{ id: string; title: string; claimedBy?: string | null } | null> {
+  private async getTaskById(projectId: string, taskId: string): Promise<Task | null> {
     try {
       const tasks = await this.taskService.getTasksByProject(projectId);
       return tasks.find(t => t.id === taskId) || null;
@@ -338,6 +509,56 @@ export class SubagentMonitorService {
     } catch {
       return false;
     }
+  }
+
+  private determineSessionActivity(
+    session: OpenClawSession,
+    sessionKey: string,
+    lastUpdateTime: number
+  ): 'running' | 'stopped' {
+    const now = Date.now();
+    const inactiveTime = lastUpdateTime > 0 ? now - lastUpdateTime : Number.POSITIVE_INFINITY;
+    const hasRealtimeConnection = (session as any).connectionState === 'connected' || (session as any).isAlive;
+    const hasActivePolling = Boolean((session as any).polling);
+
+    if (hasRealtimeConnection || hasActivePolling) {
+      return 'running';
+    }
+
+    if (sessionKey.includes('subagent:') && inactiveTime <= 3 * 60 * 1000) {
+      return 'running';
+    }
+
+    return 'stopped';
+  }
+
+  private normalizeExecutionLabel(label: string, subagentId: string): string {
+    const normalized = label.trim();
+    if (normalized) {
+      return normalized;
+    }
+
+    const tail = subagentId.split(':').pop() || 'unknown';
+    return `subagent:${tail.slice(-12)}`;
+  }
+
+  private async broadcastTaskRuntimeUpdate(projectId: string, taskId: string): Promise<void> {
+    if (!this.wsServer) {
+      return;
+    }
+
+    const task = await this.getTaskById(projectId, taskId);
+    if (!task) {
+      return;
+    }
+
+    const execution = (await this.getActiveExecutions()).get(`${projectId}:${taskId}`);
+    this.wsServer.broadcastTaskUpdate(projectId, {
+      ...task,
+      activeExecutorId: execution?.subagentId || null,
+      activeExecutorLabel: execution?.label || null,
+      activeExecutorLastUpdate: execution?.lastUpdateTimestamp || null,
+    });
   }
 
   /**
@@ -368,6 +589,7 @@ export class SubagentMonitorService {
 
       // 3. 记录到内存
       this.registeredSubagents.set(subagentId, { taskId, projectId });
+      await this.broadcastTaskRuntimeUpdate(projectId, taskId);
 
       console.log(`[SubagentMonitorService] ✓ Registered subagent ${subagentId} for task ${taskId}`);
     } catch (error) {
@@ -515,6 +737,7 @@ export class SubagentMonitorService {
       });
 
       await this.appendInactiveNote(subagentId);
+      await this.broadcastTaskRuntimeUpdate(projectId, taskId);
 
       console.log(`[SubagentMonitorService] ✓ Marked inactive for manual review: ${subagentId}`);
     } catch (error) {

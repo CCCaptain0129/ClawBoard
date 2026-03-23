@@ -8,37 +8,40 @@
   "icon": "📁",
   "taskPrefix": "EXP",
   "createdAt": "2026-03-16T23:59:00.000Z",
-  "updatedAt": "2026-03-16T23:59:00.000Z",
+  "updatedAt": "2026-03-23T01:27:16.508Z",
   "tasks": [
     {
-      "id": "EXP-001",
-      "title": "浏览看板并了解状态流转",
-      "description": "查看任务如何从 todo 进入 in-progress、review 和 done。",
-      "status": "todo",
-      "priority": "P2",
+      "id": "EXP-002",
+      "title": "制定 life-restart-app MVP 问卷题库 v0（维度+题目+选项）",
+      "description": "为 MVP 版本整理一份可落地的问卷题库：覆盖关键人生维度；每题包含题干、选项、分值/映射规则；便于后续计算初始属性与推荐路线。",
+      "status": "in-progress",
+      "priority": "P1",
       "labels": [
-        "示例"
+        "主线任务"
       ],
-      "assignee": "产品负责人",
-      "claimedBy": null,
+      "assignee": null,
+      "claimedBy": "agent:main:subagent:000693b6-18fd-47cc-810e-627d218f412a",
       "dependencies": [],
-      "contextSummary": "这是一个示例任务，用于帮助新用户理解看板的基本工作方式。",
+      "contextSummary": "已确定：MVP 为 Web、不登录、问卷完整、地图简洁清晰、游戏化以正反馈/升级为主。\n本任务输出问卷题库 v0，后续会用于：生成初始角色属性、推荐路线/目标、驱动地图与成长系统。",
       "acceptanceCriteria": [
-        "能理解 4 个状态的含义",
-        "能在卡片中修改负责人"
+        "覆盖 MVP 所需的关键维度（不少于 8 个）",
+        "题目数量满足可用（不少于 25 题），且每题有明确映射/分值",
+        "输出格式可直接被前端读取（JSON 字段完整、可解析）"
       ],
       "deliverables": [
-        "完成一次看板基本操作"
+        "问卷维度清单（含每维定义）",
+        "题库 v0（题干/选项/分值或映射规则）",
+        "导出为 JSON/Markdown（便于接入前端）"
       ],
       "executionMode": "manual",
       "agentType": "general",
-      "blockingReason": null,
+      "blockingReason": "Subagent 会话已失活或长时间无更新，需要人工复核后再决定是否完成。",
       "dueDate": null,
-      "estimatedTime": "10分钟",
-      "startTime": null,
-      "completeTime": null,
-      "createdAt": "2026-03-16T23:59:00.000Z",
-      "updatedAt": "2026-03-16T23:59:00.000Z",
+      "estimatedTime": "1天",
+      "startTime": "2026-03-16T09:03:49.481Z",
+      "completeTime": "2026-03-16T12:47:39.920Z",
+      "createdAt": "2026-03-16T08:49:58.753Z",
+      "updatedAt": "2026-03-23T01:27:16.508Z",
       "comments": []
     }
   ]

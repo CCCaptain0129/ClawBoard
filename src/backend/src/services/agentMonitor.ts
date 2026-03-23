@@ -206,14 +206,24 @@ export class OpenClawAgentMonitor {
   }
 
   async getAgentStatus(): Promise<AgentStatus[]> {
-    // 优先尝试通过 WebSocket 获取实时状态
-    const realtimeAgents = await this.getRealtimeAgentStatus();
-    if (realtimeAgents.length > 0) {
-      return realtimeAgents;
+    const [realtimeAgents, fileAgents] = await Promise.all([
+      this.getRealtimeAgentStatus(),
+      this.getAgentStatusFromFile(),
+    ]);
+
+    if (realtimeAgents.length === 0) {
+      return fileAgents;
     }
 
-    // 回退到 sessions.json
-    return this.getAgentStatusFromFile();
+    const merged = new Map<string, AgentStatus>();
+    for (const agent of fileAgents) {
+      merged.set(agent.id, agent);
+    }
+    for (const agent of realtimeAgents) {
+      merged.set(agent.id, agent);
+    }
+
+    return Array.from(merged.values());
   }
 
   private async getRealtimeAgentStatus(): Promise<AgentStatus[]> {
@@ -502,14 +512,28 @@ export class OpenClawAgentMonitor {
     try {
       const fs = await import('fs');
       const path = await import('path');
-      const sessionsPath = path.join(process.env.HOME || '', '.openclaw/agents/main/sessions/sessions.json');
-      
-      const sessionsData = JSON.parse(fs.readFileSync(sessionsPath, 'utf-8'));
       const agents: AgentStatus[] = [];
-      
-      for (const [key, session] of Object.entries(sessionsData)) {
-        const agent = await this.parseFileSession(session as any, key);
-        agents.push(agent);
+
+      const agentsRoot = path.join(process.env.HOME || '', '.openclaw/agents');
+      if (!fs.existsSync(agentsRoot)) {
+        return [];
+      }
+
+      const agentDirs = fs.readdirSync(agentsRoot, { withFileTypes: true })
+        .filter((entry: any) => entry.isDirectory())
+        .map((entry: any) => entry.name);
+
+      for (const agentDir of agentDirs) {
+        const sessionsPath = path.join(agentsRoot, agentDir, 'sessions', 'sessions.json');
+        if (!fs.existsSync(sessionsPath)) {
+          continue;
+        }
+
+        const sessionsData = JSON.parse(fs.readFileSync(sessionsPath, 'utf-8'));
+        for (const [key, session] of Object.entries(sessionsData)) {
+          const agent = await this.parseFileSession(session as any, key);
+          agents.push(agent);
+        }
       }
       
       return agents;

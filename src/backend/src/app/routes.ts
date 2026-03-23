@@ -11,7 +11,7 @@ import { accessTokenMiddleware } from '../middleware/accessToken';
 export function registerApiRoutes(app: express.Express, services: AppServices): void {
   app.use('/api', accessTokenMiddleware);
   app.use('/api/agents', agentRoutes(services.agentService));
-  app.use('/api/tasks', taskRoutes(services.taskService, services.wsServer));
+  app.use('/api/tasks', taskRoutes(services.taskService, services.wsServer, services.subagentMonitorService));
   app.use('/api/tasks', healthCheckRouter);
   app.use('/api/execution', executionRoutes(services.projectExecutionService));
   app.use('/api/sync', syncRoutes(services.taskService, services.wsServer, services.safeSyncService));

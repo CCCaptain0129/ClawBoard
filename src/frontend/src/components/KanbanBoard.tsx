@@ -53,6 +53,7 @@ export default function KanbanBoard() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showCreateProjectModal, setShowCreateProjectModal] = useState(false)
   const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null)
+  const [pendingDeleteTask, setPendingDeleteTask] = useState<{ id: string; title: string } | null>(null)
   
   // JSON-first: 生成04进度跟踪状态
   const [generatingProgress, setGeneratingProgress] = useState(false)
@@ -104,6 +105,20 @@ export default function KanbanBoard() {
       void fetchTasks()
     }
   }, [currentProject, visibleProjects.length])
+
+  useEffect(() => {
+    if (!currentProject || projects.length === 0) {
+      return
+    }
+
+    const intervalId = window.setInterval(() => {
+      void fetchTasks()
+    }, 10000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [currentProject, projects.length])
 
   const fetchProjects = async () => {
     try {
@@ -303,6 +318,17 @@ export default function KanbanBoard() {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       setNotice({ type: 'error', message: `删除失败：${errorMessage}` })
     }
+  }
+
+  const requestDeleteTask = (taskId: string, taskTitle: string) => {
+    setPendingDeleteTask({ id: taskId, title: taskTitle })
+  }
+
+  const confirmDeleteTask = async () => {
+    if (!pendingDeleteTask) return
+    const { id } = pendingDeleteTask
+    setPendingDeleteTask(null)
+    await handleDeleteTask(id)
   }
 
   // ========================================
@@ -639,7 +665,7 @@ export default function KanbanBoard() {
                           projectIcon={project?.icon}
                           onStatusChange={handleStatusChange}
                           onAssigneeChange={handleAssigneeChange}
-                          onDelete={handleDeleteTask}
+                          onDelete={requestDeleteTask}
                         />
                       </div>
                     )
@@ -671,6 +697,35 @@ export default function KanbanBoard() {
           onClose={() => setShowCreateProjectModal(false)}
           onSuccess={handleCreateProjectSuccess}
         />
+      )}
+
+      {pendingDeleteTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-slate-900">确认删除任务</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                任务“{pendingDeleteTask.title}”将从看板中移除。只有 `todo` 状态任务允许删除。
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setPendingDeleteTask(null)}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmDeleteTask()}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+              >
+                确认删除
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

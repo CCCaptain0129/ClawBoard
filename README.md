@@ -42,7 +42,11 @@
 ## 真源规则
 
 - 前端不是任务真源，只是可视化入口
+- 对外（给 Agent）真源：后端 API（API-first，不依赖本地目录）
 - 任务运行态真源是 `tasks/*.json`
+- 全局真源入口：`GET /api/tasks/source-of-truth`
+- 推荐通过 `GET /api/tasks/projects/:projectId/source-of-truth` 获取项目真源绝对路径
+- 可通过 `PUT /api/tasks/projects/:projectId/source-of-truth` 更新路径映射（持久化到 `tasks/project-source-map.json`）
 - 项目文档建议保存在 `projects/<project-name>/docs/`
 - 修改任务状态或任务内容时，优先通过后端 API
 
@@ -55,6 +59,8 @@
 ```bash
 ./install.sh
 ```
+
+安装脚本会将当前安装目录写入 `.env` 的 `OPENCLAW_VIS_WORKSPACE_ROOT`，后端将优先用它解析 `tasks` 真源路径，避免路径硬编码。
 
 或手动安装：
 
