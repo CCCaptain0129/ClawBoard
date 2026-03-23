@@ -1,0 +1,76 @@
+#!/bin/bash
+
+set -e
+
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+print_help() {
+  cat <<'EOF'
+ClawBoard Unified CLI
+
+Usage:
+  ./clawboard <command> [args...]
+
+Commands:
+  install        Run install wizard (install.sh)
+  start          Start services (start.sh)
+  stop           Stop services (stop.sh)
+  restart        Restart services
+  verify         Verify service health (verify.sh)
+  status         Alias of verify --quick
+  help           Show this help
+
+Examples:
+  ./clawboard install
+  ./clawboard start
+  ./clawboard start -- --foreground
+  ./clawboard verify -- --full
+
+Notes:
+  - Everything after `--` is passed to the underlying script.
+  - Legacy scripts (install.sh/start.sh/stop.sh/verify.sh) still work.
+EOF
+}
+
+main() {
+  if [ $# -eq 0 ]; then
+    print_help
+    exit 0
+  fi
+
+  local cmd="$1"
+  shift
+
+  case "$cmd" in
+    help|-h|--help)
+      print_help
+      ;;
+    install)
+      "$PROJECT_ROOT/install.sh" "$@"
+      ;;
+    start)
+      "$PROJECT_ROOT/start.sh" "$@"
+      ;;
+    stop)
+      "$PROJECT_ROOT/stop.sh" "$@"
+      ;;
+    restart)
+      "$PROJECT_ROOT/stop.sh"
+      "$PROJECT_ROOT/start.sh" "$@"
+      ;;
+    verify)
+      "$PROJECT_ROOT/verify.sh" "$@"
+      ;;
+    status)
+      "$PROJECT_ROOT/verify.sh" --quick "$@"
+      ;;
+    *)
+      echo "Unknown command: $cmd" >&2
+      echo ""
+      print_help
+      exit 1
+      ;;
+  esac
+}
+
+main "$@"

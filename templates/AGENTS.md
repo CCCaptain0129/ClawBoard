@@ -37,7 +37,7 @@
 
 关键文件：
 - `tasks/pm-workflow-automation-tasks.json` - 任务数据
-- `scripts/heartbeat-loop.mjs` - 心跳脚本
+- `scripts/pm-agent-dispatcher.mjs` - 自动调度脚本
 - `docs/internal/SUBAGENTS任务分发记录.md` - 分发记录
 
 ## 配置位置
@@ -48,7 +48,7 @@
 ## 注意事项
 
 - 不要修改 `tasks/*.json` 文件，使用 API 操作
-- 心跳脚本在项目根目录下运行
+- 自动调度脚本在项目根目录下运行
 - 敏感配置存储在 `openclaw.json`，权限 600
 
 ## 相关文档

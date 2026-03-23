@@ -17,12 +17,12 @@
 
 1. 安装依赖与初始化：
 ```bash
-./install.sh
+./clawboard install
 ```
 
 2. 启动服务：
 ```bash
-./start.sh
+./clawboard start
 ```
 
 3. 打开看板：
@@ -33,8 +33,15 @@
 
 停止服务：
 ```bash
-./stop.sh
+./clawboard stop
 ```
+
+快速检查服务状态：
+```bash
+./clawboard status
+```
+
+兼容说明：原命令 `./install.sh`、`./start.sh`、`./stop.sh`、`./verify.sh` 仍可继续使用。
 
 ## 数据真源（Source of Truth）
 

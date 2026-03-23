@@ -15,13 +15,13 @@ openclaw gateway start
 openclaw bind feishu --group <group_id>
 ```
 
-### 心跳脚本
+### 自动调度脚本
 
-位置：`__PROJECT_ROOT__/scripts/heartbeat-loop.mjs`
+位置：`__PROJECT_ROOT__/scripts/pm-agent-dispatcher.mjs`
 
 ```bash
-cd __PROJECT_ROOT__/scripts
-node heartbeat-loop.mjs
+cd __PROJECT_ROOT__
+node scripts/pm-agent-dispatcher.mjs --once
 ```
 
 ### 任务 API
