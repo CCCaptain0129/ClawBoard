@@ -189,7 +189,7 @@ function App() {
 
       const noProjectEnabled = (dispatcherStatus.projectAllowlist?.length || 0) === 0
       const message = noProjectEnabled
-        ? '开启全局自动调度后，系统会尝试自动分派任务。\n\n当前还没有启用任何项目，所以不会立即分派任务。\n下一步：到任务看板打开“本项目自动调度”，再把任务改为“进行中”。\n\n是否继续开启？'
+        ? '开启全局自动调度后，系统会尝试自动分派任务。\n\n当前还没有启用任何项目，所以不会立即分派任务。\n下一步：到任务看板打开“Agent 自动调度”，再把任务改为“进行中”。\n\n是否继续开启？'
         : '开启全局自动调度后，系统会自动分派“已启用项目”中处于“进行中”的任务给 subagent。\n\n是否继续？'
       const confirmed = window.confirm(message)
       if (!confirmed) {
@@ -362,13 +362,6 @@ function App() {
           )}
         </div>
       </header>
-      {currentPage === 'tasks' && (
-        <div className="max-w-7xl mx-auto px-6 pt-3">
-          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
-            自动调度顺序：1) 开启“全局自动调度” 2) 在项目内开启“本项目自动调度” 3) 将任务切换到“进行中”。
-          </div>
-        </div>
-      )}
       <main className="max-w-7xl mx-auto px-6 py-8">
         {currentPage === 'agents' && <Dashboard />}
         {currentPage === 'tasks' && <KanbanBoard />}

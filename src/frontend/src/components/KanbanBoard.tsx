@@ -407,6 +407,7 @@ export default function KanbanBoard() {
 
   const currentProjectAutoEnabled = currentProject !== 'all'
     && Boolean(dispatcherStatus?.projectAllowlist?.includes(currentProject))
+  const globalAutoEnabled = Boolean(dispatcherStatus?.running && dispatcherStatus?.mode === 'auto')
 
   const handleToggleProjectDispatch = async () => {
     if (currentProject === 'all' || projectDispatchLoading) return
@@ -418,7 +419,9 @@ export default function KanbanBoard() {
       setNotice({
         type: 'success',
         message: nextEnabled
-          ? `项目 ${projectInfo.name} 已加入自动调度`
+          ? (globalAutoEnabled
+            ? `项目 ${projectInfo.name} 已加入自动调度`
+            : `项目 ${projectInfo.name} 已开启 Agent 自动调度。当前全局自动调度未开启，开启后将自动生效。`)
           : `项目 ${projectInfo.name} 已移出自动调度`,
       })
     } catch (err) {
@@ -596,23 +599,31 @@ export default function KanbanBoard() {
             </div>
 
             {currentProject !== 'all' && (
-              <div className="mt-3 inline-flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
-                <span className="text-xs font-medium text-slate-600">本项目自动调度</span>
-                <button
-                  onClick={handleToggleProjectDispatch}
-                  disabled={projectDispatchLoading}
-                  className={`h-8 px-3 rounded-lg text-xs font-semibold border transition-colors ${
-                    currentProjectAutoEnabled
-                      ? 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
-                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                  title={dispatcherStatus?.running
-                    ? '切换当前项目是否自动调度'
-                    : '当前全局自动调度关闭，开启后将在全局开启时生效'}
-                >
-                  {projectDispatchLoading ? '更新中...' : currentProjectAutoEnabled ? '开启' : '关闭'}
-                </button>
-                <span className="text-xs text-slate-500">仅当前项目生效；任务为“进行中”时才会自动分派</span>
+              <div className="mt-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+                <div className="inline-flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-medium text-slate-600">Agent 自动调度</span>
+                  <button
+                    onClick={handleToggleProjectDispatch}
+                    disabled={projectDispatchLoading}
+                    className={`h-8 px-3 rounded-lg text-xs font-semibold border transition-colors ${
+                      currentProjectAutoEnabled
+                        ? 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    title={dispatcherStatus?.running
+                      ? '切换当前项目是否自动调度'
+                      : '当前全局自动调度关闭，开启后将在全局开启时生效'}
+                  >
+                    {projectDispatchLoading ? '更新中...' : currentProjectAutoEnabled ? '开启' : '关闭'}
+                  </button>
+                </div>
+                <div className="mt-2 text-xs text-slate-500">
+                  {currentProjectAutoEnabled && globalAutoEnabled
+                    ? '状态：自动调度已生效。将对当前项目中“进行中”的任务自动分派。'
+                    : currentProjectAutoEnabled && !globalAutoEnabled
+                      ? '状态：项目侧已开启，等待“全局自动调度”开启后生效。'
+                      : '状态：当前项目未开启自动调度。'}
+                </div>
               </div>
             )}
           </div>
