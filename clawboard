@@ -12,12 +12,13 @@ Usage:
   ./clawboard <command> [args...]
 
 Commands:
-  install        Run install wizard (install.sh)
-  start          Start services (start.sh)
-  stop           Stop services (stop.sh)
+  install        Run install wizard
+  start          Start services
+  stop           Stop services
   restart        Restart services
-  verify         Verify service health (verify.sh)
+  verify         Verify service health
   status         Alias of verify --quick
+  token          Print BOARD_ACCESS_TOKEN from .env
   help           Show this help
 
 Examples:
@@ -28,7 +29,7 @@ Examples:
 
 Notes:
   - Everything after `--` is passed to the underlying script.
-  - Legacy scripts (install.sh/start.sh/stop.sh/verify.sh) still work.
+  - Underlying scripts are in scripts/cli/.
 EOF
 }
 
@@ -46,23 +47,41 @@ main() {
       print_help
       ;;
     install)
-      "$PROJECT_ROOT/install.sh" "$@"
+      "$PROJECT_ROOT/scripts/cli/install.sh" "$@"
       ;;
     start)
-      "$PROJECT_ROOT/start.sh" "$@"
+      "$PROJECT_ROOT/scripts/cli/start.sh" "$@"
       ;;
     stop)
-      "$PROJECT_ROOT/stop.sh" "$@"
+      "$PROJECT_ROOT/scripts/cli/stop.sh" "$@"
       ;;
     restart)
-      "$PROJECT_ROOT/stop.sh"
-      "$PROJECT_ROOT/start.sh" "$@"
+      "$PROJECT_ROOT/scripts/cli/stop.sh"
+      "$PROJECT_ROOT/scripts/cli/start.sh" "$@"
       ;;
     verify)
-      "$PROJECT_ROOT/verify.sh" "$@"
+      "$PROJECT_ROOT/scripts/cli/verify.sh" "$@"
       ;;
     status)
-      "$PROJECT_ROOT/verify.sh" --quick "$@"
+      "$PROJECT_ROOT/scripts/cli/verify.sh" --quick "$@"
+      ;;
+    token)
+      local env_file="$PROJECT_ROOT/.env"
+      if [ ! -f "$env_file" ]; then
+        echo "No .env file found at: $env_file" >&2
+        echo "Run: ./clawboard install" >&2
+        exit 1
+      fi
+
+      local token
+      token=$(awk -F= '/^BOARD_ACCESS_TOKEN=/{print substr($0, index($0, "=")+1); exit}' "$env_file")
+      if [ -z "$token" ]; then
+        echo "BOARD_ACCESS_TOKEN not found in .env" >&2
+        echo "Run: ./clawboard install" >&2
+        exit 1
+      fi
+
+      echo "$token"
       ;;
     *)
       echo "Unknown command: $cmd" >&2

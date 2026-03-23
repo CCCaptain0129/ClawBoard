@@ -4,8 +4,8 @@ REM 验证后端和前端服务是否正常运行
 
 setlocal enabledelayedexpansion
 
-REM 项目根目录
-set "PROJECT_ROOT=%~dp0"
+REM 项目根目录（当前文件位于 scripts\cli）
+for %%I in ("%~dp0..\..") do set "PROJECT_ROOT=%%~fI\"
 set "BACKEND_PORT=3000"
 set "FRONTEND_PORT=5173"
 
@@ -221,7 +221,7 @@ if %ERRORS% equ 0 (
     echo     前端: type tmp\frontend.log
     echo.
     echo   重启服务:
-    echo     stop.bat ^&^& start.bat
+    echo     clawboard.bat restart
     echo.
 )
 

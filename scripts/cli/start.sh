@@ -13,8 +13,8 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# 项目根目录
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# 项目根目录（当前文件位于 scripts/cli）
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 BACKEND_DIR="$PROJECT_ROOT/src/backend"
 FRONTEND_DIR="$PROJECT_ROOT/src/frontend"
 BACKEND_BIN="$BACKEND_DIR/node_modules/.bin/ts-node"
@@ -627,7 +627,7 @@ function show_access_info() {
     echo "   前端: cat $FRONTEND_PID_FILE"
     echo "   PM-Agent Dispatcher: cat $DISPATCHER_PID_FILE"
     echo ""
-    echo "🛑 停止服务: ./stop.sh"
+    echo "🛑 停止服务: ./clawboard stop"
     echo ""
     echo "⚙️  PM-Agent Dispatcher 配置:"
     echo "   轮询间隔: ${DISPATCHER_INTERVAL:-10} 秒 (可通过 DISPATCHER_INTERVAL 环境变量修改)"

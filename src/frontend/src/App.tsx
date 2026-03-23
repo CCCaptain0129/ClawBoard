@@ -200,6 +200,9 @@ function App() {
             <div className="mt-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">
               访问码可在服务器项目根目录的 <span className="font-mono">.env</span> 文件中找到，对应字段是 <span className="font-mono">BOARD_ACCESS_TOKEN</span>。
             </div>
+            <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+              不确定怎么找？在服务端执行：<span className="font-mono">./clawboard token</span>
+            </div>
           </div>
           <form className="space-y-4" onSubmit={verifyAndStoreToken}>
             <input

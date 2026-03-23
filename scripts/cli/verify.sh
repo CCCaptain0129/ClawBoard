@@ -14,8 +14,8 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
 
-# 项目根目录
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# 项目根目录（当前文件位于 scripts/cli）
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 # 默认端口
 BACKEND_PORT=${BACKEND_PORT:-3000}
@@ -265,7 +265,7 @@ show_summary() {
         echo "    前端: tail -f tmp/frontend.log"
         echo ""
         echo "  重启服务:"
-        echo "    ./stop.sh && ./start.sh"
+        echo "    ./clawboard restart"
         echo ""
     fi
 }

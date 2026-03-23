@@ -30,6 +30,10 @@
 - 后端：[http://127.0.0.1:3000](http://127.0.0.1:3000)
 
 首次访问需要输入 `.env` 中的 `BOARD_ACCESS_TOKEN`。
+如果不确定 token 是什么，可在服务器上执行：
+```bash
+./clawboard token
+```
 
 停止服务：
 ```bash
@@ -41,7 +45,7 @@
 ./clawboard status
 ```
 
-兼容说明：原命令 `./install.sh`、`./start.sh`、`./stop.sh`、`./verify.sh` 仍可继续使用。
+脚本位置说明：底层脚本已收敛到 `scripts/cli/`，推荐统一使用 `./clawboard`。
 
 ## 数据真源（Source of Truth）
 
@@ -69,7 +73,9 @@ openclaw-visualization/
 ├── src/backend/          # 后端
 ├── tasks/                # 项目与任务真源
 ├── docs/                 # 文档
-└── scripts/              # 调度与脚本
+└── scripts/
+    ├── cli/              # install/start/stop/verify 脚本
+    └── pm-agent-dispatcher.mjs
 ```
 
 ## 文档入口

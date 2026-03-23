@@ -14,8 +14,8 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
 
-# 项目根目录
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# 项目根目录（当前文件位于 scripts/cli）
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 BACKEND_DIR="$PROJECT_ROOT/src/backend"
 FRONTEND_DIR="$PROJECT_ROOT/src/frontend"
 CONFIG_DIR="$BACKEND_DIR/config"
@@ -314,9 +314,9 @@ show_next_steps() {
     echo ""
     echo -e "  2. ${CYAN}启动服务${NC}"
     if [[ "$os" == "Windows" ]]; then
-        echo "     start.bat"
+        echo "     clawboard.bat start"
     else
-        echo "     ./start.sh"
+        echo "     ./clawboard start"
     fi
     echo ""
     echo -e "  3. ${CYAN}访问应用${NC}"
@@ -325,28 +325,28 @@ show_next_steps() {
     echo ""
     echo -e "  4. ${CYAN}验证服务状态${NC}"
     if [[ "$os" == "Windows" ]]; then
-        echo "     verify.bat    (Windows)"
+        echo "     clawboard.bat status    (Windows)"
     else
-        echo "     ./verify.sh   (macOS/Linux)"
+        echo "     ./clawboard status   (macOS/Linux)"
     fi
     echo ""
     echo -e "${BOLD}常用命令：${NC}"
     echo ""
     if [[ "$os" == "Windows" ]]; then
-        echo "  start.bat          启动服务"
-        echo "  stop.bat           停止服务"
-        echo "  verify.bat         验证服务状态"
+        echo "  clawboard.bat start    启动服务"
+        echo "  clawboard.bat stop     停止服务"
+        echo "  clawboard.bat status   验证服务状态"
     else
-        echo "  ./start.sh         启动服务"
-        echo "  ./stop.sh          停止服务"
-        echo "  ./verify.sh        验证服务状态"
+        echo "  ./clawboard start     启动服务"
+        echo "  ./clawboard stop      停止服务"
+        echo "  ./clawboard status    验证服务状态"
         echo "  pm2 start ecosystem.config.cjs   使用 PM2 托管"
     fi
     echo ""
     echo -e "${BOLD}获取帮助：${NC}"
     echo ""
     echo "  查看 README.md 或 docs/INSTALL.md 了解更多"
-    echo "  GitHub: https://github.com/CCCaptain0129/OpenClaw_Visualization"
+    echo "  GitHub: https://github.com/CCCaptain0129/ClawBoard"
     echo ""
 }
 

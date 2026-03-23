@@ -3,8 +3,8 @@ REM OpenClaw Visualization 一键停止脚本 (Windows)
 
 setlocal enabledelayedexpansion
 
-REM 项目根目录
-set "PROJECT_ROOT=%~dp0"
+REM 项目根目录（当前文件位于 scripts\cli）
+for %%I in ("%~dp0..\..") do set "PROJECT_ROOT=%%~fI\"
 
 echo ==========================================
 echo OpenClaw Visualization 停止服务

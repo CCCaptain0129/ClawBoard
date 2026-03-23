@@ -4,8 +4,8 @@ REM 解决端口冲突、健康检查、多实例运行等问题
 
 setlocal enabledelayedexpansion
 
-REM 项目根目录
-set "PROJECT_ROOT=%~dp0"
+REM 项目根目录（当前文件位于 scripts\cli）
+for %%I in ("%~dp0..\..") do set "PROJECT_ROOT=%%~fI\"
 set "BACKEND_DIR=%PROJECT_ROOT%src\backend"
 set "FRONTEND_DIR=%PROJECT_ROOT%src\frontend"
 
@@ -322,7 +322,7 @@ echo 🔍 查看进程:
 echo    后端: type %BACKEND_PID_FILE%
 echo    前端: type %FRONTEND_PID_FILE%
 echo.
-echo 🛑 停止服务: stop.bat
+echo 🛑 停止服务: clawboard.bat stop
 echo ==========================================
 echo.
 

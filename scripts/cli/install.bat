@@ -4,8 +4,8 @@ REM 新用户在干净机器上快速启动可视化看板后端/前端
 
 setlocal enabledelayedexpansion
 
-REM 项目根目录
-set "PROJECT_ROOT=%~dp0"
+REM 项目根目录（当前文件位于 scripts\cli）
+for %%I in ("%~dp0..\..") do set "PROJECT_ROOT=%%~fI\"
 set "BACKEND_DIR=%PROJECT_ROOT%src\backend"
 set "FRONTEND_DIR=%PROJECT_ROOT%src\frontend"
 set "CONFIG_DIR=%BACKEND_DIR%\config"
@@ -232,24 +232,24 @@ echo   1. %CYAN%配置 Gateway Token%NC%（如果还没有配置）
 echo      notepad src\backend\config\openclaw.json
 echo.
 echo   2. %CYAN%启动服务%NC%
-echo      start.bat
+echo      clawboard.bat start
 echo.
 echo   3. %CYAN%访问应用%NC%
 echo      http://localhost:5173
 echo.
 echo   4. %CYAN%验证服务状态%NC%
-echo      verify.bat
+echo      clawboard.bat status
 echo.
 echo %BOLD%常用命令：%NC%
 echo.
-echo   start.bat          启动服务
-echo   stop.bat           停止服务
-echo   verify.bat         验证服务状态
+echo   clawboard.bat start     启动服务
+echo   clawboard.bat stop      停止服务
+echo   clawboard.bat status    验证服务状态
 echo.
 echo %BOLD%获取帮助：%NC%
 echo.
 echo   查看 README.md 或 docs\INSTALL.md 了解更多
-echo   GitHub: https://github.com/CCCaptain0129/OpenClaw_Visualization
+echo   GitHub: https://github.com/CCCaptain0129/ClawBoard
 echo.
 pause
 exit /b 0
