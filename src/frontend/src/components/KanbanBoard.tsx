@@ -511,7 +511,7 @@ export default function KanbanBoard() {
   }, [notice])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {notice && (
         <div className={`rounded-xl border px-4 py-3 text-sm shadow-sm ${
           notice.type === 'success'
@@ -523,14 +523,14 @@ export default function KanbanBoard() {
       )}
 
       {/* 项目切换 Tab */}
-      <div className="bg-white rounded-xl p-2 shadow-sm border border-slate-200">
+      <div className="bg-white rounded-2xl p-2.5 shadow-sm border border-slate-200">
         <div className="flex gap-2 overflow-x-auto">
           <button
             onClick={() => setCurrentProject('all')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+            className={`h-9 px-4 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
               currentProject === 'all'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-gray-700 hover:bg-slate-100'
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'text-slate-700 hover:bg-slate-100'
             }`}
           >
             <span className="inline-flex items-center gap-2">
@@ -545,18 +545,23 @@ export default function KanbanBoard() {
             <button
               key={project.id}
               onClick={() => setCurrentProject(project.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2 ${
+              className={`h-9 px-4 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2 ${
                 currentProject === project.id
-                  ? 'bg-white text-gray-900 shadow-sm border-2'
-                  : 'text-gray-700 hover:bg-slate-100'
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'text-slate-700 hover:bg-slate-100'
               }`}
-              style={currentProject === project.id ? { borderColor: project.color } : {}}
             >
-              <span>{project.icon}</span>
+              <span
+                className="inline-block h-2.5 w-2.5 rounded-full"
+                style={{ backgroundColor: project.color }}
+              ></span>
               <span>{project.name}</span>
               <span 
-                className="px-1.5 py-0.5 text-xs rounded-full"
-                style={{ backgroundColor: `${project.color}20`, color: project.color }}
+                className={`px-1.5 py-0.5 text-xs rounded-full ${
+                  currentProject === project.id
+                    ? 'bg-white/20 text-white'
+                    : 'bg-slate-100 text-slate-600'
+                }`}
               >
                 {taskCounts[project.id] || 0}
               </span>
@@ -564,135 +569,129 @@ export default function KanbanBoard() {
           ))}
           <button
             onClick={() => setShowCreateProjectModal(true)}
-            className="px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200"
+            className="h-9 px-4 rounded-lg text-sm font-medium transition-all whitespace-nowrap text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200"
           >
             + 新增项目
           </button>
         </div>
       </div>
 
-      {/* 项目标题和进度 */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div 
-            className="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
-            style={{ backgroundColor: `${projectInfo.color}20` }}
-          >
-            {projectInfo.icon}
+      {/* 项目概览与操作 */}
+      <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-5 shadow-sm space-y-4">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div className="min-w-0">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+                style={{ backgroundColor: `${projectInfo.color}20` }}
+              >
+                {projectInfo.icon}
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-2xl font-bold text-slate-900 truncate">{projectInfo.name}</h2>
+                <p className="text-sm text-slate-500 mt-1">
+                  {currentProject === 'all' ? '查看所有项目的任务' : projectInfo.description}
+                </p>
+              </div>
+            </div>
+
+            {currentProject !== 'all' && (
+              <div className="mt-3 inline-flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                <span className="text-xs font-medium text-slate-600">本项目自动调度</span>
+                <button
+                  onClick={handleToggleProjectDispatch}
+                  disabled={projectDispatchLoading}
+                  className={`h-8 px-3 rounded-lg text-xs font-semibold border transition-colors ${
+                    currentProjectAutoEnabled
+                      ? 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  title={dispatcherStatus?.running
+                    ? '切换当前项目是否自动调度'
+                    : '当前全局自动调度关闭，开启后将在全局开启时生效'}
+                >
+                  {projectDispatchLoading ? '更新中...' : currentProjectAutoEnabled ? '开启' : '关闭'}
+                </button>
+                <span className="text-xs text-slate-500">仅当前项目生效；任务为“进行中”时才会自动分派</span>
+              </div>
+            )}
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">{projectInfo.name}</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              {currentProject === 'all' ? '查看所有项目的任务' : projectInfo.description}
-            </p>
+
+          {currentProject !== 'all' && (
+            <div className="flex flex-wrap items-center gap-2 xl:justify-end">
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="h-10 px-4 rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors text-sm font-semibold flex items-center gap-2 shadow-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                新增任务
+              </button>
+
+              <button
+                onClick={handleGenerateProgress}
+                disabled={generatingProgress}
+                className="h-10 px-4 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                title="生成 04-进度跟踪.md 文档"
+              >
+                {generatingProgress ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-400 border-t-transparent"></div>
+                    生成中...
+                  </>
+                ) : (
+                  <>
+                    <span>📊</span>
+                    生成进度文档
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={handleArchiveProject}
+                className="h-10 px-4 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors text-sm font-semibold"
+              >
+                归档项目
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <div className="text-xs font-medium text-slate-500 mb-1">任务总数</div>
+            <div className="text-2xl font-bold text-slate-900">{total}</div>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <div className="text-xs font-medium text-slate-500 mb-1">待处理</div>
+            <div className="text-2xl font-bold text-slate-800">{todoCount}</div>
+          </div>
+          <div className="rounded-xl border border-blue-200 bg-blue-50/50 px-4 py-3">
+            <div className="text-xs font-medium text-slate-500 mb-1">进行中</div>
+            <div className="text-2xl font-bold text-blue-700">{inProgressCount}</div>
+          </div>
+          <div className="rounded-xl border border-violet-200 bg-violet-50/50 px-4 py-3">
+            <div className="text-xs font-medium text-slate-500 mb-1">待审核</div>
+            <div className="text-2xl font-bold text-violet-700">{reviewCount}</div>
+          </div>
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 px-4 py-3">
+            <div className="text-xs font-medium text-slate-500 mb-1">已完成</div>
+            <div className="text-2xl font-bold text-emerald-700">{doneCount}</div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          {/* PMW-036: 新增任务按钮 */}
-          {currentProject !== 'all' && (
-            <button
-              onClick={handleToggleProjectDispatch}
-              disabled={projectDispatchLoading}
-              className={`px-4 py-2.5 rounded-lg transition-all text-sm font-semibold border ${
-                currentProjectAutoEnabled
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                  : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
-              title={dispatcherStatus?.running
-                ? '切换当前项目是否自动调度'
-                : '当前全局自动调度关闭，开启后将在全局开启时生效'}
-            >
-              {projectDispatchLoading
-                ? '更新中...'
-                : `本项目自动调度：${currentProjectAutoEnabled ? '开' : '关'}`}
-            </button>
-          )}
-          {currentProject !== 'all' && (
-            <span className="text-xs text-slate-500">
-              仅影响当前项目；任务需为“进行中”才会自动分派
-            </span>
-          )}
 
-          {currentProject !== 'all' && (
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-all text-sm font-semibold shadow-sm hover:shadow flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              新增任务
-            </button>
-          )}
-          
-          {/* JSON-first: 生成04进度跟踪按钮 */}
-          {currentProject !== 'all' && (
-            <button
-              onClick={handleGenerateProgress}
-              disabled={generatingProgress}
-              className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all text-sm font-semibold shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              title="生成 04-进度跟踪.md 文档"
-            >
-              {generatingProgress ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  生成中...
-                </>
-              ) : (
-                <>
-                  <span>📊</span>
-                  生成进度文档
-                </>
-              )}
-            </button>
-          )}
-          {currentProject !== 'all' && (
-            <button
-              onClick={handleArchiveProject}
-              className="px-4 py-2.5 rounded-lg border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all text-sm font-semibold"
-            >
-              归档项目
-            </button>
-          )}
-
-        </div>
-      </div>
-
-      {/* 统计卡片 */}
-      <div className="grid grid-cols-5 gap-4">
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
-          <div className="text-3xl font-bold text-gray-900 mb-1">{total}</div>
-          <div className="text-sm text-gray-500 font-medium">任务总数</div>
-        </div>
-        <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-5 shadow-sm border border-slate-200">
-          <div className="text-3xl font-bold text-gray-900 mb-1">{todoCount}</div>
-          <div className="text-sm text-gray-500 font-medium">待处理</div>
-        </div>
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 shadow-sm border border-blue-200">
-          <div className="text-3xl font-bold text-blue-600 mb-1">{inProgressCount}</div>
-          <div className="text-sm text-gray-500 font-medium">进行中</div>
-        </div>
-        <div className="bg-gradient-to-br from-violet-50 to-fuchsia-100 rounded-xl p-5 shadow-sm border border-violet-200">
-          <div className="text-3xl font-bold text-violet-600 mb-1">{reviewCount}</div>
-          <div className="text-sm text-gray-500 font-medium">待审核</div>
-        </div>
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-5 shadow-sm border border-green-200">
-          <div className="text-3xl font-bold text-green-600 mb-1">{doneCount}</div>
-          <div className="text-sm text-gray-500 font-medium">已完成</div>
-        </div>
-      </div>
-
-      {/* 进度条 */}
-      <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-700">总体进度</span>
-          <span className="text-sm font-bold text-blue-600">{progress}%</span>
-        </div>
-        <div className="w-full bg-slate-200 rounded-full h-2">
-          <div 
-            className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          ></div>
+        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-slate-600">总体进度</span>
+            <span className="text-sm font-bold text-slate-900">{progress}%</span>
+          </div>
+          <div className="w-full bg-slate-200 rounded-full h-1.5">
+            <div
+              className="bg-slate-900 h-1.5 rounded-full transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
         </div>
       </div>
 

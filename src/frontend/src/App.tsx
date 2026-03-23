@@ -271,11 +271,11 @@ function App() {
               <p className="text-sm text-gray-500 mt-1">实时监控和管理 OpenClaw Agent</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold text-slate-500 mr-1">系统状态</span>
-              <span className={`inline-flex items-center h-9 px-3 rounded-lg text-sm font-semibold border ${
+              <span className="text-xs font-semibold text-slate-500 mr-1">连接状态</span>
+              <span className={`inline-flex items-center h-9 px-3 rounded-lg text-sm font-medium border bg-white ${
                 isBackendConnected
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                  : 'border-rose-200 bg-rose-50 text-rose-700'
+                  ? 'border-slate-200 text-slate-700'
+                  : 'border-rose-200 text-rose-700'
               }`}>
                 <span className={`w-2 h-2 rounded-full mr-2 ${
                   isBackendConnected ? 'bg-emerald-500' : 'bg-rose-500'
@@ -284,15 +284,22 @@ function App() {
               </span>
               <button
                 onClick={showGatewaySetupHint}
-                className={`inline-flex items-center h-9 px-3 rounded-lg text-sm font-semibold border transition-colors ${
+                className={`inline-flex items-center h-9 px-3 rounded-lg text-sm font-medium border bg-white transition-colors ${
                   dispatcherPrerequisites?.gateway.status === 'ready'
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                    ? 'border-slate-200 text-slate-700 hover:bg-slate-50'
                     : dispatcherPrerequisites?.gateway.status === 'connection_failed'
-                      ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
-                      : 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
+                      ? 'border-amber-200 text-amber-700 hover:bg-amber-50'
+                      : 'border-rose-200 text-rose-700 hover:bg-rose-50'
                 }`}
                 title="点击查看 OpenClaw 网关配置说明"
               >
+                <span className={`w-2 h-2 rounded-full mr-2 ${
+                  dispatcherPrerequisites?.gateway.status === 'ready'
+                    ? 'bg-emerald-500'
+                    : dispatcherPrerequisites?.gateway.status === 'connection_failed'
+                      ? 'bg-amber-500'
+                      : 'bg-rose-500'
+                }`}></span>
                 {dispatcherPrerequisites?.gateway.status === 'ready'
                   ? 'OpenClaw 网关：已连接'
                   : dispatcherPrerequisites?.gateway.status === 'connection_failed'
@@ -303,10 +310,10 @@ function App() {
                 onClick={toggleDispatcherMode}
                 disabled={!dispatcherStatus || dispatcherLoading}
                 title={dispatcherStatus?.running ? '已开启，仅调度启用的项目' : '已关闭，仅手动管理任务'}
-                className={`h-9 px-3 text-sm font-semibold rounded-lg border transition-colors ${
+                className={`h-9 px-3 text-sm font-semibold rounded-lg border bg-white transition-colors ${
                   dispatcherStatus?.mode === 'auto'
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                    : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    ? 'border-blue-200 text-blue-700 hover:bg-blue-50'
+                    : 'border-slate-200 text-slate-700 hover:bg-slate-50'
                 } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {dispatcherLoading
@@ -357,8 +364,8 @@ function App() {
       </header>
       {currentPage === 'tasks' && (
         <div className="max-w-7xl mx-auto px-6 pt-3">
-          <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-            自动调度使用顺序：1) 开启“全局自动调度” 2) 在项目内开启“本项目自动调度” 3) 将任务切换到“进行中”。
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
+            自动调度顺序：1) 开启“全局自动调度” 2) 在项目内开启“本项目自动调度” 3) 将任务切换到“进行中”。
           </div>
         </div>
       )}
