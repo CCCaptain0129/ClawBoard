@@ -10,31 +10,43 @@ const PRIORITY_ORDER: Record<Task['priority'], number> = {
 
 export class WorkflowPolicyService {
   isTaskAutoDispatchEligible(task: Task, allTasks: Task[], projectConfig: ProjectExecutionConfig): boolean {
+    return this.getIneligibleReason(task, allTasks, projectConfig) === null;
+  }
+
+  getIneligibleReason(task: Task, allTasks: Task[], projectConfig: ProjectExecutionConfig): string | null {
     if (!projectConfig.autoDispatchEnabled) {
-      return false;
+      return '项目未开启自动调度';
     }
 
     if (projectConfig.executionMode === 'manual') {
-      return false;
+      return '项目执行模式为手动';
     }
 
     if (task.status !== 'todo') {
-      return false;
+      return `任务状态为 ${task.status}`;
     }
 
     if (task.executionMode === 'manual') {
-      return false;
+      return '任务执行模式为手动';
+    }
+
+    if (this.hasAssignee(task)) {
+      return `任务已指定负责人（${task.assignee?.trim()}）`;
     }
 
     if (!this.hasMinimumExecutionInfo(task)) {
-      return false;
+      return '任务缺少执行信息（目标/交付物/验收标准）';
     }
 
     if (!this.areDependenciesSatisfied(task, allTasks)) {
-      return false;
+      return '任务依赖未完成';
     }
 
-    return true;
+    return null;
+  }
+
+  private hasAssignee(task: Task): boolean {
+    return (task.assignee ?? '').trim().length > 0;
   }
 
   hasMinimumExecutionInfo(task: Task): boolean {

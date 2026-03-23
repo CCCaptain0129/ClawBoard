@@ -129,11 +129,11 @@ export class StatusSyncService {
 
       const subagentId = idMatch[1];
 
-      // 提取任务 ID
-      const taskMatch = block.match(/\*\*任务\*\*:\s*TASK-(\d+)/);
+      // 提取任务 ID（兼容 CBO-001 / PMW-010 / TASK-TEST-001 等格式）
+      const taskMatch = block.match(/\*\*任务\*\*:\s*([A-Z][A-Z0-9-]+)/);
       if (!taskMatch) continue;
 
-      const taskId = `TASK-${taskMatch[1]}`;
+      const taskId = taskMatch[1];
 
       // 提取状态
       const statusMatch = block.match(/\*\*状态\*\*:\s*(🔄 进行中|✅ 成功|❌ 失败|成功完成|失败)/);
@@ -175,10 +175,16 @@ export class StatusSyncService {
 
     console.log(`[StatusSyncService] Processing record: ${record.subagentId} -> ${record.status}`);
 
-    // 更新任务状态
+    // 更新任务状态（避免硬编码项目 ID：根据 taskId 反查项目）
     try {
+      const projectId = await this.findProjectIdByTaskId(record.taskId);
+      if (!projectId) {
+        console.warn(`[StatusSyncService] Project not found for task ${record.taskId}`);
+        return;
+      }
+
       const task = await this.taskService.updateTask(
-        'openclaw-visualization',
+        projectId,
         record.taskId,
         this.mapStatusToTask(record.status)
       );
@@ -188,7 +194,7 @@ export class StatusSyncService {
         this.processedRecords.set(record.subagentId, record.status);
 
         // 广播更新
-        this.wsServer.broadcastTaskUpdate('openclaw-visualization', task);
+        this.wsServer.broadcastTaskUpdate(projectId, task);
 
         console.log(`[StatusSyncService] ✅ Updated task ${record.taskId} to ${task.status}`);
       } else {
@@ -196,6 +202,22 @@ export class StatusSyncService {
       }
     } catch (error) {
       console.error(`[StatusSyncService] Failed to update task ${record.taskId}:`, error);
+    }
+  }
+
+  private async findProjectIdByTaskId(taskId: string): Promise<string | null> {
+    try {
+      const projects = await this.taskService.getAllProjects();
+      for (const project of projects) {
+        const tasks = await this.taskService.getTasksByProject(project.id);
+        if (tasks.some((task) => task.id === taskId)) {
+          return project.id;
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('[StatusSyncService] findProjectIdByTaskId failed:', error);
+      return null;
     }
   }
 

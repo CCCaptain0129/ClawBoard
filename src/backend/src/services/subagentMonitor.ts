@@ -25,6 +25,7 @@ export interface SubagentStatus {
 interface OpenClawSession {
   sessionId: string;
   updatedAt: number;
+  sessionFile?: string;
   label?: string;
   spawnDepth?: number;
   spawnedBy?: string;
@@ -57,6 +58,14 @@ export interface ActiveSubagentExecution {
   lastUpdateTimestamp: string;
 }
 
+interface CompletionSignalPayload {
+  taskId: string;
+  status: 'done' | 'blocked';
+  summary?: string;
+  deliverables?: string;
+  nextStep?: string;
+}
+
 /**
  * SubagentMonitorService - 监控 Subagent 完成状态并自动补齐任务状态
  *
@@ -81,6 +90,8 @@ export class SubagentMonitorService {
 
   // 幂等性控制：记录已处理的 subagent，避免重复标记
   private processedSubagents: Set<string> = new Set();
+  private processedCompletionSignals: Set<string> = new Set();
+  private sessionFileMtimeCache: Map<string, number> = new Map();
   
   // 已注册的 subagent（从 sessions.json 自动注册的）
   private registeredSubagents: Map<string, { taskId: string; projectId: string }> = new Map();
@@ -307,8 +318,11 @@ export class SubagentMonitorService {
     try {
       console.log('[SubagentMonitorService] Checking for completed subagents...');
 
-      // 0. 首先检测并注册新的 subagent 会话
+      // 0. 先检测并注册新的 subagent 会话
       await this.detectAndRegisterNewSubagents();
+
+      // 0.5 解析 Subagent 回复中的 completion_signal，优先按明确完成信号更新状态
+      await this.syncCompletionSignals();
 
       // 1. 从记录文件中提取所有进行中的 subagentId
       const inProgressSubagents = await this.getInProgressSubagents();
@@ -435,6 +449,239 @@ export class SubagentMonitorService {
       console.log(`[SubagentMonitorService] Registered subagents count: ${this.registeredSubagents.size}`);
     } catch (error) {
       console.error('[SubagentMonitorService] Error detecting new subagents:', error);
+    }
+  }
+
+  private async syncCompletionSignals(): Promise<void> {
+    try {
+      const sessions = await this.readAllSubagentSessions();
+      for (const [subagentId, session] of sessions.entries()) {
+        if (!subagentId.includes(':subagent:')) {
+          continue;
+        }
+
+        const sessionFile = session.sessionFile;
+        if (!sessionFile) {
+          continue;
+        }
+
+        let stat;
+        try {
+          stat = await fs.stat(sessionFile);
+        } catch {
+          continue;
+        }
+
+        const previousMtime = this.sessionFileMtimeCache.get(sessionFile);
+        if (previousMtime && previousMtime >= stat.mtimeMs) {
+          continue;
+        }
+        this.sessionFileMtimeCache.set(sessionFile, stat.mtimeMs);
+
+        const content = await fs.readFile(sessionFile, 'utf-8');
+        const signals = this.extractCompletionSignalsFromJsonl(content);
+        for (const signal of signals) {
+          await this.applyCompletionSignal(subagentId, signal, sessionFile);
+        }
+      }
+    } catch (error) {
+      console.error('[SubagentMonitorService] Error syncing completion signals:', error);
+    }
+  }
+
+  private extractCompletionSignalsFromJsonl(content: string): CompletionSignalPayload[] {
+    const signals: CompletionSignalPayload[] = [];
+    const lines = content.split('\n');
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) {
+        continue;
+      }
+
+      let entry: any;
+      try {
+        entry = JSON.parse(line);
+      } catch {
+        continue;
+      }
+
+      if (entry?.type !== 'message' || entry?.message?.role !== 'assistant') {
+        continue;
+      }
+
+      const textParts = Array.isArray(entry?.message?.content)
+        ? entry.message.content
+            .filter((item: any) => item?.type === 'text' && typeof item?.text === 'string')
+            .map((item: any) => item.text as string)
+        : [];
+      if (textParts.length === 0) {
+        continue;
+      }
+
+      const assistantText = textParts.join('\n');
+
+      const blockPattern = /```completion_signal\s*([\s\S]*?)```/g;
+      let match: RegExpExecArray | null;
+      while ((match = blockPattern.exec(assistantText)) !== null) {
+        const block = match[1];
+        const payload: Partial<CompletionSignalPayload> = {};
+
+        const fieldPattern = /^\s*([a-zA-Z_]+)\s*:\s*(.+?)\s*$/gm;
+        let fieldMatch: RegExpExecArray | null;
+
+        while ((fieldMatch = fieldPattern.exec(block)) !== null) {
+          const key = fieldMatch[1].toLowerCase();
+          const value = fieldMatch[2].trim();
+
+          if (key === 'task_id') {
+            payload.taskId = value;
+          } else if (key === 'status') {
+            const normalized = value.toLowerCase();
+            if (normalized.includes('blocked')) {
+              payload.status = 'blocked';
+            } else if (normalized.includes('done')) {
+              payload.status = 'done';
+            }
+          } else if (key === 'summary') {
+            payload.summary = value;
+          } else if (key === 'deliverables') {
+            payload.deliverables = value;
+          } else if (key === 'next_step') {
+            payload.nextStep = value;
+          }
+        }
+
+        if (!payload.taskId || !payload.status) {
+          continue;
+        }
+
+        signals.push({
+          taskId: payload.taskId,
+          status: payload.status,
+          summary: payload.summary,
+          deliverables: payload.deliverables,
+          nextStep: payload.nextStep,
+        });
+      }
+    }
+
+    return signals;
+  }
+
+  private async applyCompletionSignal(
+    subagentId: string,
+    signal: CompletionSignalPayload,
+    sourceFile: string
+  ): Promise<void> {
+    const dedupeKey = `${subagentId}|${signal.taskId}|${signal.status}|${signal.summary || ''}|${signal.nextStep || ''}`;
+    if (this.processedCompletionSignals.has(dedupeKey)) {
+      return;
+    }
+
+    const projectId = await this.findProjectIdByTaskId(signal.taskId);
+    if (!projectId) {
+      console.warn(`[SubagentMonitorService] Completion signal task not found: ${signal.taskId} (${sourceFile})`);
+      return;
+    }
+
+    const currentTask = await this.getTaskById(projectId, signal.taskId);
+    if (!currentTask) {
+      return;
+    }
+
+    const awaitingSubagentResult = currentTask.status === 'in-progress'
+      && (!currentTask.claimedBy || currentTask.claimedBy === subagentId);
+    if (!awaitingSubagentResult) {
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const commentId = `completion-signal-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    const commentSummary = signal.summary || (signal.status === 'done' ? 'Subagent 报告任务完成。' : 'Subagent 报告任务阻塞。');
+    const commentLines = [
+      `来自 ${subagentId} 的 completion_signal：${commentSummary}`,
+      signal.deliverables ? `交付物：${signal.deliverables}` : null,
+      signal.nextStep ? `下一步：${signal.nextStep}` : null,
+    ].filter(Boolean);
+
+    const comments = [
+      ...(Array.isArray(currentTask.comments) ? currentTask.comments : []),
+      {
+        id: commentId,
+        content: commentLines.join('\n'),
+        timestamp: now,
+      },
+    ];
+
+    const updates: Partial<Task> = {
+      claimedBy: null,
+      comments,
+    };
+
+    if (signal.status === 'done') {
+      if (currentTask.status !== 'done') {
+        updates.status = 'review';
+      }
+      updates.blockingReason = null;
+      if (!currentTask.completeTime) {
+        updates.completeTime = now;
+      }
+    } else {
+      updates.status = 'todo';
+      updates.blockingReason = signal.nextStep && signal.nextStep !== 'N/A'
+        ? signal.nextStep
+        : (signal.summary || 'Subagent 返回 blocked，等待人工处理。');
+      updates.completeTime = null;
+    }
+
+    await this.taskService.updateTask(projectId, signal.taskId, updates);
+    await this.patchRecordStatusFromCompletion(subagentId, signal);
+
+    this.processedSubagents.add(subagentId);
+    this.processedCompletionSignals.add(dedupeKey);
+
+    await this.broadcastTaskRuntimeUpdate(projectId, signal.taskId);
+
+    console.log(
+      `[SubagentMonitorService] ✓ completion_signal applied: ${signal.taskId} -> ${signal.status === 'done' ? 'review' : 'todo'}`
+    );
+  }
+
+  private async patchRecordStatusFromCompletion(subagentId: string, signal: CompletionSignalPayload): Promise<void> {
+    try {
+      const content = await fs.readFile(this.recordingPath, 'utf-8');
+      const escapedId = subagentId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const blockPatternWithRelease = new RegExp(
+        `(\\*\\*Subagent ID\\*\\*:\\s*\`${escapedId}\`[\\s\\S]*?\\*\\*释放时间\\*\\*:\\s*)([^\\n]*)(\\n\\*\\*状态\\*\\*:\\s*)(🔄 进行中|✅ 成功|❌ 失败)(\\n)`,
+        'g'
+      );
+
+      const releaseTime = new Date().toISOString().slice(0, 16).replace('T', ' ');
+      const mappedStatus = signal.status === 'done' ? '✅ 成功' : '❌ 失败';
+      let nextContent = content.replace(
+        blockPatternWithRelease,
+        `$1${releaseTime}$3${mappedStatus}$5`
+      );
+
+      // 兼容旧记录：没有“释放时间”字段时，插入释放时间并替换状态
+      if (nextContent === content) {
+        const blockPatternWithoutRelease = new RegExp(
+          `(\\*\\*Subagent ID\\*\\*:\\s*\`${escapedId}\`[\\s\\S]*?)(\\n\\*\\*状态\\*\\*:\\s*)(🔄 进行中|✅ 成功|❌ 失败)(\\n)`,
+          'g'
+        );
+        nextContent = content.replace(
+          blockPatternWithoutRelease,
+          `$1\n**释放时间**: ${releaseTime}$2${mappedStatus}$4`
+        );
+      }
+
+      if (nextContent !== content) {
+        await fs.writeFile(this.recordingPath, nextContent, 'utf-8');
+      }
+    } catch (error) {
+      console.error('[SubagentMonitorService] Failed to patch record status from completion signal:', error);
     }
   }
 
@@ -803,6 +1050,8 @@ export class SubagentMonitorService {
    */
   clearProcessedCache(): void {
     this.processedSubagents.clear();
+    this.processedCompletionSignals.clear();
+    this.sessionFileMtimeCache.clear();
     this.registeredSubagents.clear();
     console.log('[SubagentMonitorService] Processed and registered cache cleared');
   }

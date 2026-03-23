@@ -26,9 +26,10 @@ export class TaskSelectionService {
 
     const selectedTask = candidates[0];
     if (!selectedTask) {
+      const ineligibleSummary = this.buildIneligibleSummary(tasks, projectConfig);
       return {
         taskId: null,
-        reason: '没有满足自动派发条件的任务',
+        reason: ineligibleSummary ? `没有满足自动派发条件的任务：${ineligibleSummary}` : '没有满足自动派发条件的任务',
       };
     }
 
@@ -36,5 +37,24 @@ export class TaskSelectionService {
       taskId: selectedTask.id,
       reason: `按优先级和依赖规则选择 ${selectedTask.id}`,
     };
+  }
+
+  private buildIneligibleSummary(tasks: Task[], projectConfig: ProjectExecutionConfig): string {
+    const details = tasks
+      .filter((task) => task.status === 'todo')
+      .map((task) => {
+        const reason = this.workflowPolicyService.getIneligibleReason(task, tasks, projectConfig);
+        if (!reason) {
+          return null;
+        }
+        return `${task.id}（${reason}）`;
+      })
+      .filter((item): item is string => item !== null);
+
+    if (details.length === 0) {
+      return '';
+    }
+
+    return details.slice(0, 3).join('；');
   }
 }
