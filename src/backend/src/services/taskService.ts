@@ -10,6 +10,7 @@ export type ProgressSyncCallback = (projectId: string) => Promise<void> | void;
 export class TaskService {
   private tasksPath = getTasksRoot();
   private projectsPath = path.join(this.tasksPath, 'projects.json');
+  private completedArchivePath = path.join(this.tasksPath, 'archive', 'completed');
   private progressSyncCallback?: ProgressSyncCallback;
 
   /**
@@ -322,6 +323,46 @@ export class TaskService {
     return { success: true, task: taskToDelete };
   }
 
+  async archiveCompletedTasks(projectId: string): Promise<{
+    archivedTasks: Task[];
+    archivedCount: number;
+    remainingCount: number;
+    archiveFilePath: string;
+  }> {
+    const tasks = await this.getTasksByProject(projectId);
+    const completedTasks = tasks.filter((task) => task.status === 'done');
+    const remainingTasks = tasks.filter((task) => task.status !== 'done');
+    const archiveFilePath = this.getCompletedArchiveFilePath(projectId);
+
+    if (completedTasks.length > 0) {
+      fs.mkdirSync(this.completedArchivePath, { recursive: true });
+      this.appendCompletedArchive(projectId, completedTasks);
+      await this.saveTasks(projectId, remainingTasks);
+
+      if (this.progressSyncCallback) {
+        setImmediate(() => {
+          try {
+            const result = this.progressSyncCallback!(projectId);
+            if (result && typeof result.then === 'function') {
+              result.catch((error: Error) => {
+                console.error('[TaskService] Progress sync callback failed:', error);
+              });
+            }
+          } catch (error) {
+            console.error('[TaskService] Progress sync callback error:', error);
+          }
+        });
+      }
+    }
+
+    return {
+      archivedTasks: completedTasks,
+      archivedCount: completedTasks.length,
+      remainingCount: remainingTasks.length,
+      archiveFilePath,
+    };
+  }
+
   /**
    * 检查是否需要触发进度同步
    *
@@ -361,5 +402,50 @@ export class TaskService {
       const data = { ...project, tasks, updatedAt: new Date().toISOString() };
       fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
     }
+  }
+
+  private getCompletedArchiveFilePath(projectId: string): string {
+    return path.join(this.completedArchivePath, `${projectId}-completed-tasks.json`);
+  }
+
+  private appendCompletedArchive(projectId: string, tasks: Task[]): void {
+    const archiveFilePath = this.getCompletedArchiveFilePath(projectId);
+    const now = new Date().toISOString();
+
+    const nextBatch = {
+      archivedAt: now,
+      count: tasks.length,
+      tasks,
+    };
+
+    if (!fs.existsSync(archiveFilePath)) {
+      fs.writeFileSync(
+        archiveFilePath,
+        JSON.stringify(
+          {
+            projectId,
+            updatedAt: now,
+            totalArchived: tasks.length,
+            batches: [nextBatch],
+          },
+          null,
+          2
+        )
+      );
+      return;
+    }
+
+    const raw = fs.readFileSync(archiveFilePath, 'utf-8');
+    const current = JSON.parse(raw);
+    const existingBatches = Array.isArray(current?.batches) ? current.batches : [];
+
+    const next = {
+      projectId,
+      updatedAt: now,
+      totalArchived: (typeof current?.totalArchived === 'number' ? current.totalArchived : 0) + tasks.length,
+      batches: [...existingBatches, nextBatch],
+    };
+
+    fs.writeFileSync(archiveFilePath, JSON.stringify(next, null, 2));
   }
 }

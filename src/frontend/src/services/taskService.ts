@@ -135,6 +135,8 @@ export interface DispatcherPrerequisites {
 }
 
 async function parseJsonResponse<T>(response: Response, fallbackMessage: string): Promise<T> {
+  const contentType = response.headers.get('content-type') || ''
+
   if (!response.ok) {
     const raw = await response.text()
     if (raw) {
@@ -156,6 +158,12 @@ async function parseJsonResponse<T>(response: Response, fallbackMessage: string)
     }
 
     throw new Error(fallbackMessage)
+  }
+
+  if (!contentType.includes('application/json')) {
+    const raw = await response.text()
+    const preview = raw.slice(0, 120).replace(/\s+/g, ' ').trim()
+    throw new Error(`接口返回了非 JSON 内容（可能是页面或旧版本服务）：${preview || fallbackMessage}`)
   }
 
   return response.json() as Promise<T>
@@ -255,6 +263,19 @@ export async function deleteTask(projectId: string, taskId: string) {
     throw new Error(error.error || 'Failed to delete task')
   }
   return response.json()
+}
+
+export async function archiveCompletedTasks(projectId: string) {
+  const response = await authFetch(buildApiUrl(`/api/tasks/projects/${projectId}/tasks/archive-completed`), {
+    method: 'POST',
+  })
+  return parseJsonResponse<{
+    success: boolean
+    archivedCount: number
+    remainingCount: number
+    archiveFilePath: string
+    message: string
+  }>(response, 'Failed to archive completed tasks')
 }
 
 /**

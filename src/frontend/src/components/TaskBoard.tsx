@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import TaskCard from './TaskCard'
 import CreateTaskModal from './CreateTaskModal'
 import CreateProjectModal from './CreateProjectModal'
-import { deleteTask, generateProgressDoc, getDispatcherStatus, getProjects, getTasks, getTasksForProjects, setProjectDispatcherEnabled, updateProject, updateTask, type DispatcherStatus, type Project, type Task } from '../services/taskService'
+import { archiveCompletedTasks, deleteTask, generateProgressDoc, getDispatcherStatus, getProjects, getTasks, getTasksForProjects, setProjectDispatcherEnabled, updateProject, updateTask, type DispatcherStatus, type Project, type Task } from '../services/taskService'
 import { useWebSocket } from '../hooks/useWebSocket'
 
 const columns = [
@@ -55,6 +55,7 @@ export default function TaskBoard() {
   
   // JSON-first: 生成04进度跟踪状态
   const [generatingProgress, setGeneratingProgress] = useState(false)
+  const [archivingCompleted, setArchivingCompleted] = useState(false)
   const visibleProjects = projects.filter((project) => project.status !== 'archived')
 
   useWebSocket({
@@ -314,6 +315,38 @@ export default function TaskBoard() {
       setNotice({ type: 'success', message: `项目 ${updatedProject.name} 已归档` })
     } catch (err) {
       setNotice({ type: 'error', message: err instanceof Error ? err.message : '归档项目失败' })
+    }
+  }
+
+  const handleArchiveCompletedTasks = async () => {
+    if (currentProject === 'all') return
+
+    const project = projects.find((item) => item.id === currentProject)
+    if (!project) return
+
+    if (!window.confirm(`确认归档项目“${project.name}”中所有已完成任务吗？其他任务会保留并继续运行。`)) {
+      return
+    }
+
+    try {
+      setArchivingCompleted(true)
+      const result = await archiveCompletedTasks(project.id)
+
+      if (result.archivedCount > 0) {
+        setTasks((currentTasks) => currentTasks.filter((task) => task.status !== 'done'))
+      }
+
+      setNotice({
+        type: 'success',
+        message: result.archivedCount > 0
+          ? `已归档 ${result.archivedCount} 个已完成任务`
+          : '没有可归档的已完成任务',
+      })
+      await refreshProjectCounts(visibleProjects)
+    } catch (err) {
+      setNotice({ type: 'error', message: err instanceof Error ? err.message : '归档已完成任务失败' })
+    } finally {
+      setArchivingCompleted(false)
     }
   }
 
@@ -653,6 +686,15 @@ export default function TaskBoard() {
                     生成进度文档
                   </>
                 )}
+              </button>
+
+              <button
+                onClick={handleArchiveCompletedTasks}
+                disabled={archivingCompleted}
+                className="h-10 px-4 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                title="仅归档已完成任务，其他任务保留"
+              >
+                {archivingCompleted ? '归档中...' : '归档已完成'}
               </button>
 
               <button

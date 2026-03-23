@@ -457,6 +457,41 @@ export function taskRoutes(
     }
   });
 
+  // 手动归档已完成任务（仅归档 done，其他状态保持不变）
+  router.post('/projects/:id/tasks/archive-completed', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const validation = await validateProjectAccess(id);
+      if (!validation.ok) {
+        return res.status(validation.status).json(validation.body);
+      }
+
+      const result = await taskService.archiveCompletedTasks(id);
+
+      for (const task of result.archivedTasks) {
+        wsServer.broadcastTaskUpdate(id, { ...task, deleted: true });
+      }
+
+      res.json({
+        success: true,
+        archivedCount: result.archivedCount,
+        remainingCount: result.remainingCount,
+        archiveFilePath: result.archiveFilePath,
+        message:
+          result.archivedCount > 0
+            ? `Archived ${result.archivedCount} completed task(s).`
+            : 'No completed tasks to archive.',
+      });
+    } catch (error) {
+      console.error('Failed to archive completed tasks:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to archive completed tasks',
+        details: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
   // 查询项目进度
   router.get('/projects/:id/progress', async (req, res) => {
     try {
