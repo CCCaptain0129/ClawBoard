@@ -18,10 +18,6 @@ export class WorkflowPolicyService {
       return '项目未开启自动调度';
     }
 
-    if (projectConfig.executionMode === 'manual') {
-      return '项目执行模式为手动';
-    }
-
     if (task.status !== 'todo' && task.status !== 'in-progress') {
       return `任务状态为 ${task.status}`;
     }

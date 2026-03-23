@@ -43,6 +43,16 @@ function createProjectConfig(overrides: Partial<ProjectExecutionConfig> = {}): P
 }
 
 describe('WorkflowPolicyService', () => {
+  it('项目 executionMode 为 manual 时，不应单独阻断自动派发', () => {
+    const service = new WorkflowPolicyService();
+    const task = createTask({ executionMode: 'auto' });
+    const config = createProjectConfig({ executionMode: 'manual', autoDispatchEnabled: true });
+
+    const eligible = service.isTaskAutoDispatchEligible(task, [task], config);
+
+    expect(eligible).toBe(true);
+  });
+
   it('当任务已指定负责人且满足其他条件时，仍允许自动派发', () => {
     const service = new WorkflowPolicyService();
     const task = createTask({ assignee: 'Alice' });
