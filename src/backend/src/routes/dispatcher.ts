@@ -13,6 +13,16 @@ export function dispatcherRoutes(dispatcherControlService: DispatcherControlServ
     }
   });
 
+  router.get('/prerequisites', async (_req, res) => {
+    try {
+      const prerequisites = await dispatcherControlService.getPrerequisites();
+      res.json(prerequisites);
+    } catch (error) {
+      const details = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: 'Failed to get dispatcher prerequisites', details });
+    }
+  });
+
   router.post('/mode', async (req, res) => {
     try {
       const { mode, intervalMs } = req.body || {};

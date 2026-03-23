@@ -123,6 +123,17 @@ export interface DispatcherStatus {
   updatedAt: string
 }
 
+export interface DispatcherPrerequisites {
+  checkedAt: string
+  gateway: {
+    status: 'ready' | 'missing_config' | 'connection_failed'
+    configured: boolean
+    url: string
+    configPath: string
+    message: string
+  }
+}
+
 async function parseJsonResponse<T>(response: Response, fallbackMessage: string): Promise<T> {
   if (!response.ok) {
     const raw = await response.text()
@@ -290,4 +301,9 @@ export async function setProjectDispatcherEnabled(projectId: string, enabled: bo
     'Failed to update project dispatcher status'
   )
   return data.status
+}
+
+export async function getDispatcherPrerequisites() {
+  const response = await authFetch(buildApiUrl('/api/dispatcher/prerequisites'))
+  return parseJsonResponse<DispatcherPrerequisites>(response, 'Failed to fetch dispatcher prerequisites')
 }

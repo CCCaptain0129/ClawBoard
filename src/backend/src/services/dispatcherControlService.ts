@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { spawn } from 'child_process';
+import { WebSocket } from 'ws';
 import { getWorkspaceRoot } from '../config/paths';
 
 export type DispatcherMode = 'manual' | 'auto';
@@ -14,6 +15,19 @@ export interface DispatcherStatus {
   pidFile: string;
   logFile: string;
   updatedAt: string;
+}
+
+export interface GatewayReadiness {
+  status: 'ready' | 'missing_config' | 'connection_failed';
+  configured: boolean;
+  url: string;
+  configPath: string;
+  message: string;
+}
+
+export interface DispatcherPrerequisites {
+  gateway: GatewayReadiness;
+  checkedAt: string;
 }
 
 interface RuntimeState {
@@ -30,6 +44,8 @@ export class DispatcherControlService {
   private logFilePath: string;
   private runtimeStatePath: string;
   private dispatcherConfigPath: string;
+  private gatewayCache: DispatcherPrerequisites | null = null;
+  private gatewayCacheAt = 0;
 
   constructor() {
     this.workspaceRoot = getWorkspaceRoot();
@@ -37,6 +53,22 @@ export class DispatcherControlService {
     this.logFilePath = path.join(this.workspaceRoot, 'tmp/logs/pm-dispatcher.out');
     this.runtimeStatePath = path.join(this.workspaceRoot, 'tmp/dispatcher-mode.json');
     this.dispatcherConfigPath = path.join(this.workspaceRoot, 'config/pm-agent-dispatcher.json');
+  }
+
+  async getPrerequisites(force = false): Promise<DispatcherPrerequisites> {
+    const now = Date.now();
+    if (!force && this.gatewayCache && now - this.gatewayCacheAt < 10000) {
+      return this.gatewayCache;
+    }
+
+    const gateway = await this.checkGatewayReadiness();
+    const result: DispatcherPrerequisites = {
+      gateway,
+      checkedAt: new Date().toISOString(),
+    };
+    this.gatewayCache = result;
+    this.gatewayCacheAt = now;
+    return result;
   }
 
   getStatus(): DispatcherStatus {
@@ -185,6 +217,100 @@ export class DispatcherControlService {
       return this.loadRuntimeState().intervalMs;
     }
     return Math.min(600000, Math.max(5000, Math.round(intervalMs)));
+  }
+
+  private resolveGatewayConfig(): { url: string; token: string; configPath: string } {
+    const configPath = path.join(this.workspaceRoot, 'src/backend/config/openclaw.json');
+    let fileConfig: { gateway?: { url?: string; token?: string } } = {};
+
+    if (fs.existsSync(configPath)) {
+      try {
+        fileConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      } catch {
+        // ignore parse errors and fallback to env/defaults
+      }
+    }
+
+    const url = (process.env.OPENCLAW_GATEWAY_URL || fileConfig.gateway?.url || 'ws://127.0.0.1:18789').trim();
+    const token = (process.env.OPENCLAW_GATEWAY_TOKEN || fileConfig.gateway?.token || '').trim();
+    return { url, token, configPath };
+  }
+
+  private async checkGatewayReadiness(): Promise<GatewayReadiness> {
+    const { url, token, configPath } = this.resolveGatewayConfig();
+
+    if (!token) {
+      return {
+        status: 'missing_config',
+        configured: false,
+        url,
+        configPath,
+        message: `未配置 Gateway Token，请在 ${configPath} 的 gateway.token 中填写。`,
+      };
+    }
+
+    if (!url.startsWith('ws://') && !url.startsWith('wss://')) {
+      return {
+        status: 'missing_config',
+        configured: false,
+        url,
+        configPath,
+        message: `Gateway URL 格式无效（${url}），需要以 ws:// 或 wss:// 开头。`,
+      };
+    }
+
+    const reachable = await this.tryConnectGateway(url, token, 1500);
+    if (!reachable.ok) {
+      return {
+        status: 'connection_failed',
+        configured: true,
+        url,
+        configPath,
+        message: `Gateway 连接失败：${reachable.reason || '未知错误'}。请确认 openclaw gateway 已启动且 token 正确。`,
+      };
+    }
+
+    return {
+      status: 'ready',
+      configured: true,
+      url,
+      configPath,
+      message: 'Gateway 连接正常，可自动创建 subagent。',
+    };
+  }
+
+  private tryConnectGateway(url: string, token: string, timeoutMs: number): Promise<{ ok: boolean; reason?: string }> {
+    return new Promise((resolve) => {
+      let settled = false;
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        try {
+          ws.close();
+        } catch {
+          // ignore
+        }
+        resolve({ ok: false, reason: '连接超时' });
+      }, timeoutMs);
+
+      const wsUrl = `${url}${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}`;
+      const ws = new WebSocket(wsUrl);
+
+      ws.once('open', () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        ws.close();
+        resolve({ ok: true });
+      });
+
+      ws.once('error', (error) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve({ ok: false, reason: error.message });
+      });
+    });
   }
 
   private readPid(): number | null {

@@ -3,7 +3,13 @@ import Dashboard from './pages/Dashboard'
 import KanbanBoard from './components/KanbanBoard'
 import AgentInitPage from './pages/AgentInitPage'
 import { authFetch, buildApiUrl, clearStoredAccessToken, getStoredAccessToken, setStoredAccessToken } from './config'
-import { getDispatcherStatus, setDispatcherMode, type DispatcherStatus } from './services/taskService'
+import {
+  getDispatcherPrerequisites,
+  getDispatcherStatus,
+  setDispatcherMode,
+  type DispatcherPrerequisites,
+  type DispatcherStatus
+} from './services/taskService'
 import './index.css'
 
 type AppPage = 'agents' | 'tasks' | 'agent-init'
@@ -36,6 +42,7 @@ function App() {
   const [tokenError, setTokenError] = useState<string | null>(null)
   const [isCheckingToken, setIsCheckingToken] = useState(false)
   const [dispatcherStatus, setDispatcherStatus] = useState<DispatcherStatus | null>(null)
+  const [dispatcherPrerequisites, setDispatcherPrerequisites] = useState<DispatcherPrerequisites | null>(null)
   const [dispatcherLoading, setDispatcherLoading] = useState(false)
   const [dispatcherError, setDispatcherError] = useState<string | null>(null)
 
@@ -57,9 +64,13 @@ function App() {
     let disposed = false
     const loadDispatcher = async () => {
       try {
-        const status = await getDispatcherStatus()
+        const [status, prerequisites] = await Promise.all([
+          getDispatcherStatus(),
+          getDispatcherPrerequisites(),
+        ])
         if (!disposed) {
           setDispatcherStatus(status)
+          setDispatcherPrerequisites(prerequisites)
           setDispatcherError(null)
         }
       } catch (error) {
@@ -166,6 +177,16 @@ function App() {
 
     const nextMode = dispatcherStatus.mode === 'auto' ? 'manual' : 'auto'
     if (nextMode === 'auto') {
+      const gatewayReady = dispatcherPrerequisites?.gateway.status === 'ready'
+      if (!gatewayReady) {
+        const gatewayMessage = dispatcherPrerequisites?.gateway.message || 'Gateway 未就绪'
+        const configPath = dispatcherPrerequisites?.gateway.configPath || 'src/backend/config/openclaw.json'
+        window.alert(
+          `当前无法开启自动调度。\n\n原因：${gatewayMessage}\n\n请先完成配置后再重试。\n配置文件：${configPath}`
+        )
+        return
+      }
+
       const noProjectEnabled = (dispatcherStatus.projectAllowlist?.length || 0) === 0
       const message = noProjectEnabled
         ? '开启全局自动调度后，系统会尝试自动分派任务。\n\n当前还没有启用任何项目，所以不会立即分派任务。\n下一步：到任务看板打开“本项目自动调度”，再把任务改为“进行中”。\n\n是否继续开启？'
@@ -186,6 +207,16 @@ function App() {
     } finally {
       setDispatcherLoading(false)
     }
+  }
+
+  const showGatewaySetupHint = () => {
+    if (!dispatcherPrerequisites?.gateway) {
+      window.alert('Gateway 状态加载中，请稍后重试。')
+      return
+    }
+    window.alert(
+      `Gateway 配置说明\n\n状态：${dispatcherPrerequisites.gateway.message}\n\n配置文件：${dispatcherPrerequisites.gateway.configPath}\n命令建议：\n1) openclaw gateway start\n2) openclaw gateway status`
+    )
   }
 
   if (!accessToken) {
@@ -264,6 +295,23 @@ function App() {
                 }`}></span>
                 {isBackendConnected ? '服务在线' : '服务离线'}
               </span>
+              <button
+                onClick={showGatewaySetupHint}
+                className={`inline-flex items-center h-10 px-4 rounded-xl text-sm font-semibold border transition-colors ${
+                  dispatcherPrerequisites?.gateway.status === 'ready'
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                    : dispatcherPrerequisites?.gateway.status === 'connection_failed'
+                      ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                      : 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
+                }`}
+                title="点击查看 Gateway 配置说明"
+              >
+                {dispatcherPrerequisites?.gateway.status === 'ready'
+                  ? 'Gateway 已连接'
+                  : dispatcherPrerequisites?.gateway.status === 'connection_failed'
+                    ? 'Gateway 连接失败'
+                    : 'Gateway 未配置'}
+              </button>
               <div className="flex gap-2">
                 <button
                   onClick={() => navigateTo('agents')}
