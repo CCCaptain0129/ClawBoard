@@ -134,6 +134,14 @@ export interface DispatcherPrerequisites {
   }
 }
 
+export interface DispatchOnceResult {
+  projectId: string
+  dispatched: boolean
+  taskId: string | null
+  reason: string
+  subagentId?: string
+}
+
 async function parseJsonResponse<T>(response: Response, fallbackMessage: string): Promise<T> {
   const contentType = response.headers.get('content-type') || ''
 
@@ -327,4 +335,13 @@ export async function setProjectDispatcherEnabled(projectId: string, enabled: bo
 export async function getDispatcherPrerequisites() {
   const response = await authFetch(buildApiUrl('/api/dispatcher/prerequisites'))
   return parseJsonResponse<DispatcherPrerequisites>(response, 'Failed to fetch dispatcher prerequisites')
+}
+
+export async function dispatchProjectOnce(projectId: string, forceAutoDispatch = true) {
+  const response = await authFetch(buildApiUrl(`/api/execution/projects/${projectId}/dispatch-once`), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ forceAutoDispatch }),
+  })
+  return parseJsonResponse<DispatchOnceResult>(response, 'Failed to dispatch project task')
 }

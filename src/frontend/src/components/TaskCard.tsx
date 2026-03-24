@@ -36,6 +36,8 @@ interface TaskCardProps {
   projectIcon?: string
   onStatusChange?: (taskId: string, newStatus: 'todo' | 'in-progress' | 'review' | 'done') => void
   onAssigneeChange?: (taskId: string, assignee: string | null) => Promise<void> | void
+  onRedispatchTask?: (taskId: string) => Promise<void> | void
+  isRedispatching?: boolean
   onDelete?: (taskId: string, taskTitle: string) => void // JSON-first: 删除任务
 }
 
@@ -199,6 +201,8 @@ export default function TaskCard({
   projectIcon = '📊',
   onStatusChange,
   onAssigneeChange,
+  onRedispatchTask,
+  isRedispatching = false,
   onDelete // JSON-first: 删除任务
 }: TaskCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -696,6 +700,22 @@ export default function TaskCard({
                 title="删除任务（仅 todo 状态）"
               >
                 🗑️ 删除
+              </button>
+            )}
+
+            {onRedispatchTask && task.status === 'in-progress' && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  void onRedispatchTask(task.id)
+                }}
+                disabled={isRedispatching}
+                className="text-xs font-medium text-amber-600 hover:text-amber-700 hover:bg-amber-50 px-2 py-1 rounded transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                title="清理占用并重新派发任务"
+              >
+                {isRedispatching ? '重新派发中...' : '重新派发任务'}
               </button>
             )}
 

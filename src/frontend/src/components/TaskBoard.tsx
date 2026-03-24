@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import TaskCard from './TaskCard'
 import CreateTaskModal from './CreateTaskModal'
 import CreateProjectModal from './CreateProjectModal'
-import { archiveCompletedTasks, deleteTask, generateProgressDoc, getDispatcherStatus, getProjects, getTasks, getTasksForProjects, setProjectDispatcherEnabled, updateProject, updateTask, type DispatcherStatus, type Project, type Task } from '../services/taskService'
+import { archiveCompletedTasks, deleteTask, dispatchProjectOnce, generateProgressDoc, getDispatcherStatus, getProjects, getTasks, getTasksForProjects, setProjectDispatcherEnabled, updateProject, updateTask, type DispatcherStatus, type Project, type Task } from '../services/taskService'
 import { useWebSocket } from '../hooks/useWebSocket'
 
 const columns = [
@@ -52,6 +52,7 @@ export default function TaskBoard() {
   const [pendingDeleteTask, setPendingDeleteTask] = useState<{ id: string; title: string } | null>(null)
   const [dispatcherStatus, setDispatcherStatus] = useState<DispatcherStatus | null>(null)
   const [projectDispatchLoading, setProjectDispatchLoading] = useState(false)
+  const [redispatchingTaskId, setRedispatchingTaskId] = useState<string | null>(null)
   
   // JSON-first: 生成04进度跟踪状态
   const [generatingProgress, setGeneratingProgress] = useState(false)
@@ -260,6 +261,55 @@ export default function TaskBoard() {
       type: 'success',
       message: assignee ? `任务 ${taskId} 已分配给 ${assignee}` : `任务 ${taskId} 的负责人已清空`,
     })
+  }
+
+  const handleRedispatchTask = async (taskId: string) => {
+    if (redispatchingTaskId) {
+      return
+    }
+
+    try {
+      setRedispatchingTaskId(taskId)
+      const taskProjectId = getTaskProjectId(taskId)
+      if (!taskProjectId) {
+        throw new Error(`无法确定任务 ${taskId} 所属项目`)
+      }
+
+      const currentTask = tasks.find((task) => task.id === taskId)
+      if (!currentTask) {
+        throw new Error(`任务 ${taskId} 不存在`)
+      }
+
+      if (currentTask.status === 'done' || currentTask.status === 'review') {
+        throw new Error('仅进行中任务支持重新派发')
+      }
+
+      if (currentTask.claimedBy) {
+        const releasedTask = await updateTask(taskProjectId, taskId, { claimedBy: null })
+        setTasks((currentTasks) => currentTasks.map((task) => (
+          task.id === taskId ? releasedTask : task
+        )))
+      }
+
+      const dispatchResult = await dispatchProjectOnce(taskProjectId, true)
+      if (!dispatchResult.dispatched) {
+        throw new Error(dispatchResult.reason || '未找到可派发任务')
+      }
+
+      if (dispatchResult.taskId !== taskId) {
+        setNotice({
+          type: 'error',
+          message: `任务 ${taskId} 已清理占用，但本次派发命中 ${dispatchResult.taskId}（${dispatchResult.reason}）`,
+        })
+      } else {
+        const subagentHint = dispatchResult.subagentId ? `，subagent: ${dispatchResult.subagentId}` : ''
+        setNotice({ type: 'success', message: `任务 ${taskId} 已重新派发${subagentHint}` })
+      }
+    } catch (err) {
+      setNotice({ type: 'error', message: err instanceof Error ? err.message : '重新派发失败' })
+    } finally {
+      setRedispatchingTaskId(null)
+    }
   }
 
 
@@ -802,6 +852,8 @@ export default function TaskBoard() {
                           projectIcon={project?.icon}
                           onStatusChange={handleStatusChange}
                           onAssigneeChange={handleAssigneeChange}
+                          onRedispatchTask={handleRedispatchTask}
+                          isRedispatching={redispatchingTaskId === task.id}
                           onDelete={requestDeleteTask}
                         />
                       </div>
