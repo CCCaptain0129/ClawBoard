@@ -345,3 +345,12 @@ export async function dispatchProjectOnce(projectId: string, forceAutoDispatch =
   })
   return parseJsonResponse<DispatchOnceResult>(response, 'Failed to dispatch project task')
 }
+
+export async function dispatchTaskById(projectId: string, taskId: string, forceAutoDispatch = true) {
+  const response = await authFetch(buildApiUrl(`/api/execution/projects/${projectId}/tasks/${taskId}/dispatch`), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ forceAutoDispatch }),
+  })
+  return parseJsonResponse<DispatchOnceResult>(response, `Failed to dispatch task ${taskId}`)
+}

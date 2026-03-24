@@ -132,6 +132,50 @@ export class ProjectExecutionService {
     };
   }
 
+  async dispatchTaskById(projectId: string, taskId: string, forceAutoDispatch = false): Promise<{
+    projectId: string;
+    dispatched: boolean;
+    taskId: string | null;
+    reason: string;
+    subagentId?: string;
+  }> {
+    const project = (await this.taskService.getAllProjects()).find((item) => item.id === projectId);
+    if (!project) {
+      throw new Error(`Project "${projectId}" not found`);
+    }
+
+    const effectiveConfig = this.projectConfigService.getEffectiveConfig(project);
+    const projectConfig = {
+      ...effectiveConfig,
+      autoDispatchEnabled: forceAutoDispatch ? true : effectiveConfig.autoDispatchEnabled,
+    };
+
+    const tasks = await this.taskService.getTasksByProject(projectId);
+    const task = tasks.find((item) => item.id === taskId);
+    if (!task) {
+      throw new Error(`Task "${taskId}" not found in project "${projectId}"`);
+    }
+
+    const ineligibleReason = this.taskSelectionService.getIneligibleReason(task, tasks, projectConfig);
+    if (ineligibleReason) {
+      return {
+        projectId,
+        dispatched: false,
+        taskId,
+        reason: `任务 ${taskId} 不满足派发条件：${ineligibleReason}`,
+      };
+    }
+
+    const subagentId = await this.dispatchTask(projectId, task, `指定任务派发 ${task.id}`);
+    return {
+      projectId,
+      dispatched: true,
+      taskId: task.id,
+      reason: `已按指定任务派发 ${task.id}`,
+      subagentId,
+    };
+  }
+
   async getTaskExecutionContext(projectId: string, taskId: string): Promise<{
     projectId: string;
     taskId: string;

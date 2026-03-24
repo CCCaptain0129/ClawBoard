@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import TaskCard from './TaskCard'
 import CreateTaskModal from './CreateTaskModal'
 import CreateProjectModal from './CreateProjectModal'
-import { archiveCompletedTasks, deleteTask, dispatchProjectOnce, generateProgressDoc, getDispatcherStatus, getProjects, getTasks, getTasksForProjects, setProjectDispatcherEnabled, updateProject, updateTask, type DispatcherStatus, type Project, type Task } from '../services/taskService'
+import { archiveCompletedTasks, deleteTask, dispatchTaskById, generateProgressDoc, getDispatcherStatus, getProjects, getTasks, getTasksForProjects, setProjectDispatcherEnabled, updateProject, updateTask, type DispatcherStatus, type Project, type Task } from '../services/taskService'
 import { useWebSocket } from '../hooks/useWebSocket'
 
 const columns = [
@@ -291,20 +291,13 @@ export default function TaskBoard() {
         )))
       }
 
-      const dispatchResult = await dispatchProjectOnce(taskProjectId, true)
+      const dispatchResult = await dispatchTaskById(taskProjectId, taskId, true)
       if (!dispatchResult.dispatched) {
         throw new Error(dispatchResult.reason || '未找到可派发任务')
       }
 
-      if (dispatchResult.taskId !== taskId) {
-        setNotice({
-          type: 'error',
-          message: `任务 ${taskId} 已清理占用，但本次派发命中 ${dispatchResult.taskId}（${dispatchResult.reason}）`,
-        })
-      } else {
-        const subagentHint = dispatchResult.subagentId ? `，subagent: ${dispatchResult.subagentId}` : ''
-        setNotice({ type: 'success', message: `任务 ${taskId} 已重新派发${subagentHint}` })
-      }
+      const subagentHint = dispatchResult.subagentId ? `，subagent: ${dispatchResult.subagentId}` : ''
+      setNotice({ type: 'success', message: `任务 ${taskId} 已重新派发${subagentHint}` })
     } catch (err) {
       setNotice({ type: 'error', message: err instanceof Error ? err.message : '重新派发失败' })
     } finally {

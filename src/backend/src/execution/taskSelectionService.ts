@@ -5,6 +5,10 @@ import { WorkflowPolicyService } from './workflowPolicyService';
 export class TaskSelectionService {
   constructor(private workflowPolicyService: WorkflowPolicyService = new WorkflowPolicyService()) {}
 
+  getIneligibleReason(task: Task, allTasks: Task[], projectConfig: ProjectExecutionConfig): string | null {
+    return this.workflowPolicyService.getIneligibleReason(task, allTasks, projectConfig);
+  }
+
   selectNextTask(tasks: Task[], projectConfig: ProjectExecutionConfig): TaskSelectionResult {
     if (!this.workflowPolicyService.hasAvailableCapacity(tasks, projectConfig)) {
       return {
