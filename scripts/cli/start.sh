@@ -23,6 +23,17 @@ BACKEND_HOST="127.0.0.1"
 FRONTEND_HOST="127.0.0.1"
 FRONTEND_DEFAULT_PORT=5173
 
+# 非交互 shell 场景下，优先补齐 nvm 的 Node 22（openclaw 需要 >= 22.12）
+NVM_NODE22_BIN=""
+for candidate in "$HOME"/.nvm/versions/node/v22*/bin; do
+    if [ -d "$candidate" ]; then
+        NVM_NODE22_BIN="$candidate"
+    fi
+done
+if [ -n "$NVM_NODE22_BIN" ]; then
+    export PATH="$NVM_NODE22_BIN:$PATH"
+fi
+
 # 补充用户级可执行目录，避免 openclaw CLI 在非交互 shell 中找不到
 export PATH="$HOME/.local/share/pnpm:$HOME/.local/bin:$PATH"
 
