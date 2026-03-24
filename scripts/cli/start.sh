@@ -23,6 +23,9 @@ BACKEND_HOST="127.0.0.1"
 FRONTEND_HOST="127.0.0.1"
 FRONTEND_DEFAULT_PORT=5173
 
+# 补充用户级可执行目录，避免 openclaw CLI 在非交互 shell 中找不到
+export PATH="$HOME/.local/share/pnpm:$HOME/.local/bin:$PATH"
+
 # 日志文件
 BACKEND_LOG="$PROJECT_ROOT/tmp/backend.log"
 FRONTEND_LOG="$PROJECT_ROOT/tmp/frontend.log"
