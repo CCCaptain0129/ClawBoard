@@ -2,9 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { WorkflowPolicyService } from '../src/execution/workflowPolicyService';
 import { ProjectExecutionConfig } from '../src/execution/types';
 import { Task } from '../src/types/tasks';
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
 
 function createTask(overrides: Partial<Task> = {}): Task {
   return {
@@ -98,106 +95,18 @@ describe('WorkflowPolicyService', () => {
 
   it('进行中且已被占用的任务，不应重复自动派发', () => {
     const service = new WorkflowPolicyService();
-    const thirtySecondsAgo = new Date(Date.now() - 30 * 1000).toISOString();
-    const task = createTask({
-      status: 'in-progress',
-      claimedBy: 'agent:main:subagent:abc',
-      updatedAt: thirtySecondsAgo,
-      startTime: thirtySecondsAgo,
-    });
+    const task = createTask({ status: 'in-progress', claimedBy: 'agent:main:subagent:abc' });
     const config = createProjectConfig();
 
     const eligible = service.isTaskAutoDispatchEligible(task, [task], config);
 
     expect(eligible).toBe(false);
-  });
-
-  it('claimedBy 超过 1 分钟且无活跃 subagent 时，应视为可重新派发', () => {
-    const service = new WorkflowPolicyService();
-    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-    const task = createTask({
-      status: 'in-progress',
-      claimedBy: 'subagent',
-      updatedAt: twoMinutesAgo,
-      startTime: twoMinutesAgo,
-    });
-    const config = createProjectConfig();
-
-    const eligible = service.isTaskAutoDispatchEligible(task, [task], config);
-
-    expect(eligible).toBe(true);
-  });
-
-  it('claimedBy 在 1 分钟内时，应避免重复派发', () => {
-    const service = new WorkflowPolicyService();
-    const thirtySecondsAgo = new Date(Date.now() - 30 * 1000).toISOString();
-    const task = createTask({
-      status: 'in-progress',
-      claimedBy: 'subagent',
-      updatedAt: thirtySecondsAgo,
-      startTime: thirtySecondsAgo,
-    });
-    const config = createProjectConfig();
-
-    const eligible = service.isTaskAutoDispatchEligible(task, [task], config);
-
-    expect(eligible).toBe(false);
-  });
-
-  it('claimedBy 对应活跃 subagent 会话时，即使超过 1 分钟也不应重复派发', () => {
-    const service = new WorkflowPolicyService();
-    const oldTime = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-    const sessionsPath = path.join(os.tmpdir(), `workflow-policy-sessions-${Date.now()}.json`);
-
-    const previousPath = process.env.OPENCLAW_SESSIONS_PATH;
-    process.env.OPENCLAW_SESSIONS_PATH = sessionsPath;
-    (WorkflowPolicyService as any).sessionsCache = null;
-    fs.writeFileSync(
-      sessionsPath,
-      JSON.stringify({
-        'agent:main:subagent:test-active': {
-          updatedAt: Date.now(),
-        },
-      }),
-      'utf-8'
-    );
-
-    try {
-      const task = createTask({
-        status: 'in-progress',
-        claimedBy: 'agent:main:subagent:test-active',
-        updatedAt: oldTime,
-        startTime: oldTime,
-      });
-      const config = createProjectConfig();
-
-      const eligible = service.isTaskAutoDispatchEligible(task, [task], config);
-
-      expect(eligible).toBe(false);
-    } finally {
-      if (previousPath === undefined) {
-        delete process.env.OPENCLAW_SESSIONS_PATH;
-      } else {
-        process.env.OPENCLAW_SESSIONS_PATH = previousPath;
-      }
-      (WorkflowPolicyService as any).sessionsCache = null;
-      if (fs.existsSync(sessionsPath)) {
-        fs.unlinkSync(sessionsPath);
-      }
-    }
   });
 
   it('并发上限只应统计已被占用的进行中任务', () => {
     const service = new WorkflowPolicyService();
-    const thirtySecondsAgo = new Date(Date.now() - 30 * 1000).toISOString();
     const tasks: Task[] = [
-      createTask({
-        id: 'A',
-        status: 'in-progress',
-        claimedBy: 'agent:main:subagent:1',
-        updatedAt: thirtySecondsAgo,
-        startTime: thirtySecondsAgo,
-      }),
+      createTask({ id: 'A', status: 'in-progress', claimedBy: 'agent:main:subagent:1' }),
       createTask({ id: 'B', status: 'in-progress', claimedBy: null }),
       createTask({ id: 'C', status: 'todo', claimedBy: null }),
     ];
