@@ -9,7 +9,7 @@ import {
 
 // Legacy compatibility default: keep a value for config shape, but this field no longer gates auto dispatch.
 const DEFAULT_EXECUTION_MODE: ExecutionMode = 'auto';
-const DEFAULT_MAX_CONCURRENT_SUBAGENTS = 1;
+const DEFAULT_MAX_CONCURRENT_SUBAGENTS = 3;
 
 export class ProjectConfigService {
   private configPath: string;
