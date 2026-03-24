@@ -8,6 +8,7 @@ import { TaskSelectionService } from './taskSelectionService';
 
 export class ProjectExecutionService {
   private isRunning = false;
+  private readonly dispatchDriver: 'main-agent' | 'legacy';
 
   constructor(
     private taskService: TaskService,
@@ -16,7 +17,10 @@ export class ProjectExecutionService {
     private taskSelectionService: TaskSelectionService = new TaskSelectionService(),
     private executionPacketService: ExecutionPacketService = new ExecutionPacketService(),
     private subagentManager: SubagentManager = new SubagentManager(taskService)
-  ) {}
+  ) {
+    const rawDriver = (process.env.DISPATCH_DRIVER || 'main-agent').trim().toLowerCase();
+    this.dispatchDriver = rawDriver === 'legacy' ? 'legacy' : 'main-agent';
+  }
 
   async runCycle(): Promise<void> {
     if (this.isRunning) {
@@ -48,7 +52,10 @@ export class ProjectExecutionService {
           continue;
         }
 
-        await this.dispatchTask(project.id, selectedTask, selection.reason);
+        const dispatch = await this.dispatchTask(project.id, selectedTask, selection.reason);
+        if (!dispatch.dispatched) {
+          console.log(`[ProjectExecutionService] ${project.id}: ${dispatch.reason}`);
+        }
       }
     } catch (error) {
       console.error('[ProjectExecutionService] Run cycle failed:', error);
@@ -121,14 +128,22 @@ export class ProjectExecutionService {
       throw new Error(`Task "${preview.selectedTaskId}" not found before dispatch`);
     }
 
-    const subagentId = await this.dispatchTask(projectId, task, preview.reason);
+    const dispatch = await this.dispatchTask(projectId, task, preview.reason);
+    if (!dispatch.dispatched) {
+      return {
+        projectId,
+        dispatched: false,
+        taskId: task.id,
+        reason: dispatch.reason,
+      };
+    }
 
     return {
       projectId,
       dispatched: true,
       taskId: task.id,
-      reason: preview.reason,
-      subagentId,
+      reason: dispatch.reason,
+      subagentId: dispatch.subagentId,
     };
   }
 
@@ -166,13 +181,22 @@ export class ProjectExecutionService {
       };
     }
 
-    const subagentId = await this.dispatchTask(projectId, task, `指定任务派发 ${task.id}`);
+    const dispatch = await this.dispatchTask(projectId, task, `指定任务派发 ${task.id}`);
+    if (!dispatch.dispatched) {
+      return {
+        projectId,
+        dispatched: false,
+        taskId: task.id,
+        reason: dispatch.reason,
+      };
+    }
+
     return {
       projectId,
       dispatched: true,
       taskId: task.id,
-      reason: `已按指定任务派发 ${task.id}`,
-      subagentId,
+      reason: dispatch.reason,
+      subagentId: dispatch.subagentId,
     };
   }
 
@@ -251,10 +275,21 @@ export class ProjectExecutionService {
     };
   }
 
-  private async dispatchTask(projectId: string, task: Task, reason: string): Promise<string> {
+  private async dispatchTask(projectId: string, task: Task, reason: string): Promise<{
+    dispatched: boolean;
+    reason: string;
+    subagentId?: string;
+  }> {
     const project = (await this.taskService.getAllProjects()).find((item) => item.id === projectId);
     const packet = this.executionPacketService.buildPacket(projectId, task);
     const taskDescription = `${this.buildSubagentPrompt(project?.name || projectId, packet)}\n\n调度原因: ${reason}`;
+
+    if (this.dispatchDriver !== 'legacy') {
+      return {
+        dispatched: false,
+        reason: `当前为 main-agent 派发模式，已跳过 legacy SubagentManager 自动派发（task=${task.id}）`,
+      };
+    }
 
     console.log(`[ProjectExecutionService] Dispatching ${task.id} for project ${projectId}`);
     const subagentId = await this.subagentManager.createSubagent({
@@ -271,7 +306,11 @@ export class ProjectExecutionService {
       this.wsServer.broadcastTaskUpdate(projectId, updatedTask);
     }
 
-    return subagentId;
+    return {
+      dispatched: true,
+      reason: `已按 legacy 派发 ${task.id}`,
+      subagentId,
+    };
   }
 
   private buildSubagentPrompt(projectLabel: string, packet: ReturnType<ExecutionPacketService['buildPacket']>): string {

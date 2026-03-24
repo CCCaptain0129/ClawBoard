@@ -18,6 +18,8 @@ export function taskRoutes(
 
   // 初始化SubagentManager
   const subagentManager = new SubagentManager(taskService);
+  const dispatchDriver = (process.env.DISPATCH_DRIVER || 'main-agent').trim().toLowerCase();
+  const legacyDispatchEnabled = dispatchDriver === 'legacy';
 
   type ProjectSourceMapEntry = {
     projectRoot?: string;
@@ -533,6 +535,13 @@ export function taskRoutes(
 
   // 创建Subagent并自动更新任务状态
   router.post('/subagent/create', async (req, res) => {
+    if (!legacyDispatchEnabled) {
+      return res.status(409).json({
+        error: 'SubagentManager is disabled',
+        details: 'Current dispatch driver is main-agent. Enable legacy mode with DISPATCH_DRIVER=legacy if you need this endpoint.',
+      });
+    }
+
     try {
       const { projectId, taskId, taskTitle, taskDescription, subagentType } = req.body;
 
@@ -576,6 +585,13 @@ export function taskRoutes(
 
   // 标记Subagent完成并更新任务状态
   router.post('/subagent/complete', async (req, res) => {
+    if (!legacyDispatchEnabled) {
+      return res.status(409).json({
+        error: 'SubagentManager is disabled',
+        details: 'Current dispatch driver is main-agent. Legacy completion endpoint is not available.',
+      });
+    }
+
     try {
       const { subagentId, success, output, error } = req.body;
 
