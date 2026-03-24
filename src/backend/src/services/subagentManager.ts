@@ -81,30 +81,9 @@ export class SubagentManager {
 
   private createAndStartSubagent(subagentId: string, label: string, taskDescription: string): Promise<void> {
     const message = `[Subagent Context] You are running as a subagent (depth 1/1). Results auto-announce to your requester; do not busy-poll for status.\n\n[Subagent Task]: ${taskDescription}`;
-    const model = process.env.OPENCLAW_SUBAGENT_MODEL?.trim();
 
     return (async () => {
-      const patchResult = await this.callGatewayRPC('sessions.patch', {
-        key: subagentId,
-        spawnDepth: 1
-      });
-
-      if (!patchResult.ok) {
-        throw new Error(patchResult.error || 'sessions.patch failed');
-      }
-
-      if (model) {
-        // 模型设置失败不阻塞创建流程
-        try {
-          await this.callGatewayRPC('sessions.patch', {
-            key: subagentId,
-            model
-          });
-        } catch {
-          // ignore
-        }
-      }
-
+      // 直接使用 agent + 全新 sessionKey 启动，避免“预创建 session 后被当作恢复会话”的歧义。
       const agentResult = await this.callGatewayRPC('agent', {
         message,
         sessionKey: subagentId,

@@ -744,8 +744,8 @@ async function callGatewayRPC(method, params) {
  * 通过 OpenClaw Gateway RPC 创建 subagent
  * 
  * 流程：
- * 1. 使用 sessions.patch 创建 session entry
- * 2. 使用 agent 方法启动 subagent 执行
+ * 1. 生成全新 sessionKey（agent:main:subagent:uuid）
+ * 2. 直接调用 agent 方法启动 subagent 执行
  * 
  * 优势：
  * - 不需要手动处理 Gateway token
@@ -760,41 +760,16 @@ async function spawnSubagent(task, project, prompt) {
   log(`准备创建 subagent: ${childSessionKey} (label: ${subagentLabel})`);
   
   try {
-    // 步骤 1: 使用 sessions.patch 创建 session entry
-    // 这会创建一个 subagent session 并返回 sessionId
-    log(`步骤 1: 创建 session entry (${childSessionKey})`);
-    
-    const patchResult = await callGatewayRPC('sessions.patch', {
-      key: childSessionKey,
-      spawnDepth: 1  // 子 session 深度
-    });
-    
-    if (!patchResult.ok) {
-      throw new Error(patchResult.error || 'sessions.patch failed');
-    }
-    
-    log(`Session entry 已创建: sessionId=${patchResult.entry?.sessionId}`);
-    
-    // 步骤 2: 设置模型
-    const model = config.globalConstraints.defaultModel;
-    log(`步骤 2: 设置模型 ${model}`);
-    
-    try {
-      await callGatewayRPC('sessions.patch', {
-        key: childSessionKey,
-        model: model
-      });
-    } catch (e) {
-      log(`设置模型失败（继续）: ${e.message}`, 'WARN');
-    }
-    
-    // 步骤 3: 构建 subagent task message
+    // 直接用 agent + 全新 sessionKey 启动，避免预创建 session 被识别为“继续上次会话”。
+    log(`步骤 1: 直接启动 subagent (${childSessionKey})`);
+
+    // 步骤 2: 构建 subagent task message
     const childTaskMessage = `[Subagent Context] You are running as a subagent (depth 1/1). Results auto-announce to your requester; do not busy-poll for status.
 
 [Subagent Task]: ${prompt}`;
     
-    // 步骤 4: 使用 agent 方法启动 subagent
-    log(`步骤 3: 启动 subagent 执行`);
+    // 步骤 3: 使用 agent 方法启动 subagent
+    log(`步骤 2: 触发 agent RPC`);
     
     const idempotencyKey = randomUUID();
     const agentResult = await callGatewayRPC('agent', {
