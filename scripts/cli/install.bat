@@ -12,7 +12,7 @@ set "CONFIG_DIR=%BACKEND_DIR%\config"
 set "CONFIG_FILE=%CONFIG_DIR%\openclaw.json"
 set "CONFIG_EXAMPLE=%CONFIG_DIR%\openclaw.json.example"
 set "ENV_FILE=%PROJECT_ROOT%.env"
-set "DEFAULT_TASKS_ROOT_REL=local\tasks"
+set "DEFAULT_TASKS_ROOT_REL=tasks"
 set "DEFAULT_TASKS_ROOT_ABS=%PROJECT_ROOT%local\tasks"
 
 REM 最低版本要求
@@ -139,7 +139,7 @@ if not exist "%PROJECT_ROOT%tmp\logs" mkdir "%PROJECT_ROOT%tmp\logs"
 type nul > "%PROJECT_ROOT%tmp\.gitkeep" 2>nul
 
 REM ========================================
-REM 配置任务运行态目录（默认 local\tasks）
+REM 配置任务运行态目录（默认 tasks）
 REM ========================================
 echo.
 echo %CYAN%[STEP]%NC% 配置任务运行态目录...
@@ -161,8 +161,8 @@ if not exist "%DEFAULT_TASKS_ROOT_ABS%\example-project-tasks.json" (
     if exist "%PROJECT_ROOT%tasks\example-project-tasks.json" copy "%PROJECT_ROOT%tasks\example-project-tasks.json" "%DEFAULT_TASKS_ROOT_ABS%\example-project-tasks.json" >nul
 )
 
-echo %GREEN%[OK]%NC% 任务运行态目录已设置为: local\tasks
-echo %BLUE%[INFO]%NC% 本地任务数据将写入 local\tasks ^(默认不进入 Git^)
+echo %GREEN%[OK]%NC% 任务运行态目录已设置为: tasks
+echo %BLUE%[INFO]%NC% 任务数据将写入项目目录下的 tasks
 
 REM ========================================
 REM 检查配置文件

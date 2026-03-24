@@ -22,7 +22,7 @@ CONFIG_DIR="$BACKEND_DIR/config"
 CONFIG_FILE="$CONFIG_DIR/openclaw.json"
 CONFIG_EXAMPLE="$CONFIG_DIR/openclaw.json.example"
 ENV_FILE="$PROJECT_ROOT/.env"
-DEFAULT_TASKS_ROOT_REL="local/tasks"
+DEFAULT_TASKS_ROOT_REL="tasks"
 DEFAULT_TASKS_ROOT_ABS="$PROJECT_ROOT/$DEFAULT_TASKS_ROOT_REL"
 
 # 最低版本要求
@@ -262,7 +262,7 @@ setup_tasks_runtime_root() {
     fi
 
     print_success "任务运行态目录已设置为: $DEFAULT_TASKS_ROOT_REL"
-    print_info "本地任务数据将写入 $DEFAULT_TASKS_ROOT_REL (默认不进入 Git)"
+    print_info "任务数据将写入项目目录下的 $DEFAULT_TASKS_ROOT_REL"
 }
 
 # 检查并提示配置文件
@@ -465,7 +465,7 @@ main() {
     setup_workspace_root
     echo ""
 
-    # 配置任务运行态目录（默认 local/tasks）
+    # 配置任务运行态目录（默认 tasks）
     setup_tasks_runtime_root
     echo ""
     

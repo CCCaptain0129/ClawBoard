@@ -149,11 +149,11 @@ Windows:
 3. 不建议直接暴露到公网，建议放在内网/VPN 下使用。
 4. 如需公网访问，建议增加 Nginx + HTTPS + IP 白名单。
 
-## 避免测试数据误推送
+## 任务目录约定
 
-- 安装脚本会自动把任务运行态目录设置为 `local/tasks`（写入 `.env` 的 `OPENCLAW_VIS_TASKS_ROOT`）。
-- `local/` 默认在 `.gitignore` 中，本地测试任务不会进入 Git。
-- 仓库里的 `tasks/` 仅作为示例数据，建议不要在其中进行日常测试。
+- 开源默认任务运行态目录为项目内 `tasks/`（安装脚本会写入 `.env` 的 `OPENCLAW_VIS_TASKS_ROOT=tasks`）。
+- 前端与后端都以该目录下的 `tasks/*.json` 作为任务运行态真源。
+- 如需自定义目录，可手动修改 `.env` 中的 `OPENCLAW_VIS_TASKS_ROOT`。
 
 ## 数据真源（Source of Truth）
 
