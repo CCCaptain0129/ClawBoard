@@ -95,15 +95,28 @@ function findSiblingProjectDir(projectSuffix: string): string | null {
 export function getProjectRoot(projectId: string): string {
   const workspaceRoot = getWorkspaceRoot();
   const workspaceProjectId = path.basename(workspaceRoot);
+  const envOverride = process.env[`PROJECT_ROOT_${projectId.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`];
 
-  if (projectId === workspaceProjectId) {
-    return process.env[`PROJECT_ROOT_${projectId.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`]
-      || workspaceRoot;
+  if (envOverride) {
+    return envOverride;
   }
 
-  return process.env[`PROJECT_ROOT_${projectId.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`]
-    || findSiblingProjectDir(projectId)
-    || path.join(getProjectsParentDir(), projectId);
+  if (projectId === workspaceProjectId) {
+    return workspaceRoot;
+  }
+
+  const sibling = findSiblingProjectDir(projectId);
+  if (sibling) {
+    return sibling;
+  }
+
+  // 若任务真源文件存在于当前看板的 tasks 根目录，默认该项目由当前仓库承载。
+  const taskJsonInWorkspace = path.join(getTasksRoot(), `${projectId}-tasks.json`);
+  if (fs.existsSync(taskJsonInWorkspace)) {
+    return workspaceRoot;
+  }
+
+  return path.join(getProjectsParentDir(), projectId);
 }
 
 export function getSubagentRecordingPath(): string {

@@ -800,6 +800,7 @@ async function spawnSubagent(task, project, prompt) {
     const agentResult = await callGatewayRPC('agent', {
       message: childTaskMessage,
       sessionKey: childSessionKey,
+      lane: 'subagent',
       deliver: false,
       label: subagentLabel,
       spawnedBy: 'pm-agent-dispatcher',

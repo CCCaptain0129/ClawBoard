@@ -108,6 +108,7 @@ export class SubagentManager {
       const agentResult = await this.callGatewayRPC('agent', {
         message,
         sessionKey: subagentId,
+        lane: 'subagent',
         deliver: false,
         label,
         spawnedBy: 'backend-dispatch-once',
