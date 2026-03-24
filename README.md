@@ -126,6 +126,29 @@ cd ClawBoard
 ./clawboard restart  # 重启服务
 ```
 
+6. 让看板可被外部访问（服务器场景）
+
+默认情况下，前端通常只监听本机地址，外部设备无法直接访问。  
+如果你需要在服务器上运行并通过 IP 远程查看，请按以下步骤调整：
+
+macOS / Linux:
+1. 编辑 [`scripts/cli/start.sh`](./scripts/cli/start.sh)
+2. 将 `FRONTEND_HOST="127.0.0.1"` 改为 `FRONTEND_HOST="0.0.0.0"`
+3. 重启服务：`./clawboard restart`
+4. 使用 `http://<服务器IP>:5173` 访问
+
+Windows:
+1. 编辑 [`scripts/cli/start.bat`](./scripts/cli/start.bat)
+2. 将前端启动命令改为带 host 参数（`npm run dev -- --host 0.0.0.0`）
+3. 重新启动服务：`clawboard.bat start`
+4. 使用 `http://<服务器IP>:5173` 访问
+
+注意事项（强烈建议）：
+1. 至少保留 `BOARD_ACCESS_TOKEN` 访问码鉴权（默认已启用）。
+2. 服务器防火墙仅放行必要端口（通常只需 `5173`）。
+3. 不建议直接暴露到公网，建议放在内网/VPN 下使用。
+4. 如需公网访问，建议增加 Nginx + HTTPS + IP 白名单。
+
 ## 避免测试数据误推送
 
 - 安装脚本会自动把任务运行态目录设置为 `local/tasks`（写入 `.env` 的 `OPENCLAW_VIS_TASKS_ROOT`）。
