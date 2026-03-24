@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { getProjectRoot, getTasksRoot, getWorkspaceRoot } from '../config/paths';
+import { getProjectRoot, getTasksRoot } from '../config/paths';
 import { ProjectMemoryService } from '../memory/projectMemoryService';
 import { Task } from '../types/tasks';
 import { TaskExecutionPacket } from './types';
@@ -41,7 +41,7 @@ export class ExecutionPacketService {
   private buildRelevantFiles(projectId: string, docs: string[]): string[] {
     const projectRoot = getProjectRoot(projectId);
     const files = [
-      getWorkspaceRoot(),
+      projectRoot,
       path.join(getTasksRoot(), `${projectId}-tasks.json`),
       ...docs.map((doc) => path.join(projectRoot, doc)),
     ];
@@ -51,6 +51,7 @@ export class ExecutionPacketService {
 
   private buildFallbackInstructions(projectId: string, docs: string[]): string[] {
     const instructions: string[] = [
+      `如不确定本地路径，优先调用 API 真源入口 GET /api/tasks/projects/${projectId}/source-of-truth`,
       `如需确认任务运行态真源，查看 ${path.join(getTasksRoot(), `${projectId}-tasks.json`)}`,
     ];
 
