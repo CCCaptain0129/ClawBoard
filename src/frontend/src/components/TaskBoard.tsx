@@ -111,7 +111,7 @@ export default function TaskBoard() {
     }
 
     const intervalId = window.setInterval(() => {
-      void fetchTasks()
+      void fetchTasks({ silent: true })
     }, 10000)
 
     return () => {
@@ -182,10 +182,13 @@ export default function TaskBoard() {
     }
   }
 
-  const fetchTasks = async () => {
+  const fetchTasks = async (options?: { silent?: boolean }) => {
+    const silent = options?.silent === true
     setError(null)
     try {
-      setLoading(true)
+      if (!silent) {
+        setLoading(true)
+      }
       if (currentProject === 'all') {
         setTasks(await getTasksForProjects(visibleProjects))
         return
@@ -197,7 +200,9 @@ export default function TaskBoard() {
       setError(`加载任务失败：${errorMessage}`)
       setTasks([])
     } finally {
-      setLoading(false)
+      if (!silent) {
+        setLoading(false)
+      }
     }
   }
 
