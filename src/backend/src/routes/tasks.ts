@@ -3,10 +3,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { TaskService } from '../services/taskService';
 import { WebSocketHandler } from '../websocket/server';
-import { SubagentManager } from '../services/subagentManager';
 import type { SubagentMonitorService } from '../services/subagentMonitor';
 import type { Task } from '../types/tasks';
-import { getProjectRoot, getSubagentRecordingPath, getTasksRoot } from '../config/paths';
+import { getProjectRoot, getTasksRoot } from '../config/paths';
 
 export function taskRoutes(
   taskService: TaskService,
@@ -15,11 +14,6 @@ export function taskRoutes(
 ) {
   const router = Router();
   const projectSourceMapPath = path.join(getTasksRoot(), 'project-source-map.json');
-
-  // 初始化SubagentManager
-  const subagentManager = new SubagentManager(taskService);
-  const dispatchDriver = (process.env.DISPATCH_DRIVER || 'main-agent').trim().toLowerCase();
-  const legacyDispatchEnabled = dispatchDriver === 'legacy';
 
   type ProjectSourceMapEntry = {
     projectRoot?: string;
@@ -530,116 +524,6 @@ export function taskRoutes(
       });
     } catch (error) {
       res.status(500).json({ error: 'Failed to get project progress' });
-    }
-  });
-
-  // 创建Subagent并自动更新任务状态
-  router.post('/subagent/create', async (req, res) => {
-    if (!legacyDispatchEnabled) {
-      return res.status(409).json({
-        error: 'SubagentManager is disabled',
-        details: 'Current dispatch driver is main-agent. Enable legacy mode with DISPATCH_DRIVER=legacy if you need this endpoint.',
-      });
-    }
-
-    try {
-      const { projectId, taskId, taskTitle, taskDescription, subagentType } = req.body;
-
-      if (!projectId || !taskId || !taskTitle || !taskDescription) {
-        return res.status(400).json({
-          error: 'Missing required fields: projectId, taskId, taskTitle, taskDescription'
-        });
-      }
-
-      const subagentId = await subagentManager.createSubagent({
-        projectId,
-        taskId,
-        taskTitle,
-        taskDescription,
-        subagentType
-      });
-
-      // 获取更新后的任务
-      const task = await taskService.getTasksByProject(projectId)
-        .then(tasks => tasks.find(t => t.id === taskId));
-
-      // 广播任务更新
-      if (task) {
-        wsServer.broadcastTaskUpdate(projectId, await enrichTask(projectId, task));
-      }
-
-      res.json({
-        success: true,
-        subagentId,
-        task,
-        message: 'Subagent created and task status updated to in-progress'
-      });
-    } catch (error) {
-      console.error('Failed to create subagent:', error);
-      res.status(500).json({
-        error: 'Failed to create subagent',
-        details: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
-
-  // 标记Subagent完成并更新任务状态
-  router.post('/subagent/complete', async (req, res) => {
-    if (!legacyDispatchEnabled) {
-      return res.status(409).json({
-        error: 'SubagentManager is disabled',
-        details: 'Current dispatch driver is main-agent. Legacy completion endpoint is not available.',
-      });
-    }
-
-    try {
-      const { subagentId, success, output, error } = req.body;
-
-      if (!subagentId) {
-        return res.status(400).json({
-          error: 'Missing required field: subagentId'
-        });
-      }
-
-      // 查找任务ID - 使用更灵活的正则表达式
-      const recordingPath = getSubagentRecordingPath();
-      const content = fs.readFileSync(recordingPath, 'utf-8');
-      // 支持多种任务ID格式：VIS-xxx, INT-xxx, EXA-xxx, TASK-xxx, TASK-TEST-xxx, TEST-xxx 等
-      const match = content.match(new RegExp(`Subagent ID.*\`${subagentId}\`.*任务:\\s*([A-Z][A-Z0-9-]+)`, 's'));
-      const taskId = match ? match[1] : null;
-
-      await subagentManager.markSubagentComplete(subagentId, {
-        success: success ?? false,
-        output: output || '',
-        error,
-        completedAt: new Date().toISOString()
-      });
-
-      // 获取更新后的任务
-      let task = null;
-      if (taskId) {
-        const projects = await taskService.getAllProjects();
-        for (const project of projects) {
-          task = await taskService.getTasksByProject(project.id)
-            .then(tasks => tasks.find(t => t.id === taskId));
-          if (task) {
-            wsServer.broadcastTaskUpdate(project.id, await enrichTask(project.id, task));
-            break;
-          }
-        }
-      }
-
-      res.json({
-        success: true,
-        task,
-        message: 'Subagent marked as complete and task status updated to review'
-      });
-    } catch (error) {
-      console.error('Failed to mark subagent complete:', error);
-      res.status(500).json({
-        error: 'Failed to mark subagent complete',
-        details: error instanceof Error ? error.message : String(error)
-      });
     }
   });
 

@@ -44,7 +44,6 @@ FRONTEND_LOG="$PROJECT_ROOT/tmp/frontend.log"
 # PID 文件
 BACKEND_PID_FILE="$PROJECT_ROOT/tmp/backend.pid"
 FRONTEND_PID_FILE="$PROJECT_ROOT/tmp/frontend.pid"
-DISPATCHER_PID_FILE="$PROJECT_ROOT/tmp/pm-dispatcher.pid"
 
 # 端口文件（用于记录实际使用的端口）
 FRONTEND_PORT_FILE="$PROJECT_ROOT/tmp/frontend.port"
@@ -563,54 +562,6 @@ function start_frontend() {
     fi
 }
 
-# 停止 dispatcher 服务
-function stop_dispatcher() {
-    if [ -f "$DISPATCHER_PID_FILE" ]; then
-        local pid=$(cat "$DISPATCHER_PID_FILE")
-        if ps -p $pid > /dev/null 2>&1; then
-            print_info "停止 PM-Agent Dispatcher (PID: $pid)..."
-            kill $pid 2>/dev/null
-            sleep 2
-
-            # 如果进程还在运行，强制停止
-            if ps -p $pid > /dev/null 2>&1; then
-                kill -9 $pid 2>/dev/null
-                sleep 1
-            fi
-
-            print_success "PM-Agent Dispatcher 已停止"
-        fi
-        rm -f "$DISPATCHER_PID_FILE"
-    fi
-}
-
-# 启动 PM-Agent Dispatcher 服务
-function start_dispatcher() {
-    print_step "启动 PM-Agent Dispatcher..."
-
-    # 停止旧实例
-    stop_dispatcher
-
-    # 确保日志目录存在
-    mkdir -p "$PROJECT_ROOT/tmp/logs"
-
-    # 获取轮询间隔（默认 10 秒）
-    local interval=${DISPATCHER_INTERVAL:-10}
-
-    local dispatcher_pid=$(start_detached_process "$PROJECT_ROOT" "$PROJECT_ROOT/tmp/logs/pm-dispatcher.out" "$DISPATCHER_PID_FILE" "node" "scripts/pm-agent-dispatcher.mjs" "--watch" "--interval" "$interval" "--pidfile" "$DISPATCHER_PID_FILE")
-
-    # 等待一下确认进程启动
-    sleep 2
-
-    if ps -p $dispatcher_pid > /dev/null 2>&1; then
-        print_success "PM-Agent Dispatcher 已启动 (PID: $dispatcher_pid, 轮询间隔: ${interval}s)"
-        print_info "调度日志: $PROJECT_ROOT/tmp/logs/pm-dispatcher.log"
-        print_info "标准输出: $PROJECT_ROOT/tmp/logs/pm-dispatcher.out"
-    else
-        print_warning "PM-Agent Dispatcher 启动可能失败，请检查日志"
-    fi
-}
-
 # 显示访问信息
 function show_access_info() {
     echo ""
@@ -634,18 +585,12 @@ function show_access_info() {
     echo "📝 查看日志:"
     echo "   后端: tail -f $BACKEND_LOG"
     echo "   前端: tail -f $FRONTEND_LOG"
-    echo "   PM-Agent Dispatcher: tail -f $PROJECT_ROOT/tmp/logs/pm-dispatcher.log"
     echo ""
     echo "🔍 查看进程:"
     echo "   后端: cat $BACKEND_PID_FILE"
     echo "   前端: cat $FRONTEND_PID_FILE"
-    echo "   PM-Agent Dispatcher: cat $DISPATCHER_PID_FILE"
     echo ""
     echo "🛑 停止服务: ./clawboard stop"
-    echo ""
-    echo "⚙️  PM-Agent Dispatcher 配置:"
-    echo "   轮询间隔: ${DISPATCHER_INTERVAL:-10} 秒 (可通过 DISPATCHER_INTERVAL 环境变量修改)"
-    echo "   配置文件: config/pm-agent-dispatcher.json"
     echo "=========================================="
     echo ""
 }
@@ -659,7 +604,7 @@ function show_help() {
     echo "  $0 --help"
     echo ""
     echo "说明:"
-    echo "  默认以后台常驻方式启动后端、前端和 PM-Agent Dispatcher"
+    echo "  默认以后台常驻方式启动后端和前端"
     echo "  如需进程托管，推荐使用 PM2: pm2 start ecosystem.config.cjs"
     exit 0
 }
@@ -718,10 +663,6 @@ function main() {
     start_frontend
     echo ""
     
-    # 启动 PM-Agent Dispatcher（在后端健康后启动）
-    start_dispatcher
-    echo ""
-
     # 显示访问信息
     show_access_info
 }

@@ -112,36 +112,6 @@ export interface TaskExecutionContext {
   mainAgentChecklist: string[]
 }
 
-export interface DispatcherStatus {
-  mode: 'manual' | 'auto'
-  running: boolean
-  pid: number | null
-  intervalMs: number
-  projectAllowlist: string[]
-  pidFile: string
-  logFile: string
-  updatedAt: string
-}
-
-export interface DispatcherPrerequisites {
-  checkedAt: string
-  gateway: {
-    status: 'ready' | 'missing_config' | 'connection_failed'
-    configured: boolean
-    url: string
-    configPath: string
-    message: string
-  }
-}
-
-export interface DispatchOnceResult {
-  projectId: string
-  dispatched: boolean
-  taskId: string | null
-  reason: string
-  subagentId?: string
-}
-
 async function parseJsonResponse<T>(response: Response, fallbackMessage: string): Promise<T> {
   const contentType = response.headers.get('content-type') || ''
 
@@ -299,58 +269,4 @@ export async function generateProgressDoc(projectId: string) {
     throw new Error(error.error || 'Failed to generate progress doc')
   }
   return response.json()
-}
-
-export async function getDispatcherStatus() {
-  const response = await authFetch(buildApiUrl('/api/dispatcher/status'))
-  return parseJsonResponse<DispatcherStatus>(response, 'Failed to fetch dispatcher status')
-}
-
-export async function setDispatcherMode(mode: 'manual' | 'auto', intervalMs?: number) {
-  const response = await authFetch(buildApiUrl('/api/dispatcher/mode'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mode, intervalMs }),
-  })
-  const data = await parseJsonResponse<{ success: boolean; status: DispatcherStatus }>(
-    response,
-    'Failed to set dispatcher mode'
-  )
-  return data.status
-}
-
-export async function setProjectDispatcherEnabled(projectId: string, enabled: boolean) {
-  const response = await authFetch(buildApiUrl(`/api/dispatcher/projects/${projectId}`), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ enabled }),
-  })
-  const data = await parseJsonResponse<{ success: boolean; status: DispatcherStatus }>(
-    response,
-    'Failed to update project dispatcher status'
-  )
-  return data.status
-}
-
-export async function getDispatcherPrerequisites() {
-  const response = await authFetch(buildApiUrl('/api/dispatcher/prerequisites'))
-  return parseJsonResponse<DispatcherPrerequisites>(response, 'Failed to fetch dispatcher prerequisites')
-}
-
-export async function dispatchProjectOnce(projectId: string, forceAutoDispatch = true) {
-  const response = await authFetch(buildApiUrl(`/api/execution/projects/${projectId}/dispatch-once`), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ forceAutoDispatch }),
-  })
-  return parseJsonResponse<DispatchOnceResult>(response, 'Failed to dispatch project task')
-}
-
-export async function dispatchTaskById(projectId: string, taskId: string, forceAutoDispatch = true) {
-  const response = await authFetch(buildApiUrl(`/api/execution/projects/${projectId}/tasks/${taskId}/dispatch`), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ forceAutoDispatch }),
-  })
-  return parseJsonResponse<DispatchOnceResult>(response, `Failed to dispatch task ${taskId}`)
 }

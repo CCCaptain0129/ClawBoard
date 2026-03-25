@@ -4,7 +4,6 @@ import { taskRoutes } from '../routes/tasks';
 import { syncRoutes } from '../routes/sync';
 import { taskDocRoutes } from '../routes/taskDoc';
 import { executionRoutes } from '../routes/execution';
-import { dispatcherRoutes } from '../routes/dispatcher';
 import healthCheckRouter from '../routes/healthCheck';
 import type { AppServices } from './bootstrap';
 import { accessTokenMiddleware } from '../middleware/accessToken';
@@ -15,7 +14,6 @@ export function registerApiRoutes(app: express.Express, services: AppServices): 
   app.use('/api/tasks', taskRoutes(services.taskService, services.wsServer, services.subagentMonitorService));
   app.use('/api/tasks', healthCheckRouter);
   app.use('/api/execution', executionRoutes(services.projectExecutionService));
-  app.use('/api/dispatcher', dispatcherRoutes(services.dispatcherControlService));
   app.use('/api/sync', syncRoutes(services.taskService, services.wsServer, services.safeSyncService));
   app.use(
     '/api/task-doc',

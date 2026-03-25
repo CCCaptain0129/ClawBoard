@@ -175,9 +175,9 @@ export class SafeSyncService {
    * 解析 03-任务分解.md 格式
    * 
    * 支持格式：
-   * ### PMW-001 `P0` 配置 project-manager Agent 的 HEARTBEAT.md
+   * ### PMW-001 `P0` 配置 project-manager Agent 的调度规则
    * - 状态: 已完成
-   * - 描述: 编写 HEARTBEAT.md 文件...
+   * - 描述: 编写调度规则文档...
    * - 领取者: (空)
    */
   private parseTaskMarkdown(markdown: string, projectId: string): Task[] {

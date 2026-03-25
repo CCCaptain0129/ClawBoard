@@ -44,33 +44,5 @@ export function executionRoutes(projectExecutionService: ProjectExecutionService
     }
   });
 
-  router.post('/projects/:id/dispatch-once', async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { forceAutoDispatch = false } = req.body || {};
-      const result = await projectExecutionService.dispatchOnce(id, Boolean(forceAutoDispatch));
-      res.json(result);
-    } catch (error) {
-      res.status(500).json({
-        error: 'Failed to dispatch project task',
-        details: error instanceof Error ? error.message : String(error),
-      });
-    }
-  });
-
-  router.post('/projects/:id/tasks/:taskId/dispatch', async (req, res) => {
-    try {
-      const { id, taskId } = req.params;
-      const { forceAutoDispatch = false } = req.body || {};
-      const result = await projectExecutionService.dispatchTaskById(id, taskId, Boolean(forceAutoDispatch));
-      res.json(result);
-    } catch (error) {
-      res.status(500).json({
-        error: 'Failed to dispatch specific task',
-        details: error instanceof Error ? error.message : String(error),
-      });
-    }
-  });
-
   return router;
 }

@@ -28,17 +28,5 @@ module.exports = {
         NODE_ENV: "development",
       },
     },
-    {
-      name: "pm-agent-dispatcher",
-      cwd: rootDir,
-      script: "node",
-      args: `scripts/pm-agent-dispatcher.mjs --watch --interval 10 --pidfile ${path.join(rootDir, "tmp/pm-dispatcher.pid")}`,
-      interpreter: "none",
-      autorestart: true,
-      watch: false,
-      env: {
-        NODE_ENV: "development",
-      },
-    },
   ],
 };

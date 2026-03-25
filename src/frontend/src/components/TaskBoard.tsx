@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import TaskCard from './TaskCard'
 import CreateTaskModal from './CreateTaskModal'
 import CreateProjectModal from './CreateProjectModal'
-import { archiveCompletedTasks, deleteTask, dispatchTaskById, generateProgressDoc, getDispatcherStatus, getProjects, getTasks, getTasksForProjects, setProjectDispatcherEnabled, updateProject, updateTask, type DispatcherStatus, type Project, type Task } from '../services/taskService'
+import { archiveCompletedTasks, deleteTask, generateProgressDoc, getProjects, getTasks, getTasksForProjects, updateProject, updateTask, type Project, type Task } from '../services/taskService'
 import { useWebSocket } from '../hooks/useWebSocket'
 
 const columns = [
@@ -50,9 +50,6 @@ export default function TaskBoard() {
   const [showCreateProjectModal, setShowCreateProjectModal] = useState(false)
   const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null)
   const [pendingDeleteTask, setPendingDeleteTask] = useState<{ id: string; title: string } | null>(null)
-  const [dispatcherStatus, setDispatcherStatus] = useState<DispatcherStatus | null>(null)
-  const [projectDispatchLoading, setProjectDispatchLoading] = useState(false)
-  const [redispatchingTaskId, setRedispatchingTaskId] = useState<string | null>(null)
   
   // JSON-first: 生成04进度跟踪状态
   const [generatingProgress, setGeneratingProgress] = useState(false)
@@ -119,32 +116,6 @@ export default function TaskBoard() {
       window.clearInterval(intervalId)
     }
   }, [currentProject, projects.length])
-
-  useEffect(() => {
-    let disposed = false
-    const loadDispatcher = async () => {
-      try {
-        const status = await getDispatcherStatus()
-        if (!disposed) {
-          setDispatcherStatus(status)
-        }
-      } catch {
-        if (!disposed) {
-          setDispatcherStatus(null)
-        }
-      }
-    }
-
-    void loadDispatcher()
-    const timer = window.setInterval(() => {
-      void loadDispatcher()
-    }, 10000)
-
-    return () => {
-      disposed = true
-      window.clearInterval(timer)
-    }
-  }, [])
 
   const fetchProjects = async () => {
     try {
@@ -261,48 +232,6 @@ export default function TaskBoard() {
       type: 'success',
       message: assignee ? `任务 ${taskId} 已分配给 ${assignee}` : `任务 ${taskId} 的负责人已清空`,
     })
-  }
-
-  const handleRedispatchTask = async (taskId: string) => {
-    if (redispatchingTaskId) {
-      return
-    }
-
-    try {
-      setRedispatchingTaskId(taskId)
-      const taskProjectId = getTaskProjectId(taskId)
-      if (!taskProjectId) {
-        throw new Error(`无法确定任务 ${taskId} 所属项目`)
-      }
-
-      const currentTask = tasks.find((task) => task.id === taskId)
-      if (!currentTask) {
-        throw new Error(`任务 ${taskId} 不存在`)
-      }
-
-      if (currentTask.status === 'done' || currentTask.status === 'review') {
-        throw new Error('仅进行中任务支持重新派发')
-      }
-
-      if (currentTask.claimedBy) {
-        const releasedTask = await updateTask(taskProjectId, taskId, { claimedBy: null })
-        setTasks((currentTasks) => currentTasks.map((task) => (
-          task.id === taskId ? releasedTask : task
-        )))
-      }
-
-      const dispatchResult = await dispatchTaskById(taskProjectId, taskId, true)
-      if (!dispatchResult.dispatched) {
-        throw new Error(dispatchResult.reason || '未找到可派发任务')
-      }
-
-      const subagentHint = dispatchResult.subagentId ? `，subagent: ${dispatchResult.subagentId}` : ''
-      setNotice({ type: 'success', message: `任务 ${taskId} 已重新派发${subagentHint}` })
-    } catch (err) {
-      setNotice({ type: 'error', message: err instanceof Error ? err.message : '重新派发失败' })
-    } finally {
-      setRedispatchingTaskId(null)
-    }
   }
 
 
@@ -482,32 +411,6 @@ export default function TaskBoard() {
     return projects.find(p => p.id === currentProject) || { name: '未知项目', color: '#6366F1', icon: '📁' }
   }
 
-  const currentProjectAutoEnabled = currentProject !== 'all'
-    && Boolean(dispatcherStatus?.projectAllowlist?.includes(currentProject))
-  const globalAutoEnabled = Boolean(dispatcherStatus?.running && dispatcherStatus?.mode === 'auto')
-
-  const handleToggleProjectDispatch = async () => {
-    if (currentProject === 'all' || projectDispatchLoading) return
-    try {
-      setProjectDispatchLoading(true)
-      const nextEnabled = !currentProjectAutoEnabled
-      const status = await setProjectDispatcherEnabled(currentProject, nextEnabled)
-      setDispatcherStatus(status)
-      setNotice({
-        type: 'success',
-        message: nextEnabled
-          ? (globalAutoEnabled
-            ? `项目 ${projectInfo.name} 已加入自动调度`
-            : `项目 ${projectInfo.name} 已开启 Agent 自动调度。当前全局自动调度未开启，开启后将自动生效。`)
-          : `项目 ${projectInfo.name} 已移出自动调度`,
-      })
-    } catch (err) {
-      setNotice({ type: 'error', message: err instanceof Error ? err.message : '更新项目自动调度失败' })
-    } finally {
-      setProjectDispatchLoading(false)
-    }
-  }
-
   // 根据任务 ID 前缀查找对应的项目
   const findProjectByTaskPrefix = (taskId: string) => {
     return projects.find(p => taskId.startsWith(p.taskPrefix))
@@ -675,41 +578,6 @@ export default function TaskBoard() {
               </div>
             </div>
 
-            {currentProject !== 'all' && (
-              <div className="mt-3">
-                <div className="inline-flex flex-wrap items-center gap-2">
-                  <button
-                    onClick={handleToggleProjectDispatch}
-                    disabled={projectDispatchLoading}
-                    className="h-8 px-3 rounded-lg text-xs font-semibold border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    title={dispatcherStatus?.running
-                      ? '切换当前项目是否自动调度'
-                      : '当前全局自动调度关闭，开启后将在全局开启时生效'}
-                  >
-                    {projectDispatchLoading ? '更新中...' : 'Agent 自动调度'}
-                  </button>
-                  <span
-                    className={`inline-flex h-8 items-center rounded-lg border px-3 text-xs font-semibold ${
-                      currentProjectAutoEnabled
-                        ? 'border-blue-200 bg-blue-50 text-blue-700'
-                        : 'border-slate-200 bg-slate-100 text-slate-600'
-                    }`}
-                  >
-                    {currentProjectAutoEnabled ? '已开启' : '已关闭'}
-                  </span>
-                  <span className="inline-flex h-8 items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2.5 text-xs text-amber-800">
-                    <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path
-                      fillRule="evenodd"
-                      d="M8.257 3.099c.765-1.36 2.72-1.36 3.485 0l5.58 9.918c.75 1.334-.213 2.983-1.742 2.983H4.419c-1.53 0-2.492-1.649-1.742-2.983l5.58-9.918zM11 7a1 1 0 10-2 0v3a1 1 0 102 0V7zm-1 7a1.25 1.25 0 100-2.5A1.25 1.25 0 0010 14z"
-                      clipRule="evenodd"
-                    />
-                    </svg>
-                    <span>风险预警：开启后会自动执行符合条件任务，请先确认任务范围与验收标准</span>
-                  </span>
-                </div>
-              </div>
-            )}
           </div>
 
           {currentProject !== 'all' && (
@@ -845,8 +713,6 @@ export default function TaskBoard() {
                           projectIcon={project?.icon}
                           onStatusChange={handleStatusChange}
                           onAssigneeChange={handleAssigneeChange}
-                          onRedispatchTask={handleRedispatchTask}
-                          isRedispatching={redispatchingTaskId === task.id}
                           onDelete={requestDeleteTask}
                         />
                       </div>

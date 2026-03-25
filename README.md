@@ -10,7 +10,7 @@
 - 状态清晰：`todo / in-progress / review / done` 全流程可视化
 - 协作直接：任务可手动分配负责人，支持人类与 Agent 混合执行
 - 监控实时：追踪 Agent/subagent 活跃度、最近更新与执行风险
-- 控制简单：支持自动调度开关（全局 + 项目级）
+- 控制简单：保持最小链路，任务创建与状态流转可直接在看板完成；调度由 Agent 侧 cron/heartbeat 驱动
 - API-first：OpenClaw 可直接接入，也支持其他自动化系统
 
 ## 快速开始（3 分钟）
@@ -95,29 +95,18 @@ cd ClawBoard
 3. 持续更新任务状态（todo → in-progress → review → done）
 ```
 
-4. 如何设置 OpenClaw 自动实现任务调度（可选）
+4. 如何让 OpenClaw Agent 执行任务（推荐）
 
-【风险提示】  
-开启 OpenClaw 自动任务调度后，系统会主动创建 SubAgent 来执行任务（包括 `todo` 任务，以及 `in-progress` 且未被认领的任务）。  
-开启前请先确认：你已经检查过当前项目中的任务内容，并接受自动执行带来的代码/文档变更风险。
+当前版本不再内置自动派发进程，改为 **Agent 主导调度**。推荐流程是：
+1. 在看板创建任务，并补全目标/交付物/验收标准。
+2. 在“给 Agent 的说明”页面复制 `AGENTS.md` 指引给你的项目管理 Agent。
+3. 为该 Agent 配置定时触发（cron 或 heartbeat），按固定周期执行一轮调度检查。
+4. 调度检查时，Agent 按规则筛选任务并创建 SubAgent 执行。
+5. SubAgent 返回完成信号后，项目管理 Agent 将任务推进到 `review`，验收通过后再到 `done`。
 
-设置步骤：
-1. 启动服务：`./clawboard start`
-2. 在顶部开启：`自动调度：开`
-3. 在目标项目开启：`Agent 自动调度：开`
-4. 创建任务时保持：`执行模式 = 可自动派发（auto）`
-5. 将需要执行的任务放到：`todo`
-6. 在任务卡片和 Agent 看板中观察是否出现 SubAgent
-
-错误排查：
-1. 全局自动调度未开启：检查顶部开关是否为“开”。
-2. 项目自动调度未开启：检查项目卡片内“Agent 自动调度”是否为“开”。
-3. 任务执行模式错误：任务若为 `manual`，不会自动派发。请改为 `auto`。
-4. 任务已被占用：若任务 `claimedBy` 非空，说明已被认领，不会重复派发。
-5. 任务信息不完整：任务缺少目标/交付物/验收标准时，可能被过滤。
-6. 依赖未完成：有依赖任务且未完成时，不会派发当前任务。
-7. 并发已满：当前运行中的 SubAgent 达到上限时，新任务会等待下一轮。
-8. 查看调度日志：`tmp/logs/pm-dispatcher.log`，日志里会直接给出“未派发原因”。
+建议的调度周期：
+- 常规项目：每 5 分钟一轮
+- 高实时项目：每 1-2 分钟一轮（注意并发与成本）
 
 5. 常见运维命令
 ```bash
@@ -170,8 +159,6 @@ Windows:
 - `POST /api/tasks/projects/:projectId/tasks`
 - `PUT /api/tasks/projects/:projectId/tasks/:taskId`
 - `DELETE /api/tasks/projects/:projectId/tasks/:taskId`
-- `GET /api/dispatcher/status`
-- `POST /api/dispatcher/mode`
 
 ## 目录结构
 
@@ -182,8 +169,7 @@ openclaw-visualization/
 ├── tasks/                # 项目与任务真源
 ├── docs/                 # 文档
 └── scripts/
-    ├── cli/              # install/start/stop/verify 脚本
-    └── pm-agent-dispatcher.mjs
+    └── cli/              # install/start/stop/verify 脚本
 ```
 
 ## 文档入口

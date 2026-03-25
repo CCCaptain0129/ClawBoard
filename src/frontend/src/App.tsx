@@ -3,13 +3,6 @@ import Dashboard from './pages/Dashboard'
 import TaskBoard from './components/TaskBoard'
 import AgentInitPage from './pages/AgentInitPage'
 import { authFetch, buildApiUrl, clearStoredAccessToken, getStoredAccessToken, setStoredAccessToken } from './config'
-import {
-  getDispatcherPrerequisites,
-  getDispatcherStatus,
-  setDispatcherMode,
-  type DispatcherPrerequisites,
-  type DispatcherStatus
-} from './services/taskService'
 import './index.css'
 
 type AppPage = 'agents' | 'tasks' | 'agent-init'
@@ -41,10 +34,6 @@ function App() {
   const [tokenInput, setTokenInput] = useState('')
   const [tokenError, setTokenError] = useState<string | null>(null)
   const [isCheckingToken, setIsCheckingToken] = useState(false)
-  const [dispatcherStatus, setDispatcherStatus] = useState<DispatcherStatus | null>(null)
-  const [dispatcherPrerequisites, setDispatcherPrerequisites] = useState<DispatcherPrerequisites | null>(null)
-  const [dispatcherLoading, setDispatcherLoading] = useState(false)
-  const [dispatcherError, setDispatcherError] = useState<string | null>(null)
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -55,41 +44,6 @@ function App() {
     window.addEventListener('hashchange', handleHashChange)
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
-
-  useEffect(() => {
-    if (!accessToken) {
-      return
-    }
-
-    let disposed = false
-    const loadDispatcher = async () => {
-      try {
-        const [status, prerequisites] = await Promise.all([
-          getDispatcherStatus(),
-          getDispatcherPrerequisites(),
-        ])
-        if (!disposed) {
-          setDispatcherStatus(status)
-          setDispatcherPrerequisites(prerequisites)
-          setDispatcherError(null)
-        }
-      } catch (error) {
-        if (!disposed) {
-          setDispatcherError(error instanceof Error ? error.message : '加载调度状态失败')
-        }
-      }
-    }
-
-    void loadDispatcher()
-    const timer = window.setInterval(() => {
-      void loadDispatcher()
-    }, 10000)
-
-    return () => {
-      disposed = true
-      window.clearInterval(timer)
-    }
-  }, [accessToken])
 
   useEffect(() => {
     const handleInvalidToken = () => {
@@ -170,55 +124,6 @@ function App() {
     }
   }
 
-  const toggleDispatcherMode = async () => {
-    if (!dispatcherStatus || dispatcherLoading) {
-      return
-    }
-
-    const nextMode = dispatcherStatus.mode === 'auto' ? 'manual' : 'auto'
-    if (nextMode === 'auto') {
-      const gatewayReady = dispatcherPrerequisites?.gateway.status === 'ready'
-      if (!gatewayReady) {
-        const gatewayMessage = dispatcherPrerequisites?.gateway.message || 'OpenClaw 网关未就绪'
-        const configPath = dispatcherPrerequisites?.gateway.configPath || 'src/backend/config/openclaw.json'
-        window.alert(
-          `当前无法开启自动调度。\n\n原因：${gatewayMessage}\n\n请先完成配置后再重试。\n配置文件：${configPath}`
-        )
-        return
-      }
-
-      const noProjectEnabled = (dispatcherStatus.projectAllowlist?.length || 0) === 0
-      const message = noProjectEnabled
-        ? '开启全局自动调度后，系统会尝试自动分派任务。\n\n当前还没有启用任何项目，所以不会立即分派任务。\n下一步：到任务看板打开“Agent 自动调度”，再把任务改为“进行中”。\n\n是否继续开启？'
-        : '开启全局自动调度后，系统会自动分派“已启用项目”中处于“进行中”的任务给 subagent。\n\n是否继续？'
-      const confirmed = window.confirm(message)
-      if (!confirmed) {
-        return
-      }
-    }
-
-    try {
-      setDispatcherLoading(true)
-      const status = await setDispatcherMode(nextMode, dispatcherStatus.intervalMs)
-      setDispatcherStatus(status)
-      setDispatcherError(null)
-    } catch (error) {
-      setDispatcherError(error instanceof Error ? error.message : '切换调度模式失败')
-    } finally {
-      setDispatcherLoading(false)
-    }
-  }
-
-  const showGatewaySetupHint = () => {
-    if (!dispatcherPrerequisites?.gateway) {
-      window.alert('OpenClaw 网关状态加载中，请稍后重试。')
-      return
-    }
-    window.alert(
-      `OpenClaw 网关配置说明\n\n状态：${dispatcherPrerequisites.gateway.message}\n\n配置文件：${dispatcherPrerequisites.gateway.configPath}\n命令建议：\n1) openclaw gateway start\n2) openclaw gateway status`
-    )
-  }
-
   if (!accessToken) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-200 flex items-center justify-center px-6">
@@ -282,44 +187,6 @@ function App() {
                 }`}></span>
                 {isBackendConnected ? '看板服务：在线' : '看板服务：离线'}
               </span>
-              <button
-                onClick={showGatewaySetupHint}
-                className={`inline-flex items-center h-9 px-3 rounded-lg text-sm font-medium border bg-white transition-colors ${
-                  dispatcherPrerequisites?.gateway.status === 'ready'
-                    ? 'border-slate-200 text-slate-700 hover:bg-slate-50'
-                    : dispatcherPrerequisites?.gateway.status === 'connection_failed'
-                      ? 'border-amber-200 text-amber-700 hover:bg-amber-50'
-                      : 'border-rose-200 text-rose-700 hover:bg-rose-50'
-                }`}
-                title="点击查看 OpenClaw 网关配置说明"
-              >
-                <span className={`w-2 h-2 rounded-full mr-2 ${
-                  dispatcherPrerequisites?.gateway.status === 'ready'
-                    ? 'bg-emerald-500'
-                    : dispatcherPrerequisites?.gateway.status === 'connection_failed'
-                      ? 'bg-amber-500'
-                      : 'bg-rose-500'
-                }`}></span>
-                {dispatcherPrerequisites?.gateway.status === 'ready'
-                  ? 'OpenClaw 网关：已连接'
-                  : dispatcherPrerequisites?.gateway.status === 'connection_failed'
-                    ? 'OpenClaw 网关：连接失败'
-                    : 'OpenClaw 网关：未配置'}
-              </button>
-              <button
-                onClick={toggleDispatcherMode}
-                disabled={!dispatcherStatus || dispatcherLoading}
-                title={dispatcherStatus?.running ? '已开启，仅调度启用的项目' : '已关闭，仅手动管理任务'}
-                className={`h-9 px-3 text-sm font-semibold rounded-lg border bg-white transition-colors ${
-                  dispatcherStatus?.mode === 'auto'
-                    ? 'border-blue-200 text-blue-700 hover:bg-blue-50'
-                    : 'border-slate-200 text-slate-700 hover:bg-slate-50'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                {dispatcherLoading
-                  ? '切换中...'
-                  : `自动调度：${dispatcherStatus?.mode === 'auto' ? '开' : '关'}`}
-              </button>
             </div>
           </div>
           <div className="space-y-1">
@@ -357,9 +224,6 @@ function App() {
               </button>
             </div>
           </div>
-          {dispatcherError && (
-            <div className="text-xs text-rose-600">{dispatcherError}</div>
-          )}
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-6 py-8">

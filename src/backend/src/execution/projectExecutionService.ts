@@ -1,5 +1,4 @@
 import { TaskService } from '../services/taskService';
-import { SubagentManager } from '../services/subagentManager';
 import { Task } from '../types/tasks';
 import { WebSocketHandler } from '../websocket/server';
 import { ExecutionPacketService } from './executionPacketService';
@@ -8,19 +7,14 @@ import { TaskSelectionService } from './taskSelectionService';
 
 export class ProjectExecutionService {
   private isRunning = false;
-  private readonly dispatchDriver: 'main-agent' | 'legacy';
 
   constructor(
     private taskService: TaskService,
     private wsServer: WebSocketHandler,
     private projectConfigService: ProjectConfigService = new ProjectConfigService(),
     private taskSelectionService: TaskSelectionService = new TaskSelectionService(),
-    private executionPacketService: ExecutionPacketService = new ExecutionPacketService(),
-    private subagentManager: SubagentManager = new SubagentManager(taskService)
-  ) {
-    const rawDriver = (process.env.DISPATCH_DRIVER || 'main-agent').trim().toLowerCase();
-    this.dispatchDriver = rawDriver === 'legacy' ? 'legacy' : 'main-agent';
-  }
+    private executionPacketService: ExecutionPacketService = new ExecutionPacketService()
+  ) {}
 
   async runCycle(): Promise<void> {
     if (this.isRunning) {
@@ -280,36 +274,9 @@ export class ProjectExecutionService {
     reason: string;
     subagentId?: string;
   }> {
-    const project = (await this.taskService.getAllProjects()).find((item) => item.id === projectId);
-    const packet = this.executionPacketService.buildPacket(projectId, task);
-    const taskDescription = `${this.buildSubagentPrompt(project?.name || projectId, packet)}\n\n调度原因: ${reason}`;
-
-    if (this.dispatchDriver !== 'legacy') {
-      return {
-        dispatched: false,
-        reason: `当前为 main-agent 派发模式，已跳过 legacy SubagentManager 自动派发（task=${task.id}）`,
-      };
-    }
-
-    console.log(`[ProjectExecutionService] Dispatching ${task.id} for project ${projectId}`);
-    const subagentId = await this.subagentManager.createSubagent({
-      projectId,
-      taskId: task.id,
-      taskTitle: task.title,
-      taskDescription,
-      subagentType: this.mapAgentType(task.agentType),
-    });
-
-    const updatedTask = await this.taskService.getTasksByProject(projectId)
-      .then((tasks) => tasks.find((item) => item.id === task.id) || null);
-    if (updatedTask) {
-      this.wsServer.broadcastTaskUpdate(projectId, updatedTask);
-    }
-
     return {
-      dispatched: true,
-      reason: `已按 legacy 派发 ${task.id}`,
-      subagentId,
+      dispatched: false,
+      reason: `内置自动派发已禁用。请由项目管理 Agent 按 AGENTS.md 派发任务（project=${projectId}, task=${task.id}, reason=${reason}）。`,
     };
   }
 
@@ -446,16 +413,4 @@ ${docLines || '- 当前未配置项目文档。'}
 如果信息不足，只允许从项目真源文档和执行上下文接口补查，不要自由发挥。`;
   }
 
-  private mapAgentType(agentType: Task['agentType']): 'Dev Agent' | 'Test Agent' | 'Debug Agent' | undefined {
-    switch (agentType) {
-      case 'test':
-        return 'Test Agent';
-      case 'debug':
-        return 'Debug Agent';
-      case 'dev':
-      case 'general':
-      default:
-        return 'Dev Agent';
-    }
-  }
 }
