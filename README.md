@@ -108,14 +108,94 @@ cd ClawBoard
 - 常规项目：每 5 分钟一轮
 - 高实时项目：每 1-2 分钟一轮（注意并发与成本）
 
-5. 常见运维命令
+5. 使用 ClawHub 技能实现自动调度（推荐）
+
+如果你希望 Agent 自动检查待办并创建 SubAgent，可安装 `task-dispatch` 技能。
+
+前置条件：
+- ClawBoard 已部署并可访问（默认 `http://127.0.0.1:3000`）
+- 已获取 `BOARD_ACCESS_TOKEN`（查看项目根目录 `.env`，或通过 ClawBoard API 获取）
+
+安装技能：
+```bash
+clawhub install task-dispatch
+```
+
+在 Agent workspace 配置环境变量：
+```bash
+export TASKBOARD_API_URL=http://127.0.0.1:3000
+export TASKBOARD_ACCESS_TOKEN=your-token-here
+```
+
+创建可自动派发任务（关键是 `executionMode: "auto"`）：
+```bash
+curl -X POST http://127.0.0.1:3000/api/tasks/projects/my-project/tasks \
+  -H "Authorization: Bearer $TASKBOARD_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "创建 README 文档",
+    "description": "为项目创建 README.md 说明文档",
+    "status": "todo",
+    "executionMode": "auto",
+    "priority": "P2",
+    "deliverables": ["docs/README.md"],
+    "acceptanceCriteria": [
+      "文件已创建",
+      "包含项目标题和简介"
+    ]
+  }'
+```
+
+启用自动调度（给 Agent 的指令示例）：
+- “设置每 5 分钟自动检查任务看板”
+
+执行流程：
+1. Agent 检查看板任务
+2. 筛选 `executionMode=auto` 且 `status=todo`（并满足可派发条件）任务
+3. 创建 SubAgent 执行任务
+4. SubAgent 返回结果
+5. Agent 验收交付物
+6. 任务进入 `review`
+7. 继续下一任务
+
+手动触发（不等 cron）：
+- “检查任务看板，派发所有待执行任务”
+- “查看当前任务调度状态”
+
+任务状态说明：
+- `todo`：待处理，可被自动派发
+- `in-progress`：执行中
+- `review`：待审核
+- `done`：已完成
+- `failed`：执行失败
+
+验收任务：
+- 查看 `deliverables` 对应产物
+- 通过后将任务更新为 `done`（也可让 Agent代为验收）
+- 未通过则给出修改意见并重新执行
+
+API 验收通过示例：
+```bash
+curl -X PUT http://127.0.0.1:3000/api/tasks/projects/my-project/tasks/TASK-001 \
+  -H "Authorization: Bearer $TASKBOARD_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"status": "done"}'
+```
+
+注意事项：
+- `executionMode=manual` 不会自动派发
+- 有 `assignee` 的任务默认不自动派发
+- 依赖未完成的任务不会派发
+- 任务完成先进入 `review`，验收后再 `done`
+
+6. 常见运维命令
 ```bash
 ./clawboard status   # 查看服务状态
 ./clawboard stop     # 停止服务
 ./clawboard restart  # 重启服务
 ```
 
-6. 让看板可被外部访问（服务器场景）
+7. 让看板可被外部访问（服务器场景）
 
 默认情况下，前端通常只监听本机地址，外部设备无法直接访问。  
 如果你需要在服务器上运行并通过 IP 远程查看，请按以下步骤调整：
